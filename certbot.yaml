@@ -39,4 +39,114 @@
       command:
         cmd: certbot certonly --dns-google --dns-google-credentials /root/dns_api.secret --non-interactive --email jan.peschke@quobyte.com --agree-tos -d '*.s3.quobyte-demo.com' -d 's3.quobyte-demo.com'
 
+    - name: Fetch generated S3 certificates
+      fetch:
+        src:  /etc/letsencrypt/live/s3.quobyte-demo.com/fullchain.pem
+        dest: certificates/s3cert.pem
+        flat: yes
+
+    - name: Fetch generated S3 certificate key
+      fetch:
+        src:  /etc/letsencrypt/live/s3.quobyte-demo.com/privkey.pem
+        dest: certificates/s3key.pem
+        flat: yes
+
+    - name: Fetch generated demo certificates
+      fetch:
+        src:  /etc/letsencrypt/live/quobyte-demo.com/fullchain.pem
+        dest: certificates/democert.pem
+        flat: yes
+
+    - name: Fetch generated demo certificate key
+      fetch:
+        src:  /etc/letsencrypt/live/quobyte-demo.com/privkey.pem
+        dest: certificates/demokey.pem
+        flat: yes
+
+- hosts: webconsoleservices, apiservices 
+  become: yes
+  tasks:
+    - name: Copy certificates to webconsole and api servers
+      copy:
+        src: certificates/democert.pem
+        dest: /etc/quobyte/democert.pem
+        mode: 0400
+        owner: quobyte
+
+    - name: Copy cert keys to S3 servers
+      copy:
+        src: certificates/demokey.pem
+        dest: /etc/quobyte/demokey.pem
+        mode: 0400
+        owner: quobyte
+
+- hosts: webconsoleservices
+  become: yes
+  tasks:
+    - name: Ensure certificate config for webconsole service 
+      blockinfile:
+        path: /etc/quobyte/webconsole.cfg
+        block: |
+          webconsole.ca=/etc/quobyte/democert.pem
+          webconsole.cert=/etc/quobyte/democert.pem
+          webconsole.key=/etc/quobyte/demokey.pem
+          webconsole.secure.port=8443
+
+- hosts: apiservices
+  become: yes
+  tasks:
+    - name: Ensure certificate config for api service 
+      blockinfile:
+        path: /etc/quobyte/api.cfg
+        block: |
+          api.ca=/etc/quobyte/democert.pem
+          api.cert=/etc/quobyte/democert.pem
+          api.key=/etc/quobyte/demokey.pem
+          api.secure.port=9443
+
+
+- hosts: webconsoleservices, apiservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte API and Webconsole services 
+      service:
+        enabled: yes
+        state: restarted
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-webconsole
+         - quobyte-api
+
+- hosts: s3services 
+  become: yes
+  tasks:
+    - name: Copy certificates to S3 servers
+      copy:
+        src: certificates/s3cert.pem
+        dest: /etc/quobyte/s3cert.pem
+        mode: 0400
+        owner: quobyte
+
+    - name: Copy cert keys to S3 servers
+      copy:
+        src: certificates/s3key.pem
+        dest: /etc/quobyte/s3key.pem
+        mode: 0400
+        owner: quobyte
+
+    - name: Ensure certificate config for S3 service 
+      blockinfile:
+        path: /etc/quobyte/s3.cfg
+        block: |
+          s3.ca=/etc/quobyte/s3cert.pem
+          s3.cert=/etc/quobyte/s3cert.pem
+          s3.key=/etc/quobyte/s3key.pem
+
+    - name: Restart Quobyte S3 services 
+      service:
+        enabled: yes
+        state: restarted
+        name: "{{ item }}"
+      with_items: 
+        - quobyte-s3
 
