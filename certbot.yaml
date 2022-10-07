@@ -1,0 +1,42 @@
+- hosts: registryservices[0] 
+  vars_files:
+    - vars/secrets.yaml
+  become: yes
+  tasks:
+
+    - name: add secret file to communicate with DNS Cloud API
+      template:
+        src: templates/dns_api_template.jinja2
+        dest: "/root/dns_api.secret"
+        mode: '0400'
+
+    - name: Make sure certbot is installed  
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars: 
+        packages: 
+        - certbot
+        - python3-certbot-dns-google  
+      when: ansible_facts['os_family'] == "Debian"
+ 
+    - name: Install RPM packages
+      yum: 
+        state: present
+        name: certbot 
+      when: ansible_facts['os_family'] == "RedHat" 
+
+    - name: Install RPM packages on Suse Linux 
+      zypper: 
+        state: present
+        name: certbot 
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Use certbot to kindly ask for root wildcard certificate 
+      command:
+        cmd: certbot certonly --dns-google --dns-google-credentials /root/dns_api.secret --non-interactive --email jan.peschke@quobyte.com --agree-tos -d '*.quobyte-demo.com' -d 'quobyte-demo.com'
+    - name: Use certbot to kindly ask for s3 wildcard certificate 
+      command:
+        cmd: certbot certonly --dns-google --dns-google-credentials /root/dns_api.secret --non-interactive --email jan.peschke@quobyte.com --agree-tos -d '*.s3.quobyte-demo.com' -d 's3.quobyte-demo.com'
+
+
