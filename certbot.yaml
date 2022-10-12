@@ -102,7 +102,7 @@
           api.ca=/etc/quobyte/democert.pem
           api.cert=/etc/quobyte/democert.pem
           api.key=/etc/quobyte/demokey.pem
-          api.secure.port=9443
+          api.secure.port=7443
 
 
 - hosts: webconsoleservices, apiservices 
