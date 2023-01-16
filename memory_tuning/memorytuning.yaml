@@ -1,0 +1,89 @@
+- hosts: quobyteservers 
+  become: yes
+  tasks:
+    - name: remove deprecated environment file 
+      file:
+        path: /etc/default/quobyte
+        state: absent 
+    - name: remove deprecated systemd file 
+      file:
+        path: /etc/systemd/system/quobyte-metadata.service.d/10-memory-cgroup-disabled.conf
+        state: absent 
+
+- hosts: sharedservices
+  become: yes
+  tasks:
+    - name: Configure dataservice memory consumption
+      blockinfile:
+        path: /etc/systemd/system.control/quobyte-data.service.d/50-MemoryMaxScale.conf
+        state: present
+        create: true
+        block: | 
+          [Service]
+          MemoryMax=30.0%
+    - name: Configure metadataservice memory consumption
+      blockinfile:
+        path: /etc/systemd/system.control/quobyte-metadata.service.d/50-MemoryMaxScale.conf
+        state: present
+        create: true
+        block: | 
+          [Service]
+          MemoryMax=30.0%
+    - name: Reload systemd config 
+      command: systemctl daemon-reload
+- hosts: registryservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte registry services 
+      service:
+        state: restarted
+        name: quobyte-registry 
+- hosts: apiservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte api services 
+      service:
+        state: restarted
+        name: quobyte-api 
+- hosts: webconsoleservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte webconsole services 
+      service:
+        state: restarted
+        name: quobyte-webconsole 
+- hosts: metadataservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte metadata services 
+      service:
+        state: restarted
+        name: quobyte-metadata 
+- hosts: dataservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte data services 
+      service:
+        state: restarted
+        name: quobyte-data 
+
+- hosts: dataservices 
+  become: yes
+  tasks:
+    - name: Configure dataservice memory consumption
+      blockinfile:
+        path: /etc/systemd/system.control/quobyte-data.service.d/50-MemoryMaxScale.conf
+        state: present
+        create: true
+        block: | 
+          [Service]
+          MemoryMax=60.0%
+    - name: Reload systemd config 
+      command: systemctl daemon-reload
+- hosts: dataservices 
+  become: yes
+  tasks:
+    - name: Restart Quobyte data services 
+      service:
+        state: restarted
+        name: quobyte-data 
