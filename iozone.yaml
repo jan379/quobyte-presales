@@ -1,0 +1,14 @@
+- hosts: clientservers
+  vars_files:
+    - vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Install iozone3 package
+      apt: 
+        name: iozone3
+        state: present
+    - name: Create client.list
+     hostname mountpoint iozone-binary 
+    - name: Start IOZone 
+
+
