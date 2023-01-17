@@ -1,14 +1,44 @@
-- hosts: clientservers
-  vars_files:
-    - vars/ansible-vars
+- hosts: clients,localhost
   become: yes
   tasks:
     - name: Install iozone3 package
       apt: 
         name: iozone3
         state: present
+- hosts: localhost
+  become: yes
+  tasks:
     - name: Create client.list
-     hostname mountpoint iozone-binary 
-    - name: Start IOZone 
+      lineinfile:
+        path: /home/deploy/clients.list
+        create: true
+        line: "{{ item }} /quobyte/iozone/ /usr/bin/iozone"
+      with_items: "{{ groups.clients }}"
+      #- name: Create Volume
+- hosts: registryservices[0]
+  vars_files:
+    - /home/deploy/provisioning/vars/ansible-vars
+  become: yes
+  vars: 
+    - my_volume: "iozone"
+    - my_tenant: "My Tenant"
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+    - name: Test if volume {{ my_volume }} exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume list | grep "^{{ my_volume }} " | awk '{print $1}'
+      register: my_volume_test
 
+    - name: Create volume using policy rules
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 
+      when: my_volume not in my_volume_test.stdout 
 
+- hosts: localhost
+  become: no
+  tasks:
+    - name: start iozone
+      shell:
+        cmd: "echo iozone -b iozone.stat –r1024k -s1g -c -C -i 0 -i 1 -i 2 -i 8 -+u -+m /home/deploy/clients.list -t {{ groups.clients|length }}" 
