@@ -1,0 +1,6 @@
+- hosts: clients,localhost
+  become: yes
+  tasks:
+    - name: Stop zombies
+      shell:
+        cmd: killall iozone 
