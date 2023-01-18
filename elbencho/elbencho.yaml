@@ -38,7 +38,7 @@
         line: "{{ item }}"
       with_items: 
         - "#!/usr/bin/env bash"
-        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..256} --livecsv /home/deploy/elbencho-result-$(date).csv --liveint 1000 --infloop"
+        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..256} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
 
 - hosts: clients,localhost 
   become: yes
