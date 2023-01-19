@@ -10,7 +10,12 @@
         path: /etc/systemd/system/quobyte-metadata.service.d/10-memory-cgroup-disabled.conf
         state: absent 
 
-- hosts: sharedservices
+    - name: remove deprecated systemd file 
+      file:
+        path: /etc/systemd/system/quobyte-data.service.d/10-memory-cgroup-disabled.conf 
+        state: absent 
+
+- hosts: dataservices,metadataservices
   become: yes
   tasks:
     - name: Configure dataservice memory consumption
@@ -67,23 +72,4 @@
         state: restarted
         name: quobyte-data 
 
-- hosts: dataservices 
-  become: yes
-  tasks:
-    - name: Configure dataservice memory consumption
-      blockinfile:
-        path: /etc/systemd/system.control/quobyte-data.service.d/50-MemoryMaxScale.conf
-        state: present
-        create: true
-        block: | 
-          [Service]
-          MemoryMax=60.0%
-    - name: Reload systemd config 
-      command: systemctl daemon-reload
-- hosts: dataservices 
-  become: yes
-  tasks:
-    - name: Restart Quobyte data services 
-      service:
-        state: restarted
-        name: quobyte-data 
+
