@@ -1,0 +1,6 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Stop elbencho
+      shell:
+        cmd: elbencho --quit --hostsfile /home/deploy/elbencho-clients.list 
