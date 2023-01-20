@@ -1,0 +1,49 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Clone ior repository
+      git:
+        repo: 'https://github.com/hpc/ior.git'
+        dest: /home/deploy/ior-repo
+
+    - name: Install Requirements 
+      apt: 
+        name: ['pkg-config', 'm4', 'libtool', 'automake', 'autoconf', 'openmpi-bin'] 
+        state: present
+
+    - name: Bootstrap ior 
+      command: ./bootstrap 
+      args:
+        chdir: /home/deploy/ior-repo 
+        creates: /home/deploy/ior-repo/configure
+
+    - name: Configure ior build
+      command: ./configure 
+      args:
+        chdir: /home/deploy/ior-repo 
+        creates: /home/deploy/ior-repo/Makefile
+
+    - name: Build ior
+      command: make
+      args:
+        chdir: /home/deploy/ior-repo 
+        creates: /home/deploy/ior-repo/src/ior
+
+    - name: Install ior 
+      command: make install
+      args:
+        chdir: /home/deploy/ior-repo
+
+- hosts: clients 
+  become: yes
+  tasks:
+    - name: Install Requirements 
+      apt: 
+        name: ['openmpi-bin'] 
+        state: present
+    - name: Deploy mdtest 
+      copy:
+       src: /usr/local/bin/mdtest
+       dest: /usr/local/bin/mdtest
+       force: yes
+
