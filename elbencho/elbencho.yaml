@@ -6,11 +6,18 @@
         repo: 'https://github.com/breuner/elbencho.git'
         dest: /home/deploy/elbencho
 
-    - name: Install Requirements 
+    - name: Install DEB Requirements 
       apt: 
         name: ['build-essential', 'debhelper', 'devscripts', 'fakeroot', 'git', 'libaio-dev', 'libboost-filesystem-dev', 'libboost-program-options-dev', 'libboost-thread-dev', 'libncurses-dev', 
 'libnuma-dev', 'lintian'] 
         state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Install RPM Requirements 
+      yum: 
+        name: ['boost-devel', 'gcc-c++', 'git', 'libaio-devel', 'make', 'ncurses-devel', 'numactl-devel', 'rpm-build', 'centos-release-scl'] 
+        state: present
+      when: ansible_distribution is regex('^CentOS*') 
 
     - name: Build elbencho 
       command: make -j 4
@@ -18,11 +25,19 @@
         chdir: /home/deploy/elbencho 
         creates: /home/deploy/elbencho/bin/elbencho
 
-    - name: Package elbencho 
+    - name: Package elbencho DEB 
       command: make deb
       args:
         chdir: /home/deploy/elbencho 
         creates: /home/deploy/elbencho/packaging/elbencho*.deb
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Package elbencho RPM 
+      command: make rpm
+      args:
+        chdir: /home/deploy/elbencho 
+        creates: /home/deploy/elbencho/packaging/elbencho*.rpm
+      when: ansible_distribution is regex('^CentOS*') 
 
     - name: Create client list
       lineinfile:
@@ -38,19 +53,32 @@
         line: "{{ item }}"
       with_items: 
         - "#!/usr/bin/env bash"
-        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..256} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
+        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..48} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
 
 - hosts: clients,localhost 
   become: yes
   tasks:
-    - name: Deploy elbencho 
+    - name: Deploy elbencho DEB 
       copy:
        src: /home/deploy/elbencho/packaging/elbencho_2.2.6_amd64.deb
        dest: /tmp/elbencho.deb
        force: yes
+      when: ansible_facts['os_family'] == "Debian"
     - name: Install elbencho 
       apt:
         deb: /tmp/elbencho.deb
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Deploy elbencho RPM
+      copy:
+       src: /home/deploy/elbencho/packaging/elbencho_2.2.6_amd64.rpm
+       dest: /tmp/elbencho.rpm
+       force: yes
+      when: ansible_distribution is regex('^CentOS*') 
+    - name: Install elbencho RPM 
+      yum:
+        rpm: /tmp/elbencho.rpm
+      when: ansible_distribution is regex('^CentOS*') 
 
 - hosts: clients 
   become: yes
