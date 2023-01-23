@@ -15,12 +15,12 @@
 
     - name: Install RPM Requirements 
       yum: 
-        name: ['boost-devel', 'gcc-c++', 'git', 'libaio-devel', 'make', 'ncurses-devel', 'numactl-devel', 'rpm-build', 'centos-release-scl'] 
+        name: ['boost-devel', 'gcc-c++', 'git', 'libaio-devel', 'make', 'ncurses-devel', 'numactl-devel', 'rpm-build'] 
         state: present
-      when: ansible_distribution is regex('^CentOS*') 
+      when: ansible_facts['os_family'] == "RedHat" 
 
     - name: Build elbencho 
-      command: make -j 4
+      shell: make -j 4
       args:
         chdir: /home/deploy/elbencho 
         creates: /home/deploy/elbencho/bin/elbencho
@@ -33,11 +33,11 @@
       when: ansible_facts['os_family'] == "Debian"
 
     - name: Package elbencho RPM 
-      command: make rpm
+      shell: make rpm
       args:
         chdir: /home/deploy/elbencho 
-        creates: /home/deploy/elbencho/packaging/elbencho*.rpm
-      when: ansible_distribution is regex('^CentOS*') 
+        creates: home/deploy/elbencho/packaging/RPMS/x86_64/elbencho-*.rpm 
+      when: ansible_facts['os_family'] == "RedHat" 
 
     - name: Create client list
       lineinfile:
@@ -71,14 +71,16 @@
 
     - name: Deploy elbencho RPM
       copy:
-       src: /home/deploy/elbencho/packaging/elbencho_2.2.6_amd64.rpm
+       src: /home/deploy/elbencho/packaging/RPMS/x86_64/elbencho-2.2.6-1.x86_64.rpm 
        dest: /tmp/elbencho.rpm
        force: yes
-      when: ansible_distribution is regex('^CentOS*') 
+      when: ansible_facts['os_family'] == "RedHat" 
     - name: Install elbencho RPM 
       yum:
-        rpm: /tmp/elbencho.rpm
-      when: ansible_distribution is regex('^CentOS*') 
+        name: /tmp/elbencho.rpm
+        state: present
+        disable_gpg_check: true
+      when: ansible_facts['os_family'] == "RedHat" 
 
 - hosts: clients 
   become: yes
