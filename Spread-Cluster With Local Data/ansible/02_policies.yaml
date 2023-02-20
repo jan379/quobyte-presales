@@ -1,0 +1,13 @@
+- hosts: registryservices[0]
+  become: yes
+  vars_files:
+    - vars/ansible-vars
+  tasks:
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Create policies 
+      shell:
+        cmd: qmgmt -u {{ api_service }} policy-rule import templates/rules.protobuf

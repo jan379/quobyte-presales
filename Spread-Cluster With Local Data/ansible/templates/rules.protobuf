@@ -1,0 +1,43 @@
+policy_rule {
+  name: "on_prem_tier_out"
+  description: "Tier out old data to on_prem"
+  enabled: true
+  scope {
+    file {
+      filter_type: LAST_ACCESS_AGE_S
+      operator: LARGER_THAN
+      numeric_value: 600
+    }
+    files_operator: ALL_OF
+  }
+  policies {
+    metadata_tag_based_placement {
+      required_tag: "hdd"
+      soften_tag_requirements: false
+    }
+    file_tag_based_placement {
+      required_tag: "hdd"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+  }
+}
+policy_rule {
+  name: "cloud_first"
+  description: "place data on fast cloud devices first"
+  enabled: true
+  scope {
+    global: true
+  }
+  policies {
+    metadata_tag_based_placement {
+      required_tag: "platinum"
+      soften_tag_requirements: true
+    }
+    file_tag_based_placement {
+      required_tag: "platinum"
+      soften_tag_requirements: true
+      automatic_constraints: NONE
+    }
+  }
+}
