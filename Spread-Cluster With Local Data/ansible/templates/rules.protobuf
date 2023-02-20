@@ -1,42 +1,47 @@
 policy_rule {
-  name: "on_prem_tier_out"
-  description: "Tier out old data to on_prem"
+  name: "cloud"
+  description: "place data on fast cloud devices"
   enabled: true
   scope {
-    file {
-      filter_type: LAST_ACCESS_AGE_S
-      operator: LARGER_THAN
-      numeric_value: 600
+    volume {
+      label_pattern {
+        name_regex: "site"
+        value_regex: "cloud"
+      }
     }
-    files_operator: ALL_OF
   }
   policies {
     metadata_tag_based_placement {
-      required_tag: "hdd"
+      required_tag: "ssd"
       soften_tag_requirements: false
     }
     file_tag_based_placement {
-      required_tag: "hdd"
+      required_tag: "platinum"
       soften_tag_requirements: false
       automatic_constraints: NONE
     }
   }
 }
 policy_rule {
-  name: "cloud_first"
-  description: "place data on fast cloud devices first"
+  name: "home"
+  description: "Place data on premise"
   enabled: true
   scope {
-    global: true
+    volume {
+      label_pattern {
+        name_regex: "site"
+        value_regex: "home"
+      }
+    }
   }
   policies {
     metadata_tag_based_placement {
-      required_tag: "platinum"
-      soften_tag_requirements: true
+      required_tag: "hdd"
+      soften_tag_requirements: false
     }
     file_tag_based_placement {
-      required_tag: "platinum"
-      soften_tag_requirements: true
+      required_tag: "hdd"
+      soften_tag_requirements: false
       automatic_constraints: NONE
     }
   }

@@ -3,8 +3,8 @@
   vars_files:
     - /home/deploy/provisioning/vars/ansible-vars
   vars: 
-    - my_tenant: "spready"
-    - my_volume: "spreadOne"
+    - my_tenant: "microscopy"
+    - my_volume: "hybrid"
   become: yes
   tasks:
     - name: Get Quobyte session 
