@@ -1,0 +1,55 @@
+all:
+  vars: 
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    # adjust your python interpreter as needed
+    #ansible_python_interpreter: /usr/bin/python3
+  children: 
+   quobyteservers:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+      10.154.0.39:
+      10.154.0.40:
+      10.154.0.37:
+   webconsoleservices:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+   apiservices:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+   registryservices:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+   metadataservices:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+      10.154.0.39:
+      10.154.0.40:
+      10.154.0.37:
+   dataservices:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+      10.154.0.39:
+      10.154.0.40:
+      10.154.0.37:
+   s3services:
+    hosts:
+      10.154.0.43:
+      10.154.0.42:
+      10.154.0.41:
+
+   clients: 
+    hosts:
+      10.154.0.38:
+
