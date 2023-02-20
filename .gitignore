@@ -1,3 +1,4 @@
 vars/secrets.yaml
 certificates
 Spread-Cluster With Local Data/terraform/account_vars.tf
+Spread-Cluster With Local Data/terraform/.terraform/
