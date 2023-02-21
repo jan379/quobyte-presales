@@ -1,0 +1,11 @@
+- hosts: quobyteservers 
+  vars_files:
+    - /home/deploy/provisioning/vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Install node-exporter 
+      apt:
+        name: prometheus-node-exporter 
+        state: present
+      when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
