@@ -4,7 +4,6 @@
   become: yes
   vars: 
     - my_volume: "elbencho"
-    - my_tenant: "My Tenant"
   tasks:
     - name: Get Quobyte session 
       shell:
@@ -16,6 +15,6 @@
 
     - name: Create volume using policy rules
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 
+        cmd: qmgmt -u {{ api_service }} volume create "{{ my_volume }}" deploy deploy 
       when: my_volume not in my_volume_test.stdout 
 

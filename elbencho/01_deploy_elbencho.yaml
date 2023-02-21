@@ -34,6 +34,7 @@
       copy:
        src: /tmp/elbencho
        dest: /usr/local/bin/elbencho
+       mode: "755"
        force: yes
 
 
