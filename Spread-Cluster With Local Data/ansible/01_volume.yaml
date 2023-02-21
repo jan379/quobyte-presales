@@ -28,5 +28,5 @@
 
     - name: Create volume using policy rules
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" root root 
+        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 755 site:cloud 
       when: my_volume not in my_volume_test.stdout  
