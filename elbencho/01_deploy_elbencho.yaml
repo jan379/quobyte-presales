@@ -1,0 +1,39 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Get elbencho binary archive
+      get_url: 
+        url: https://github.com/breuner/elbencho/releases/download/v2.2-5/elbencho-static-x86_64.tar.gz
+        dest: /tmp/elbencho.tar.gz
+
+    - name: Unpack elbencho archive
+      unarchive:
+        src: /tmp/elbencho.tar.gz
+        dest: /tmp/
+
+    - name: Create client list
+      lineinfile:
+        path: /home/deploy/elbencho-clients.list
+        create: true
+        line: "{{ item }}"
+      with_items: "{{ groups.clients }}"
+ 
+    - name: Create script to start elbencho
+      lineinfile:
+        path: /home/deploy/elbencho-start.sh
+        create: true
+        line: "{{ item }}"
+      with_items: 
+        - "#!/usr/bin/env bash"
+        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..48} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
+
+- hosts: clients,localhost 
+  become: yes
+  tasks:
+    - name: Deploy elbencho binary 
+      copy:
+       src: /tmp/elbencho
+       dest: /usr/local/bin/elbencho
+       force: yes
+
+

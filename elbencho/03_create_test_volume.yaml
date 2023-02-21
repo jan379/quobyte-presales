@@ -1,0 +1,21 @@
+- hosts: registryservices[0]
+  vars_files:
+    - /home/deploy/provisioning/vars/ansible-vars
+  become: yes
+  vars: 
+    - my_volume: "elbencho"
+    - my_tenant: "My Tenant"
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+    - name: Test if volume {{ my_volume }} exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume list | grep "^{{ my_volume }} " | awk '{print $1}'
+      register: my_volume_test
+
+    - name: Create volume using policy rules
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 
+      when: my_volume not in my_volume_test.stdout 
+

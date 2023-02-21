@@ -1,0 +1,7 @@
+- hosts: clients 
+  become: yes
+  tasks:
+    - name: Start elbencho clients
+      shell:
+        cmd: elbencho --service 
+
