@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 
-until ls provisioning/inventory.yaml; do 
-  sleep 5; 
-  echo "Waiting for cloud-init to be finished..."
-done ; 
-cp ansible-vars provisioning/vars/ansible-vars
-cp ansible-inventory.yaml provisioning/inventory.yaml
+sudo apt-get update
+sudo apt-get install -y wget ansible git
+# Get Quobyte Ansible playbooks
+git clone https://github.com/quobyte/quobyte-ansible.git
+# Get presales playbooks
+git clone https://github.com/jan379/quobyte-presales.git
+# Let's start with a valid license right from the beginning
+grep "fill in a valid Quobyte license key" ansible-vars && exit 1
+cp ansible-vars quobyte-ansible/vars/ansible-vars
+cp ansible-inventory.yaml quobyte-ansible/inventory.yaml
 cd provisioning
 ansible-playbook -i inventory.yaml 00_install_quobyte_server.yaml 01_setup_coreservices.yaml 02_create_superuser.yaml 03_add_metadataservices.yaml 04_add_dataservices.yaml 05_optional_tune-cluster.yaml 06_optional_install_defaultclient.yaml 07_optional_license_cluster.yaml

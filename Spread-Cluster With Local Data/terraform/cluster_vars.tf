@@ -64,7 +64,7 @@ variable "flavor_clientserver" {
 }
 
 locals {
-  startupscript_on-prem_debflavor = "apt-get update; apt-get install -y wget ansible git python; git clone ${var.git_repository} /home/deploy/provisioning; chown -R deploy: /home/deploy/provisioning"
+  startupscript_on-prem_debflavor = "curl https://raw.githubusercontent.com/jan379/quobyte-presales/master/Spread-Cluster%20With%20Local%20Data/terraform/quickstart.sh > /home/deploy/quickstart.sh; chown deploy: /home/deploy/quickstart.sh; chmod 755 /home/deploy/quickstart.sh"
 }
 
 
