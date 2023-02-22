@@ -1,0 +1,23 @@
+- hosts: registryservices[0] 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  vars: 
+    - my_tenant: "database"
+    - my_user: "db-user"
+  become: no
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Test if user {{ my_user }} exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config list | grep "^{{ my_user }} " | awk '{print $1}'
+      register: my_user_test
+
+    - name: Create User 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config add "{{ my_user }}" --member-of-tenant="{{ my_tenant }}" --primary-group=database --passwor="changeMeLater"
+      when: my_user not in my_user_test.stdout
+
+
