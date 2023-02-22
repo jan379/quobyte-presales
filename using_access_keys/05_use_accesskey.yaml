@@ -1,0 +1,27 @@
+- hosts: registryservices[0] 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  vars: 
+    - my_tenant: "database"
+    - my_user: "db-user"
+  become: no
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Get access key for user {{ my_user }}
+      shell:
+        cmd: qmgmt -u {{ api_service }} accesskey list | grep "^{{ my_user }} " | awk '{print $1}'
+      register: my_user_test
+
+- hosts: clients 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  tasks:
+    - name: Create config script to access volume using native client
+        lineinfile:
+          path: /home/deploy/privileged_access.txt
+          line: 'qinfo ...'
+
+
