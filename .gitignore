@@ -4,3 +4,5 @@ Spread-Cluster With Local Data/terraform/account_vars.tf
 Spread-Cluster With Local Data/terraform/.terraform/
 Spread-Cluster With Local Data/terraform/terraform.tfstate.backup
 Spread-Cluster With Local Data/terraform/terraform.tfstate
+Spread-Cluster With Local Data/terraform/provisioning/ansible-vars
+Spread-Cluster With Local Data/terraform/provisioning/ansible-inventory.yaml
