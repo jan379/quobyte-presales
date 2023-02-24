@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: quobyte-mount-secret
+  namespace: quobyte
+type: "kubernetes.io/quobyte"
+data:
+    # Username/ Password to authenticate against Quobyte.
+    # Both values need to be base64 encoded.
+    user: UW50NjQ2OXBROFlUWHBtUDNkMGg= 
+    password: NUNBa3JkQmNwcW54VzhiYkR3Nk05RGFKRUJjcWNkVFpqOURXZlFhOA== 
+
+
