@@ -4,6 +4,7 @@
   vars: 
     - my_tenant: "database"
     - my_user: "db-user"
+    - dbadmin_user: "dbadmin-user"
   become: no
   tasks:
     - name: Get Quobyte session 
@@ -22,3 +23,12 @@
 
         #qmgmt accesskey create DATA_ACCESS_KEY db-user --tenant="database" --validity-days=2
 
+    - name: Test if key for user {{ dbadmin_user }} exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} accesskey list | grep "^{{ dbadmin_user }} " | awk '{print $1}'
+      register: dbadmin_user_test
+
+    - name: Create Admin Key 
+      shell:
+        cmd: qmgmt -u {{ api_service }} accesskey create MANAGEMENT_ACCESS_KEY "{{ dbadmin_user }}" --tenant="{{ my_tenant }}" --validity-days=2
+      when: dbadmin_user not in dbadmin_user_test.stdout

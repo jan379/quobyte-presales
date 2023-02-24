@@ -4,6 +4,7 @@
   vars: 
     - my_tenant: "database"
     - my_user: "db-user"
+    - dbadmin_user: "dbadmin-user"
   become: no
   tasks:
     - name: Get Quobyte session 
@@ -15,9 +16,19 @@
         cmd: qmgmt -u {{ api_service }} user config list | grep "^{{ my_user }} " | awk '{print $1}'
       register: my_user_test
 
-    - name: Create User 
+    - name: Create Unprivileged User 
       shell:
-        cmd: qmgmt -u {{ api_service }} user config add "{{ my_user }}" --member-of-tenant="{{ my_tenant }}" --primary-group=database --passwor="changeMeLater"
+        cmd: qmgmt -u {{ api_service }} user config add "{{ my_user }}" --member-of-tenant="{{ my_tenant }}" --primary-group=database --password="changeMeLater"
       when: my_user not in my_user_test.stdout
+    
+    - name: Test if user {{ dbadmin_user }} exists
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config list | grep "^{{ dbadmin_user }} " | awk '{print $1}'
+      register: dbadmin_user_test
+
+    - name: Create Admin User
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config add "{{ dbadmin_user }}" --member-of-tenant="{{ my_tenant }}" --admin-of-tenant="{{ my_tenant }}" --primary-group=database --password="changeMeLater"
+      when: dbadmin_user not in dbadmin_user_test.stdout
 
 
