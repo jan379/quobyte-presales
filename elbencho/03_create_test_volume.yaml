@@ -1,6 +1,6 @@
 - hosts: registryservices[0]
   vars_files:
-    - /home/deploy/provisioning/vars/ansible-vars
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
   become: yes
   vars: 
     - my_volume: "elbencho"
