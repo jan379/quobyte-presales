@@ -1,7 +1,7 @@
 
 - hosts: registryservices[0] 
   vars_files:
-    - /home/deploy/provisioning/vars/ansible-vars
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
   vars: 
     - my_tenant: "microscopy"
     - my_volume: "hybrid"

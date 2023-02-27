@@ -1,6 +1,6 @@
 - hosts: registryservices[0]
   vars_files:
-    - /home/deploy/provisioning/vars/ansible-vars
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
   become: yes
   tasks:
 
@@ -31,9 +31,9 @@
       set_fact:
         params: {'params': {'system_configuration': {'health_manager_config': {'enable': true }}}}
 
-    - name: Activate Tiering Policy with 5 minute interval
+    - name: Activate Tiering Policy with 24h  interval
       set_fact:
-        param2: {'params': {'system_configuration': {'health_manager_config': {'tiering_policy': {'enable': true, 'restrict_to_maintenance_window': false, 'interval_s': 300} }}}} 
+        param2: {'params': {'system_configuration': {'health_manager_config': {'tiering_policy': {'enable': true, 'restrict_to_maintenance_window': false, 'interval_s': 86400} }}}} 
 
     - name: Merge params
       set_fact:
