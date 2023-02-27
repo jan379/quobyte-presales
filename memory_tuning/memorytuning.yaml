@@ -26,6 +26,7 @@
         block: | 
           [Service]
           MemoryMax=30.0%
+          MemoryLimit=
     - name: Configure metadataservice memory consumption
       blockinfile:
         path: /etc/systemd/system.control/quobyte-metadata.service.d/50-MemoryMaxScale.conf
@@ -34,6 +35,7 @@
         block: | 
           [Service]
           MemoryMax=30.0%
+          MemoryLimit=
     - name: Reload systemd config 
       command: systemctl daemon-reload
 - hosts: registryservices 
