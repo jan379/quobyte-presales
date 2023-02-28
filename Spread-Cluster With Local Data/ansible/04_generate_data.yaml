@@ -1,0 +1,11 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: Create script to start elbencho
+      lineinfile:
+        path: /home/deploy/generate_cloud_data.sh
+        create: true
+        line: "{{ item }}"
+      with_items: 
+        - "#!/usr/bin/env bash"
+        -  elbencho --hostsfile /home/deploy/elbencho-clients.list -w --direct -b 1m --iodepth 8 -s 12g -t 48 /quobyte/hybrid/file{1..24} --livecsv "/home/deploy/elbencho-result-$(date).csv"
