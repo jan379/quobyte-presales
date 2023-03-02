@@ -35,10 +35,15 @@
       set_fact:
         param2: {'params': {'system_configuration': {'health_manager_config': {'tiering_policy': {'enable': true, 'restrict_to_maintenance_window': false, 'interval_s': 86400} }}}} 
 
+    - name: Deactivate automated Enforce Placement
+      set_fact:
+        param3: {'params': {'system_configuration': {'health_manager_config': {'enforce_placement_policy': {'enable': true, 'on_demand': false} }}}} 
+
+
     - name: Merge params
       set_fact:
-        params: "{{ params|combine(param2, recursive=True) }}"
-      when: param2 is defined
+        params: "{{ params|combine(param2, param3, recursive=True) }}"
+      when: param3 is defined
 
     - name: Merge all settings
       set_fact:
