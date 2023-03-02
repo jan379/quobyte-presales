@@ -1,0 +1,81 @@
+- hosts: registryservers[0] 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+  tasks:
+
+    - name: Dump cluster system config to variable 
+      uri:
+        url: "http://{{api_service}}:7860"
+        user: "{{admin_user}}"
+        password: "{{admin_password}}"
+        force_basic_auth: yes
+        method: POST
+        body_format: json
+        body: "{ \"id\": \"text\",\"jsonrpc\": \"2.0\", \"method\": \"getConfiguration\", \"params\": { \"configuration_type\": \"SYSTEM_CONFIGURATION\", \"retry\": \"INFINITELY\" } }"
+        return_content: yes
+      register: systemconfig_dump_raw 
+
+    - name: Extract systemconfig 
+      set_fact: 
+        systemconfig: "{{ systemconfig_dump_raw.json.result.system_configuration }}"
+
+    - name: Create new systemconfig
+      set_fact:
+        systemconfig_var: "{{ systemconfig_var | default([]) | combine({ 'method': 'setConfiguration', 'id': 'text', 'jsonrpc': '2.0', 'params': {'configuration_type': 'SYSTEM_CONFIGURATION', 'system_configuration': '{{ systemconfig }}' } }) }}"
+
+    - name: Set S3 base URL 
+      set_fact:
+        params: {'params': {'system_configuration': {'s3_proxy': {'hostname': "s3.quobyte-demo.com" }}}}
+
+    - name: Set S3 browser bucket
+      set_fact:
+        param2: {'params': {'system_configuration': {'s3_proxy': {'browser_bucket_name': "browser"} }}} 
+
+    - name: Set S3 "one volume per Bucket" rule
+      set_fact:
+        param3: {'params': {'system_configuration': {'s3_proxy': {'create_volume_per_bucket': true }}}} 
+
+    - name: Merge params
+      set_fact:
+        params: "{{ params|combine(param2, param3, recursive=True) }}"
+      when: param3 is defined
+
+    - name: Merge all settings
+      set_fact:
+        systemconfig_var: "{{ systemconfig_var|combine(params, recursive=True) }}"
+
+    - debug:
+        var: systemconfig_var
+
+    - name: Write cluster config to Quobyte 
+      uri:
+        url: "http://{{api_service}}:7860"
+        user: "{{admin_user}}"
+        password: "{{admin_password}}"
+        force_basic_auth: yes
+        method: POST
+        body_format: json
+        body: "{{ systemconfig_var }}"
+
+- hosts: s3services 
+  become: yes
+  tasks:
+
+    - name: Enable Quobyte S3 proxy
+      service:
+        enabled: yes
+        state: started
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-s3
+
+    - name: Restart Quobyte S3 services 
+      service:
+        enabled: yes
+        state: restarted
+        name: "{{ item }}"
+      with_items: 
+        - quobyte-s3
+
+
