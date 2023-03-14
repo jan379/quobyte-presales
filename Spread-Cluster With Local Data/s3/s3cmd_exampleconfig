@@ -1,0 +1,6 @@
+# example config
+host_base = s3.quobyte-demo.com
+host_bucket = %(bucket)s.s3.quobyte-demo.com
+access_key = XXXQfYvvMvjQdXVDApcA 
+secret_key = XXXehAt7CePvgC6wnXVGSz/CeBap9g1GuCTtRFv2
+use_https = False
