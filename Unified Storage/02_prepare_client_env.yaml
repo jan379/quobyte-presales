@@ -1,0 +1,18 @@
+- hosts: clients 
+  become: yes
+
+  tasks:
+
+    - name: Write /etc/quobyte/client-service.env
+      template:
+        src: templates/client-service.env.jinja2
+        dest: "/etc/quobyte/client-service.env"
+
+    - name: Enable Quobyte client service
+      service:
+        enabled: yes
+        state: restarted
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-client
+
