@@ -1,9 +1,17 @@
+- hosts: quobyteservers 
+  gather_facts: true
+  tasks:
+    - name: Get quobyteserver ip addresses 
+      set_fact:
+        main_nodes_ips: "{{ groups['quobyteservers'] | map('extract', hostvars, ['ansible_facts', 'default_ipv4', 'address']) }}"
+
 - hosts: registryservices[0]
   vars_files:
     - /home/deploy/quobyte-ansible/vars/ansible-vars
-  become: yes
   tasks:
-
+    - name: generate trusted networks
+      set_fact:
+        trusted_networks: "{{ main_nodes_ips | map('regex_replace', '$', '/32') | list }}"
     - name: Dump cluster config to variable 
       uri:
         url: "http://{{api_service}}:7860"
@@ -20,22 +28,6 @@
       set_fact: 
         systemconfig: "{{ systemconfig_dump_raw.json.result.system_configuration }}"
 
-    - debug:
-            var: systemconfig
-    - debug:
-            var: vars.hostvars
-              
-              
-    - name: get all ip addresses from all non-client hosts
-      set_fact: 
-       ## main_nodes_ips: "{{ groups['quobyteservers'] | map('extract', hostvars, ['ansible_host']) | join(',') }}"
-        quobyteservers_ips: "{{ groups['quobyteservers'] | map('extract', hostvars, ['interfaces']) | join(', ') }}"
-          ##quobyteservers_ips: "{{ groups['quobyteservers'] | map('extract', hostvars, ['ansible_host']) | map('regex_replace', '^(.*)', '\\1:80') | list }}" 
-
-    - debug:
-            var: quobyteservers_ips 
-              
-
     - name: Create new systemconfig
       set_fact:
         systemconfig_var: "{{ systemconfig_var | default([]) | combine({ 'method': 'setConfiguration', 'id': 'text', 'jsonrpc': '2.0', 'params': {'configuration_type': 'SYSTEM_CONFIGURATION', 'system_configuration': '{{ systemconfig }}' } }) }}"
@@ -46,7 +38,7 @@
 
     - name: Whitelist only Quobyte services
       set_fact:
-        param2: "{'params': {'system_configuration': {'network': {'trusted_service_networks': { {{ quobyteservers_ips  }} }}}}}"
+        param2: "{'params': {'system_configuration': {'network': {'trusted_service_networks': {{ trusted_networks }} }}}}"
 
     - name: Merge params
       set_fact:
