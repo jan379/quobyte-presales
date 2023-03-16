@@ -1,0 +1,30 @@
+- hosts: registryservices[0] 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  vars: 
+    - my_tenants:
+      - "team1"
+      - "team2"
+      - "team3"
+    - my_volume: "microscopy"
+  become: yes
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Test if tenant {{ item }} exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} tenant list | grep "^{{ item }} " | awk '{print $1}'
+      register: "tenant_exists"
+      with_items: "{{ my_tenants }}"
+
+    - debug:
+        var: tenant_exists
+
+    - name: Create tenant 
+      shell:
+        cmd: qmgmt -u {{ api_service }} tenant create {{ item.stdout }} 
+      when: item not in tenant_exists.results.[0].stdout
+      with_items: "{{ my_tenants }}"
+
