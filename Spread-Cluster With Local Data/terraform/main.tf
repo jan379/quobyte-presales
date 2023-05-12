@@ -2,15 +2,15 @@
 provider "google" {
  credentials = file(var.gcloud_credentials)
  project     = var.gcloud_project 
- region      = var.cluster_region 
+ region      = var.cluster_region_a 
 }
 
-// on-prem on-prem cluster
+// Region One
 resource "google_compute_instance" "on-prem" {
  count        = var.number_on-prem
  name         = "${var.cluster_name}-on-prem${count.index}"
- machine_type = var.flavor_on-prem
- zone         = var.cluster_region
+ machine_type = var.flavor_cloud-extension
+ zone         = var.cluster_region_a
  allow_stopping_for_update = true
  lifecycle {
     ignore_changes = [attached_disk]
@@ -21,34 +21,25 @@ resource "google_compute_instance" "on-prem" {
      image = var.image
    }
  }
-
-// stupid cheap HDD
- attached_disk {
-  source     = "projects/${var.gcloud_project}/zones/${var.cluster_region}/disks/${var.cluster_name}-disk-${count.index}-a"
- } 
-
- attached_disk {
-  source     = "projects/${var.gcloud_project}/zones/${var.cluster_region}/disks/${var.cluster_name}-disk-${count.index}-b"
- } 
-
- attached_disk {
-  source     = "projects/${var.gcloud_project}/zones/${var.cluster_region}/disks/${var.cluster_name}-disk-${count.index}-c"
- } 
-
- attached_disk {
-  source     = "projects/${var.gcloud_project}/zones/${var.cluster_region}/disks/${var.cluster_name}-disk-${count.index}-d"
- } 
-
- depends_on = [
-  google_compute_disk.disk-a,
-  google_compute_disk.disk-b,
-  google_compute_disk.disk-c,
-  google_compute_disk.disk-d,
- ]
+// fast nvme storage tier
+ scratch_disk {
+  interface = "NVME"
+ }
+ scratch_disk {
+  interface = "NVME"
+ }
+ scratch_disk {
+  interface = "NVME"
+ }
+// fast metadata disk 
+ scratch_disk {
+  interface = "NVME"
+ }
 
  metadata = {
    "ssh-keys" = <<EOT
    deploy:${file(var.public_ssh_key)}
+   deploy:${file(var.public_ssh_key-support)}
 EOT
  }
 
@@ -63,12 +54,12 @@ EOT
  }
 }
 
-// cloud extension 
+// Region Two
 resource "google_compute_instance" "cloud-extension" {
  count        = var.number_cloud-extension
  name         = "${var.cluster_name}-cloud${count.index}"
  machine_type = var.flavor_cloud-extension
- zone         = var.cluster_region
+ zone         = var.cluster_region_b
  allow_stopping_for_update = true
  lifecycle {
     ignore_changes = [attached_disk]
@@ -92,12 +83,13 @@ resource "google_compute_instance" "cloud-extension" {
  }
 // fast metadata disk 
  scratch_disk {
-  interface = "SCSI"
+  interface = "NVME"
  }
 
  metadata = {
    "ssh-keys" = <<EOT
    deploy:${file(var.public_ssh_key)}
+   deploy:${file(var.public_ssh_key-support)}
 EOT
  }
 
@@ -114,12 +106,12 @@ EOT
 }
 
 
-// some clients
-resource "google_compute_instance" "client" {
+// some clients in region A
+resource "google_compute_instance" "client-a" {
  count        = var.number_clientserver
- name         = "${var.cluster_name}-client${count.index}"
+ name         = "${var.cluster_name}-client-a${count.index}"
  machine_type = var.flavor_clientserver
- zone         = var.cluster_region
+ zone         = var.cluster_region_a
  allow_stopping_for_update = true
 
  boot_disk {
@@ -131,6 +123,7 @@ resource "google_compute_instance" "client" {
  metadata = {
    "ssh-keys" = <<EOT
    deploy:${file(var.public_ssh_key)}
+   deploy:${file(var.public_ssh_key-support)}
 EOT
  }
 
@@ -145,38 +138,39 @@ EOT
  }
 }
 
-// create necessary disks
-resource "google_compute_disk" "disk-a" {
-   count = var.number_on-prem
-   name  = "${var.cluster_name}-disk-${count.index}-a"
-   size  = var.disk_size_on-prem
-   type  = var.disk_type_on-prem 
-   zone  = var.cluster_region
+// client in region B
+resource "google_compute_instance" "client-b" {
+ //count        = var.number_clientserver
+ count        = 1
+ name         = "${var.cluster_name}-client-b"
+ machine_type = var.flavor_clientserver
+ zone         = var.cluster_region_b
+ allow_stopping_for_update = true
+
+ boot_disk {
+   initialize_params {
+     image = var.image 
+   }
+ }
+
+ metadata = {
+   "ssh-keys" = <<EOT
+   deploy:${file(var.public_ssh_key)}
+   deploy:${file(var.public_ssh_key-support)}
+EOT
+ }
+
+// install needed software 
+ metadata_startup_script = local.startupscript_on-prem_debflavor
+
+ network_interface {
+   network = "default"
+   access_config {
+     // Include this section to give the VM an external ip address
+   }
+ }
 }
 
-resource "google_compute_disk" "disk-b" {
-   count = var.number_on-prem
-   name  = "${var.cluster_name}-disk-${count.index}-b"
-   size  = var.disk_size_on-prem
-   type  = var.disk_type_on-prem 
-   zone  = var.cluster_region
-}
-
-resource "google_compute_disk" "disk-c" {
-   count = var.number_on-prem
-   name  = "${var.cluster_name}-disk-${count.index}-c"
-   size  = var.disk_size_on-prem
-   type  = var.disk_type_on-prem 
-   zone  = var.cluster_region
-}
-
-resource "google_compute_disk" "disk-d" {
-   count = var.number_on-prem
-   name  = "${var.cluster_name}-disk-${count.index}-d"
-   size  = var.disk_size_on-prem
-   type  = var.disk_type_on-prem 
-   zone  = var.cluster_region
-}
 
 // output section
 output "bastion-ip" {

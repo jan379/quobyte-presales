@@ -55,9 +55,9 @@ resource "google_dns_record_set" "ns" {
   ttl          = 21600  
   rrdatas = [
     "ns-cloud-d1.googledomains.com.",
-    "ns-cloud-d2.googledomains.com.",
-    "ns-cloud-d3.googledomains.com.",
-    "ns-cloud-d4.googledomains.com."
+    "ns-cloud-c2.googledomains.com.",
+    "ns-cloud-b3.googledomains.com.",
+    "ns-cloud-a4.googledomains.com."
   ]
 }
 

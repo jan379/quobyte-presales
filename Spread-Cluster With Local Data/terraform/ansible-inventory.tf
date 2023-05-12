@@ -5,7 +5,7 @@ resource "local_file" "AnsibleInventory" {
   on-prem_ip = join(":\n      ", google_compute_instance.on-prem.*.network_interface.0.network_ip) 
   on-prem_ips = google_compute_instance.on-prem.*.network_interface.0.network_ip 
   cloud-extension_ip = join(":\n      ", google_compute_instance.cloud-extension.*.network_interface.0.network_ip)
-  client_ip = join(":\n      ", google_compute_instance.client.*.network_interface.0.network_ip)
+  client_ip = join(":\n      ", google_compute_instance.client-a.*.network_interface.0.network_ip, google_compute_instance.client-b.*.network_interface.0.network_ip)
  }
  )
  filename = "provisioning/ansible-inventory.yaml"

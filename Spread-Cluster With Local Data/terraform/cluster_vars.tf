@@ -9,7 +9,7 @@ variable "net_cidr" {
 // configure cluster scope variables
 variable "cluster_name" {
   type = string
-  default = "spread-cluster"
+  default = "image-store"
 }
 
 variable "git_repository" {
@@ -24,12 +24,12 @@ variable "image" {
 
 variable "number_on-prem" {
   type = number
-  default = 3
+  default = 5
 }
 
 variable "number_cloud-extension" {
   type = number
-  default = 3
+  default = 1
 }
 
 variable "disk_type_on-prem" {
@@ -55,7 +55,7 @@ variable "flavor_cloud-extension" {
 
 variable "number_clientserver" {
   type = number
-  default = 1 
+  default = 10 
 }
 
 variable "flavor_clientserver" {
