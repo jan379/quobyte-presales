@@ -9,12 +9,32 @@ variable "net_cidr" {
 // configure cluster scope variables
 variable "cluster_name" {
   type = string
-  default = "image-store"
+  default = "qb-stretched"
 }
 
 variable "git_repository" {
   type = string
   default = "https://github.com/quobyte/quobyte-ansible.git"
+}
+
+variable "cluster_region_a" {
+  type = string
+  default = "europe-west4"
+}
+
+variable "cluster_region_b" {
+  type = string
+  default = "europe-west4"
+}
+
+variable "cluster_zone_a" {
+  type = string
+  default = "europe-west4-a"
+}
+
+variable "cluster_zone_b" {
+  type = string
+  default = "europe-west4-b"
 }
 
 variable "image" {
@@ -24,12 +44,12 @@ variable "image" {
 
 variable "number_on-prem" {
   type = number
-  default = 5
+  default = 4
 }
 
-variable "number_cloud-extension" {
+variable "number_cloud-burst" {
   type = number
-  default = 1
+  default = 2
 }
 
 variable "disk_type_on-prem" {
@@ -48,14 +68,19 @@ variable "flavor_on-prem" {
   default = "e2-standard-4"
 }
 
-variable "flavor_cloud-extension" {
+variable "flavor_cloud-burst" {
   type = string
   default = "n1-standard-8"
 }
 
-variable "number_clientserver" {
+variable "number_clients_burst" {
   type = number
-  default = 10 
+  default = 2 
+}
+
+variable "number_clients_on-prem" {
+  type = number
+  default = 2 
 }
 
 variable "flavor_clientserver" {
