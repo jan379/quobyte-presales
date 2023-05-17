@@ -1,6 +1,6 @@
 policy_rule {
-  name: "cloud"
-  description: "place data on fast cloud devices"
+  name: "CloudBurst"
+  description: "Place data on cloud devices"
   enabled: true
   scope {
     volume {
@@ -12,11 +12,11 @@ policy_rule {
   }
   policies {
     metadata_tag_based_placement {
-      required_tag: "ssd"
+      required_tag: "burst"
       soften_tag_requirements: false
     }
     file_tag_based_placement {
-      required_tag: "platinum"
+      required_tag: "burst"
       soften_tag_requirements: false
       automatic_constraints: NONE
     }
@@ -30,17 +30,17 @@ policy_rule {
     volume {
       label_pattern {
         name_regex: "site"
-        value_regex: "home"
+        value_regex: "on-premise"
       }
     }
   }
   policies {
     metadata_tag_based_placement {
-      required_tag: "hdd"
+      required_tag: "on-premise"
       soften_tag_requirements: false
     }
     file_tag_based_placement {
-      required_tag: "hdd"
+      required_tag: "on-premise"
       soften_tag_requirements: false
       automatic_constraints: NONE
     }

@@ -3,7 +3,7 @@
   vars_files:
     - /home/deploy/quobyte-ansible/vars/ansible-vars
   vars: 
-    - my_tenant: "microscopy"
+    - my_tenant: "ISC 2023"
     - my_volume: "hybrid"
   become: yes
   tasks:
@@ -18,7 +18,7 @@
 
     - name: Create tenant 
       shell:
-        cmd: qmgmt -u {{ api_service }} tenant create {{ my_tenant }} 
+        cmd: qmgmt -u {{ api_service }} tenant create "{{ my_tenant }}"
       when: my_tenant not in my_tenant_test.stdout
 
     - name: Test if volume {{ my_volume }} exists 
@@ -28,5 +28,5 @@
 
     - name: Create volume using policy rules
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 755 site:cloud 
+        cmd: qmgmt -u {{ api_service }} volume create "{{ my_tenant }}"/"{{ my_volume }}" deploy deploy 755 site:on-premise 
       when: my_volume not in my_volume_test.stdout  
