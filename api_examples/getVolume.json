@@ -1,0 +1,8 @@
+{
+"id": "text",
+"jsonrpc": "2.0",
+"method": "getVolumeList",
+"params": {
+  "retry": "INFINITELY"
+  }
+}

@@ -1,0 +1,9 @@
+{
+"id": "text",
+"jsonrpc": "2.0",
+"method": "getConfiguration",
+"params": {
+  "configuration_type": "SYSTEM_CONFIGURATION",
+  "retry": "INFINITELY"
+  }
+}
