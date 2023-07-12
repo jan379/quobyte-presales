@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# to be exectued on a client
+# To be executed on a Quobyte volume mount
+# stderr will go in a file
 for i in $(seq 64000); do 
 	echo $i > file-$i && echo success $i; 
-done
+done 2 > ioerrors-$(date +%F)
