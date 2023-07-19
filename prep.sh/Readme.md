@@ -5,10 +5,10 @@ needed to do an Ansible based Quobyte installation.
 
 It will do basic sanity checks:
 
-1.) Are all hosts reachable via SSH
-2.) Is the installer able to work with root rights.
-3.) Are memory recommendations met
-4.) Are devices available and prepared for an installation.
+* Are all hosts reachable via SSH
+* Is the installer able to work with root rights.
+* Are memory recommendations met
+* Are devices available and prepared for an installation.
 
 The expected result will be an Ansible inventory and an 
 Ansivle variables declaration describing the cluster.
