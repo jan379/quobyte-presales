@@ -41,12 +41,40 @@
   - name: start server iperf
     shell: iperf3 --server --daemon
 
+- hosts: localhost 
+  tasks:
+  - name: Create results directory
+    file:
+      path: /home/deploy/iperf_results
+      state: directory
+      mode: '0755'
+      
 - hosts: clients[0]
   remote_user: deploy
   tasks:
   - name: set iperf server
     set_fact: iperf_server="{{ groups['quobyteservers'].0 }}"
   - name: start client iperf
-    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf_out"
+    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-client-server"
   - name: grab iperf output
-    fetch: src="/home/deploy/iperf_out" dest=/home/deploy/testresult flat=yes
+    fetch: src="/home/deploy/iperf-client-server" dest=/home/deploy/iperf-client-server flat=yes
+
+- hosts: quobyteservers[1]
+  remote_user: deploy
+  tasks:
+  - name: set iperf server
+    set_fact: iperf_server="{{ groups['quobyteservers'].0 }}"
+  - name: start server iperf
+    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-server-server"
+  - name: grab iperf output
+    fetch: src="/home/deploy/iperf-server-server" dest=/home/deploy/iperf-server-server flat=yes
+
+- hosts: quobyteservers[0]
+  remote_user: deploy
+  tasks:
+  - name: set iperf server
+    set_fact: iperf_server="{{ groups['quobyteservers'].0 }}"
+  - name: Test machine local interface
+    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-server-localhost"
+  - name: grab iperf output
+    fetch: src="/home/deploy/iperf-server-localhost" dest=/home/deploy/iperf-server-localhost flat=yes
