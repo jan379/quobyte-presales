@@ -1,0 +1,52 @@
+- hosts: [ quobyteservers, clients ]
+  become: yes
+  tasks:
+    
+    - name: Install Debian packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+        allow_unauthenticated: "{{ check_packages_signature | default('no', false) }}"
+      vars:
+        packages:
+        - iperf3 
+      when: ansible_facts['os_family'] == "Debian"
+ 
+    - name: Install RPM packages
+      yum: 
+        update_cache: yes
+        allow_downgrade: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - iperf3 
+      when: ansible_facts['os_family'] == "RedHat" 
+
+    - name: Install RPM packages on Suse Linux 
+      zypper: 
+        update_cache: yes
+        oldpackage: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - iperf3 
+      when: ansible_facts['os_family'] == "Suse"
+
+- hosts: quobyteservers
+  remote_user: deploy
+  tasks:
+  - name: start server iperf
+    shell: iperf3 --server --daemon
+
+- hosts: clients[0]
+  remote_user: deploy
+  tasks:
+  - name: set iperf server
+    set_fact: iperf_server="{{ groups['quobyteservers'].0 }}"
+  - name: start client iperf
+    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf_out"
+  - name: grab iperf output
+    fetch: src="/home/deploy/iperf_out" dest=/home/deploy/testresult flat=yes

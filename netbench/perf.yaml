@@ -1,0 +1,9 @@
+- hosts: clients[0]
+  remote_user: deploy
+  tasks:
+  - name: set iperf server
+    set_fact: iperf_server="{{ groups['quobyteservers'].0 }}"
+  - name: start client iperf
+    shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf_out"
+  - name: grab iperf output
+    fetch: src="/home/deploy/iperf_out" dest=/home/deploy/testresult flat=yes
