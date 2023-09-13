@@ -57,7 +57,7 @@
   - name: start client iperf
     shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-client-server"
   - name: grab iperf output
-    fetch: src="/home/deploy/iperf-client-server" dest=/home/deploy/iperf-client-server flat=yes
+    fetch: src="/home/deploy/iperf-client-server" dest=/home/deploy/iperf_results/ flat=yes
 
 - hosts: quobyteservers[1]
   remote_user: deploy
@@ -67,7 +67,7 @@
   - name: start server iperf
     shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-server-server"
   - name: grab iperf output
-    fetch: src="/home/deploy/iperf-server-server" dest=/home/deploy/iperf-server-server flat=yes
+    fetch: src="/home/deploy/iperf-server-server" dest=/home/deploy/iperf_results/ flat=yes
 
 - hosts: quobyteservers[0]
   remote_user: deploy
@@ -77,4 +77,4 @@
   - name: Test machine local interface
     shell: "iperf3 --client {{ iperf_server }} > /home/deploy/iperf-server-localhost"
   - name: grab iperf output
-    fetch: src="/home/deploy/iperf-server-localhost" dest=/home/deploy/iperf-server-localhost flat=yes
+    fetch: src="/home/deploy/iperf-server-localhost" dest=/home/deploy/iperf_results/ flat=yes
