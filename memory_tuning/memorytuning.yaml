@@ -25,8 +25,10 @@
         create: true
         block: | 
           [Service]
-          MemoryMax=30.0%
+          MemoryMax=40.0%
           MemoryLimit=
+          Environment=MAX_MEM_METADATA={{ ansible_memtotal_mb * 0.3}}
+          Environment=MAX_BUFFER_METADATA={{ ansible_memtotal_mb * 0.1}}
     - name: Configure metadataservice memory consumption
       blockinfile:
         path: /etc/systemd/system.control/quobyte-metadata.service.d/50-MemoryMaxScale.conf
@@ -34,8 +36,10 @@
         create: true
         block: | 
           [Service]
-          MemoryMax=30.0%
+          MemoryMax=40.0%
           MemoryLimit=
+          Environment=MAX_MEM_DATA={{ ansible_memtotal_mb * 0.1}}
+          Environment=MAX_BUFFER_DATA={{ ansible_memtotal_mb * 0.3}}
     - name: Reload systemd config 
       command: systemctl daemon-reload
 - hosts: registryservices 
