@@ -26,7 +26,7 @@
       with_items: 
         - "#!/usr/bin/env bash"
         - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..48} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
-        - "#elbencho --hostsfile /home/deploy/elbencho-clients.list -F -w -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/"
+        - "#elbencho --hostsfile /home/deploy/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/"
 
 - hosts: clients,localhost 
   become: yes
