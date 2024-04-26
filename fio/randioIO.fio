@@ -1,0 +1,15 @@
+[global]
+ioengine=libaio
+direct=1
+ramp_time=10
+time_based           # to avoid skewing measurement by outliers
+runtime=60
+create_serialize=0
+
+[4k_data]
+rw=randread          # or randwrite
+iodepth=4            # change for more concurrency (1..32)
+numjobs=1            # change for multiple files
+directory=.          # change if necessary
+bs=4k
+size=100G

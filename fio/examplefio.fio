@@ -1,0 +1,13 @@
+# https://docs.quobyte.com/docs/16/latest/kb/4.html
+[global]
+ramp_time=10
+time_based
+runtime=60
+create_serialize=0
+
+[1m_data]
+rw=read              # or write
+numjobs=2            # change number of streams
+directory=.          # change if necessary
+bs=1m
+size=10m
