@@ -9,7 +9,7 @@ variable "net_cidr" {
 // configure cluster scope variables
 variable "cluster_name" {
   type = string
-  default = "qb-stretched"
+  default = "qb-multizone"
 }
 
 variable "git_repository" {
@@ -44,12 +44,12 @@ variable "image" {
 
 variable "number_on-prem" {
   type = number
-  default = 4
+  default = 3
 }
 
 variable "number_cloud-burst" {
   type = number
-  default = 2
+  default = 3
 }
 
 variable "disk_type_on-prem" {
@@ -75,12 +75,12 @@ variable "flavor_cloud-burst" {
 
 variable "number_clients_burst" {
   type = number
-  default = 2 
+  default = 1 
 }
 
 variable "number_clients_on-prem" {
   type = number
-  default = 2 
+  default = 1 
 }
 
 variable "flavor_clientserver" {
