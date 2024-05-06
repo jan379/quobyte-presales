@@ -3,5 +3,5 @@
   tasks:
     - name: Start elbencho clients
       shell:
-        cmd: elbencho --service 
+        cmd: /usr/local/bin/elbencho --service 
 
