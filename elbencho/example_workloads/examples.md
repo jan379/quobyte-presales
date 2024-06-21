@@ -21,9 +21,9 @@ Frequently Used Options:
 The number of clients depends on the elbencho-clients.list, of course
 
 # Write and read synchronous from any client listed in clients.list using 4 threads
-elbencho --hostsfile /home/deploy/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 1 -s 10g -t 4 /quobyte/elbencho/file{1..48}
+elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 1 -s 10g -t 4 /quobyte/elbencho/file{1..48}
 # Write and read asynchronous from any client listed in clients.list using 4 threads
-elbencho --hostsfile /home/deploy/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 2 -s 10g -t 4 /quobyte/elbencho/file{1..48}
+elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 2 -s 10g -t 4 /quobyte/elbencho/file{1..48}
 
 
 # network benchmark. Needs elbencho deployed && started on all hosts taht participate
@@ -36,8 +36,8 @@ elbencho --netbench --servers quobyte-dataserver0,quobyte-dataserver1,quobyte-da
 ## benchmark only nodes part of the cluster ("backend network test"), response-size and blocksize being the same 
 elbencho --netbench --servers quobyte-dataserver0,quobyte-dataserver1,quobyte-dataserver2 --clients quobyte-coreserver0,quobyte-coreserver1,quobyte-coreserver2 -b 1m --respsize 1m  -t 4 -s 100g --timelimit 30 --lat
 
-##elbencho --hostsfile /home/deploy/elbencho-clients.list --write --read --direct -b 1m --iodepth 1 -s 10g -t 48 /quobyte/elbencho/file{1..48}
-#elbencho --hostsfile /home/deploy/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/
+##elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --direct -b 1m --iodepth 1 -s 10g -t 48 /quobyte/elbencho/file{1..48}
+#elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/
 
 # Metadata workloads 
 
@@ -48,6 +48,6 @@ for i in $(seq 0 319); do qmgmt volume create r$i root root; done
 # needs (#clients * 32) volumes to work; otherwise adjust number of threads, clients or volumes.
 
 ## write real data
-elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 4k -b 4k /quobyte/
+elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 4k -b 4k /quobyte/
 ## write only metadata data
-elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 0k -b 0k /quobyte/
+elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 0k -b 0k /quobyte/
