@@ -48,6 +48,18 @@ for i in $(seq 0 319); do qmgmt volume create r$i root root; done
 # needs (#clients * 32) volumes to work; otherwise adjust number of threads, clients or volumes.
 
 ## write real data
-elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 4k -b 4k /quobyte/
+elbencho --label arg="Small files, 4k"\
+ --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
+ --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt
+ --write\
+ --read\
+ --threads 32\
+ --mkdirs\
+ --delfiles\
+ --dirs 1 --files 6000\
+ --size 4k\
+ --block 4k /quobyte/
+
+
 ## write only metadata data
 elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 0k -b 0k /quobyte/
