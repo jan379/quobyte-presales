@@ -1,0 +1,82 @@
+- hosts: quobyteservers
+  any_errors_fatal: false
+  become: yes
+  tasks:
+    - name: Install new Java
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+        allow_unauthenticated: "{{ check_packages_signature | default('no', false) }}"
+      vars:
+        packages:
+        - default-jre-headless
+        - openjdk-17-jre-headless 
+      when: ansible_facts['os_family'] == "Debian"
+ 
+    - name: Remove old Java 
+      apt:
+        name: "{{ packages }}"
+        state: absent
+        update_cache: yes
+        allow_unauthenticated: "{{ check_packages_signature | default('no', false) }}"
+      vars:
+        packages:
+        - default-jre-headless
+        - openjdk-11-jre-headless 
+      when: ansible_facts['os_family'] == "Debian"
+
+- hosts: registryservices 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte registry services 
+      service:
+        state: restarted
+        name: quobyte-registry 
+
+- hosts: apiservices 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte api services 
+      service:
+        state: restarted
+        name: quobyte-api 
+
+- hosts: webconsoleservices 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte webconsole services 
+      service:
+        state: restarted
+        name: quobyte-webconsole 
+
+- hosts: metadataservices 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte metadata services 
+      service:
+        state: restarted
+        name: quobyte-metadata
+
+- hosts: dataservices 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte dataservices 
+      service:
+        state: restarted
+        name: quobyte-data
+
+- hosts: s3services 
+  become: yes
+  serial: 1
+  tasks:
+    - name: Restart Quobyte dataservices 
+      service:
+        state: restarted
+        name: quobyte-s3
+
