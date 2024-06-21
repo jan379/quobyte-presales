@@ -11,25 +11,39 @@
       unarchive:
         src: /tmp/elbencho.tar.gz
         dest: /tmp/
+          
 
+    - name: Create benchmark directory
+      file:
+        path: /home/deploy/benchmarks
+        state: directory
+        owner: deploy
+        mode: '0755'
+
+    - name: Create benchmark results directory
+      file:
+        path: /home/deploy/benchmarks/results
+        state: directory
+        owner: deploy
+        mode: '0755'
+
+# Clients are used for actual storage benchmarks
     - name: Create client list
       lineinfile:
-        path: /home/deploy/elbencho-clients.list
+        path: /home/deploy/benchmarks/elbencho-clients.list
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.clients }}"
- 
-    - name: Create script to start elbencho
+
+# All other nodes are used for "netbench"
+    - name: Create dataserver list
       lineinfile:
-        path: /home/deploy/elbencho-start.sh
+        path: /home/deploy/benchmarks/elbencho-dataserver.list
         create: true
         line: "{{ item }}"
-      with_items: 
-        - "#!/usr/bin/env bash"
-        - "elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r --direct -b 4m --iodepth 4 -s 12g -t 48 /quobyte/elbencho/file{1..48} --livecsv \"/home/deploy/elbencho-result-$(date).csv\" --liveint 1000 --infloop"
-        - "#elbencho --hostsfile /home/deploy/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/"
+      with_items: "{{ groups.dataservices }}"
 
-- hosts: clients,localhost 
+- hosts: quobyteservers 
   become: yes
   tasks:
     - name: Deploy elbencho binary 
