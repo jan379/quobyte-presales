@@ -38,3 +38,16 @@ elbencho --netbench --servers quobyte-dataserver0,quobyte-dataserver1,quobyte-da
 
 ##elbencho --hostsfile /home/deploy/elbencho-clients.list --write --read --direct -b 1m --iodepth 1 -s 10g -t 48 /quobyte/elbencho/file{1..48}
 #elbencho --hostsfile /home/deploy/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/
+
+# Metadata workloads 
+
+# create some volumes to work in parallel to distribute metadata workload/ saturate metadata services:
+for i in $(seq 0 319); do qmgmt volume create r$i root root; done
+
+# write with <N> clients using 32 threads in one directory (which is a dedicated volume then). 
+# needs (#clients * 32) volumes to work; otherwise adjust number of threads, clients or volumes.
+
+## write real data
+elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 4k -b 4k /quobyte/
+## write only metadata data
+elbencho --hostsfile /home/deploy/elbencho-clients.list -w -r -t 32 -d -F -n 1 -N 6000 -s 0k -b 0k /quobyte/
