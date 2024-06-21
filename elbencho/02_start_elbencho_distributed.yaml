@@ -1,4 +1,4 @@
-- hosts: clients 
+- hosts: quobyteservers 
   become: yes
   tasks:
     - name: Start elbencho clients
