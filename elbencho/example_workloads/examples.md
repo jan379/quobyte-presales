@@ -53,7 +53,7 @@ elbencho\
  --read\
  --delfiles\
  --direct\
- --blocks 1m\
+ --block 1m\
  --iodepth 1\
  --size 10g\
  --threads 4\
@@ -68,7 +68,7 @@ elbencho\
  --read\
  --delfiles\
  --direct\
- --blocks 1m\
+ --block 1m\
  --iodepth 2\
  --size 10g\
  --threads 4\
