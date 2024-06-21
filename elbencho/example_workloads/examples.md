@@ -45,10 +45,34 @@ elbencho\
 
 
 # Write and read synchronous from any client listed in clients.list using 4 threads
-elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 1 -s 10g -t 4 /quobyte/elbencho/file{1..48}
-# Write and read asynchronous from any client listed in clients.list using 4 threads
-elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --delfiles --direct -b 1m --iodepth 2 -s 10g -t 4 /quobyte/elbencho/file{1..48}
+elbencho\
+ --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
+ --label arg="Throughput, multi client multi thread syncronous streaming."\
+ --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
+ --write\
+ --read\
+ --delfiles\
+ --direct\
+ --blocks 1m\
+ --iodepth 1\
+ --size 10g\
+ --threads 4\
+ /quobyte/elbencho/file{1..48}
 
+# Write and read iasynchronous from any client listed in clients.list using 4 threads
+elbencho\
+ --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
+ --label arg="Throughput, multi client multi thread asyncronous streaming."\
+ --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
+ --write\
+ --read\
+ --delfiles\
+ --direct\
+ --blocks 1m\
+ --iodepth 2\
+ --size 10g\
+ --threads 4\
+ /quobyte/elbencho/file{1..48}
 
 ##elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list --write --read --direct -b 1m --iodepth 1 -s 10g -t 48 /quobyte/elbencho/file{1..48}
 #elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/
