@@ -1,6 +1,6 @@
 # Let's first bench the network, then the storage
 
-# network benchmark. Needs elbencho deployed && started on all hosts that participate
+# Network benchmark. Needs elbencho deployed && started on all hosts that participate
 ## Clients send data
 elbencho\
  --label arg="Bandwidth, clients send 1MB blocks and receive 1 bit."\
