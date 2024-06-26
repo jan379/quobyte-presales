@@ -46,8 +46,8 @@ elbencho\
 
 # Write and read synchronous from any client listed in clients.list using 4 threads
 elbencho\
- --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --label arg="Throughput, multi client multi thread syncronous streaming."\
+ --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
  --write\
  --read\
@@ -61,8 +61,8 @@ elbencho\
 
 # Write and read asynchronous from any client listed in clients.list using 4 threads
 elbencho\
- --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --label arg="Throughput, multi client multi thread asyncronous streaming."\
+ --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
  --write\
  --read\
@@ -86,7 +86,8 @@ for i in $(seq 0 319); do qmgmt volume create r$i root root; done
 # needs (#clients * 32) volumes to work; otherwise adjust number of threads, clients or volumes.
 
 ## Write and read small file data
-elbencho --label arg="Small files, 4k"\
+elbencho\
+ --label arg="Small files, 4k"\
  --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
  --write\
@@ -100,7 +101,8 @@ elbencho --label arg="Small files, 4k"\
  --block 4k /quobyte/
 
 ## Write files without content
-elbencho --label arg="Zero byte files"\
+elbencho\
+ --label arg="Zero byte files"\
  --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --resfile /home/deploy/benchmarks/results/elbencho-$(date +%F).txt\
  --write\
