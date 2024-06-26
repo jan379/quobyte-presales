@@ -59,7 +59,7 @@ elbencho\
  --threads 4\
  /quobyte/elbencho/file{1..48}
 
-# Write and read iasynchronous from any client listed in clients.list using 4 threads
+# Write and read asynchronous from any client listed in clients.list using 4 threads
 elbencho\
  --hostsfile /home/deploy/benchmarks/elbencho-clients.list\
  --label arg="Throughput, multi client multi thread asyncronous streaming."\
