@@ -1,3 +1,6 @@
+# Create some volumes to work in parallel to distribute metadata workload/ saturate metadata services:
+for i in $(seq 0 319); do qmgmt volume create r$i root root; done
+
 # Let's first bench the network, then the storage
 
 # Network benchmark. Needs elbencho deployed && started on all hosts that participate
@@ -78,9 +81,6 @@ elbencho\
 #elbencho --hostsfile /home/deploy/benchmarks/elbencho-clients.list -F -w -r -t 2 -d -n 100 -N 100 -s 1M -b 1M /quobyte/elbencho/
 
 # Metadata workloads 
-
-# create some volumes to work in parallel to distribute metadata workload/ saturate metadata services:
-for i in $(seq 0 319); do qmgmt volume create r$i root root; done
 
 # write with <N> clients using 32 threads in one directory (which is a dedicated volume then). 
 # needs (#clients * 32) volumes to work; otherwise adjust number of threads, clients or volumes.
