@@ -21,6 +21,18 @@ number_storagenodes=3
 number_storagenode_devices=24
 ## Sustained throughput per device Mbit/s
 device_throughput_mbs=644 # 644=HDD, 3360=NVMe
-##
+
+## EC code to use. 
+ec_codingstripes=3
+ec_datastripes=5
+
+## Replication stripe width
+replication_stripewidth=1
+
+## Sustained device throughput per storagenode
 host_throughput_device_mbs=number_storagenode_devices*device_throughput_mbs
-print(host_throughput_device_mbs)
+
+## Sustained device throughput clusterwide
+cluster_throughput_device_mbs=number_storagenode_devices*device_throughput_mbs*number_storagenodes
+
+print("Welcome!")
