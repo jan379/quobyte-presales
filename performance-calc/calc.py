@@ -1,42 +1,35 @@
 #!/usr/bin/env python3
 
-# Network parameters
-## We assume that switches are capable of handling the
-## load of each client/ server
+import configparser
 
-## The interface throughput of a single storage server
-backend_throughput_interfaces_gbs=25
-## The interface throughput of a single client machine
-frontend_throughput_interfaces_gbs=10
+config = configparser.ConfigParser()
+try: 
+    config.read('defaultconfig.ini')
+except:
+    print("could not read configfile")
 
-# Client node specifics
-## The number of client machines
-number_clients=2
+client_nic_gbs = float(config.get('clients', 'capacity_nic_gbs'))
+number_clients = int(config.get('clients', 'number_clients'))
 
-# Server Node Specifics
+storagenode_nic_gbs = float(config.get('storagenodes', 'capacity_nic_gbs'))
+number_storagenodes = int(config.get('storagenodes', 'number_nodes'))
+number_storagenode_devices = int(config.get('storagenodes', 'number_devices'))
+device_throughput_mbs = int(config.get('storagenodes', 'device_throughput_mbps'))
+device_capacity_GB = int(config.get('storagenodes', 'capacity_devices_GB'))
 
-## Numer of storage nodes
-number_storagenodes=3
-## Number of devices per node
-number_storagenode_devices=24
-## Sustained throughput per device Mbit/s
-device_throughput_mbs=644 # 644=HDD, 3360=NVMe
-device_capacity_GB=2200
-cluster_capacity_GB=number_storagenodes*number_storagenode_devices*device_capacity_GB
+ec_datastripes = int(config.get('storageconfig', 'ec_datastripes'))  
+ec_codingstripes = int(config.get('storageconfig', 'ec_codingstripes'))  
 
-## EC code to use. 
-ec_codingstripes=3
-ec_datastripes=5
-
-## Replication stripe width
-replication_stripewidth=1
+replication_stripewidth = int(config.get('storageconfig', 'replication_stripewidth')) 
 
 ## Sustained device throughput per storagenode
-host_throughput_device_mbs=number_storagenode_devices*device_throughput_mbs
+host_throughput_device_mbs = number_storagenode_devices*device_throughput_mbs
 
 ## Sustained device throughput clusterwide
-cluster_throughput_device_mbs=number_storagenode_devices*device_throughput_mbs*number_storagenodes
+cluster_throughput_device_mbs = number_storagenode_devices*device_throughput_mbs*number_storagenodes
 
+# Overall cluster raw capacity
+cluster_capacity_GB = number_storagenodes*number_storagenode_devices*device_capacity_GB
 
 
 print("# Welcome!")
