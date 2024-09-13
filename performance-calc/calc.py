@@ -20,6 +20,8 @@ device_capacity_GB = int(config.get('storagenodes', 'capacity_devices_GB'))
 ec_datastripes = int(config.get('storageconfig', 'ec_datastripes'))  
 ec_codingstripes = int(config.get('storageconfig', 'ec_codingstripes'))  
 
+
+# Replication stripe width is influencing performance
 replication_stripewidth = int(config.get('storageconfig', 'replication_stripewidth')) 
 
 ## Sustained device throughput per storagenode
@@ -32,12 +34,20 @@ cluster_throughput_device_mbs = number_storagenode_devices*device_throughput_mbs
 cluster_capacity_GB = number_storagenodes*number_storagenode_devices*device_capacity_GB
 
 
+print("")
 print("# Welcome!")
 print("")
-print("Your storage cluster consists of",number_storagenodes, "storagenodes.")
+print("Your storage cluster consists of %s storagenodes." % number_storagenodes)
 print("")
-print("# Capacity")
+print("## Capacity")
 print("")
-print("Useable Capacity when using replication: %sGB" % (cluster_capacity_GB/3))
-print("Useable Capacity when using erasure coding EC%s+%s: %sGB" % (ec_datastripes,ec_codingstripes, (cluster_capacity_GB/((ec_datastripes+ec_codingstripes)/ec_datastripes))))
-print("RAW Capacity: %sGB" % (cluster_capacity_GB))
+print("### RAW capacity:")
+print("%s GB" % (cluster_capacity_GB))
+print("")
+print("### Useable capacity when using replication:")
+print("%s GB" % (cluster_capacity_GB/3))
+print("")
+print("### Useable capacity when using erasure coding EC%s+%s:" % (ec_datastripes,ec_codingstripes))
+print("%s GB" % (cluster_capacity_GB/((ec_datastripes+ec_codingstripes)/ec_datastripes)))
+print("")
+
