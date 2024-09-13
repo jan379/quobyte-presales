@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
 
+import sys
+import getopt
 import configparser
+
+argv = sys.argv[1:]
+try:
+    options, args = getopt.getopt(argv, "c:", ["configfile="])
+except:
+    print(err)
+for name, value in options:
+    if name in ['-c', '--configfile']:
+        configfile = value
+    else:
+        configfile = 'default.ini'
 
 config = configparser.ConfigParser()
 try: 
-    config.read('defaultconfig.ini')
+    config.read(configfile)
 except:
-    print("could not read configfile")
+    print("could not read configfile %s" % (configfile))
 
 client_nic_gbs = float(config.get('clients', 'capacity_nic_gbs'))
 number_clients = int(config.get('clients', 'number_clients'))
