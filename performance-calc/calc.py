@@ -38,7 +38,7 @@ ec_codingstripes = int(config.get('storageconfig', 'ec_codingstripes'))
 
 # Replication stripe width is influencing performance
 replication_stripewidth = int(config.get('storageconfig', 'replication_stripewidth')) 
-# Data redundancy when using replication. 1 = unreplicated, 3 = default, 5 = paranoid but doable
+# Data redundancy when using replication. 1 = unreplicated, 3 = default, 5 = paranoid
 replication_factor = int(config.get('storageconfig', 'replication_factor')) 
 
 # Sustained device throughput per storagenode
@@ -53,7 +53,7 @@ cluster_capacity_raw_TB = round(cluster_capacity_raw_GB / 1024, 2)
 cluster_capacity_raw_PB = round(cluster_capacity_raw_TB / 1024, 2)
 
 # Overall cluster raw capacity, replicated
-cluster_capacity_repl_GB = round((cluster_capacity_raw_GB)/3, 2)
+cluster_capacity_repl_GB = round((cluster_capacity_raw_GB)/replication_factor, 2)
 cluster_capacity_repl_TB = round(cluster_capacity_repl_GB / 1024, 2)
 cluster_capacity_repl_PB = round(cluster_capacity_repl_TB / 1024, 2)
 
@@ -84,12 +84,12 @@ client_network_throughput_capacity = number_clients * client_nic_mbs
 
 # Replication
 ## A single client replication is limited by client_nic_mbs.
-## A single client replication is limited by cluster_device_throughput_capacity minus replication_device_throughput_requirements 
-replication_device_throughput_requirements = ((cluster_device_throughput_capacity / 3) * 2)
-cluster_device_replication_capacity = cluster_device_throughput_capacity - replication_device_throughput_requirements
-## A single client replication is limited by cluster_network_throughput_capacity minus replication_network_throughput_requirements. 
-replication_network_throughput_requirements = ((cluster_network_throughput_capacity / 3) * 2)
-cluster_network_replication_capacity = cluster_network_throughput_capacity - replication_network_throughput_requirements
+## A single client replication is limited by cluster_device_throughput_capacity minus replication_device_throughput_overhead 
+replication_device_throughput_overhead = ((cluster_device_throughput_capacity / replication_factor) * (replication_factor -1 ))
+cluster_device_replication_capacity = cluster_device_throughput_capacity - replication_device_throughput_overhead
+## A single client replication is limited by cluster_network_throughput_capacity minus replication_network_throughput_overhead. 
+replication_network_throughput_overhead = ((cluster_network_throughput_capacity / replication_factor) * (replication_factor - 1))
+cluster_network_replication_capacity = cluster_network_throughput_capacity - replication_network_throughput_overhead
 ## A single client replication has the expected throughput of "device_throughput_mbs * replication_stripewidth".
 single_client_replicated_striped = device_throughput_mbs * replication_stripewidth
 single_client_write_throughput_replicated_mbs = min(client_nic_mbs, cluster_device_replication_capacity, cluster_network_replication_capacity, single_client_replicated_striped)
@@ -97,10 +97,14 @@ single_client_write_throughput_replicated_MBs = round(single_client_write_throug
 
 # Erasure Coding
 ## A single client EC is limited by client host network capacity minus coding_stripe_bandwidth.
-## That is (client_nic_mbs / (ec_datastripes + ec_codingstripes)) * ec_datastripes), 
+single_client_ec_frontend_network_overhead = (client_nic_mbs / (ec_datastripes + ec_codingstripes)) * (ec_codingstripes)
+single_client_ec_frontend_capacity = client_nic_mbs - single_client_ec_frontend_network_overhead
 ## A single client EC is limited by cluster_network_throughput_capacity.
 ## A single client EC is limited by cluster_device_throughput_capacity.
 ## A single  client EC has the expected throughput of "device_throughput_mbs * data stripe count"
+single_client_ec = device_throughput_mbs * ec_codingstripes 
+single_client_write_throughput_ec_mbs = min(single_client_ec_frontend_capacity, cluster_network_throughput_capacity, cluster_device_throughput_capacity, single_client_ec)
+single_client_write_throughput_ec_MBs = round(single_client_write_throughput_ec_mbs / 8, 2)
 
 print("")
 print("# Welcome!")
@@ -115,15 +119,17 @@ print("")
 print("### Capacity usable ( EC %s+%s):" % (ec_datastripes,ec_codingstripes))
 print("%s GB\t | %s TB\t | %s PB" % (cluster_capacity_ec_GB, cluster_capacity_ec_TB, cluster_capacity_ec_PB))
 print("")
-print("### Capacity usable (3x replicated):")
+print("### Capacity usable (%sx replicated):" % (replication_factor))
 print("%s GB\t | %s TB\t | %s PB" % (cluster_capacity_repl_GB, cluster_capacity_repl_TB, cluster_capacity_repl_PB))
 print("")
 
 print("")
 print("## Performance")
 print("")
-print("### Theoretical max. single client/ single stream performance (data stored 3x replicated):")
+print("### Theoretical max. single client/ single stream performance data stored %sx replicated):" % (replication_factor))
 print("%s MB/s" % (single_client_write_throughput_replicated_MBs))
 print("")
-print("### Theoretical max. multi client performance:")
+
+print("### Theoretical max. single client/ single stream performance (data stored EC%s+%s):" % (ec_datastripes, ec_codingstripes))
+print("%s MB/s" % (single_client_write_throughput_ec_MBs))
 print("")
