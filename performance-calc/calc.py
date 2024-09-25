@@ -38,6 +38,8 @@ ec_codingstripes = int(config.get('storageconfig', 'ec_codingstripes'))
 
 # Replication stripe width is influencing performance
 replication_stripewidth = int(config.get('storageconfig', 'replication_stripewidth')) 
+# Data redundancy when using replication. 1 = unreplicated, 3 = default, 5 = paranoid but doable
+replication_factor = int(config.get('storageconfig', 'replication_factor')) 
 
 # Sustained device throughput per storagenode
 host_throughput_device_mbs = number_storagenode_devices * device_throughput_mbs
