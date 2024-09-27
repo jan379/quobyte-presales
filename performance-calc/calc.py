@@ -83,8 +83,8 @@ client_network_throughput_capacity = number_clients * client_nic_mbs
 ## traffic will share the same network interface. As a consequence this NIC can become a bottleneck.
 
 # Replication
-## A single client replication is limited by client_nic_mbs.
-## A single client replication is limited by cluster_device_throughput_capacity minus replication_device_throughput_overhead 
+## A single client replicated is limited by client_nic_mbs.
+## A single client replicated is limited by cluster_device_throughput_capacity minus replication_device_throughput_overhead 
 replication_device_throughput_overhead = ((cluster_device_throughput_capacity / replication_factor) * (replication_factor -1 ))
 cluster_device_replication_capacity = cluster_device_throughput_capacity - replication_device_throughput_overhead
 ## A single client replication is limited by cluster_network_throughput_capacity minus replication_network_throughput_overhead. 
@@ -93,6 +93,9 @@ cluster_network_replication_capacity = cluster_network_throughput_capacity - rep
 ## A single client replication has the expected throughput of "device_throughput_mbs * replication_stripewidth".
 single_client_replicated_striped = device_throughput_mbs * replication_stripewidth
 single_client_write_throughput_replicated_mbs = min(client_nic_mbs, cluster_device_replication_capacity, cluster_network_replication_capacity, single_client_replicated_striped)
+single_client_write_throughput_replicated_mbs_dict = {client_nic_mbs: "Client Node interface bandwidth", cluster_device_replication_capacity: "storage device bandwidth including replication penalty", cluster_network_replication_capacity: "storage network including replication penalty", single_client_replicated_striped: "Device performance, including striping factor"}
+single_client_replicated_bottleneck_val = min(single_client_write_throughput_replicated_mbs_dict)
+single_client_replicated_bottleneck_key = (single_client_write_throughput_replicated_mbs_dict[single_client_replicated_bottleneck_val])
 single_client_write_throughput_replicated_MBs = round(single_client_write_throughput_replicated_mbs / 8, 2)
 
 # Erasure Coding
@@ -105,6 +108,30 @@ single_client_ec_frontend_capacity = client_nic_mbs - single_client_ec_frontend_
 single_client_ec = device_throughput_mbs * ec_codingstripes 
 single_client_write_throughput_ec_mbs = min(single_client_ec_frontend_capacity, cluster_network_throughput_capacity, cluster_device_throughput_capacity, single_client_ec)
 single_client_write_throughput_ec_MBs = round(single_client_write_throughput_ec_mbs / 8, 2)
+
+# Single Client, multi stream performance
+## maybe later
+# Multi client, single stream performance
+## maybe later
+
+# Multi client, multi stream performance
+## Multi client replicated performance is limited by client_network_throughput_capacity
+## Multi client replicated is limited by cluster_network_replication_capacity
+## Multi client replicated is limited by cluster_device_replication_capacity
+## Multi client replicated expected throughput is number_clients * device_throughput_mbs * replication_stripewidth
+multi_client_replicated_striped = number_clients * device_throughput_mbs * replication_stripewidth
+multi_client_write_throughput_replicated_mbs = min(client_network_throughput_capacity, cluster_device_replication_capacity, cluster_network_replication_capacity, multi_client_replicated_striped)
+multi_client_write_throughput_replicated_MBs = round(multi_client_write_throughput_replicated_mbs / 8, 2)
+
+# Multi client, multi stream performance
+## Multi client unreplicated performance is limited by client_network_throughput_capacity
+## Multi client unreplicated is limited by cluster_network_throughput_capacity
+## Multi client unreplicated is limited by cluster_device_throughput_capacity
+## Multi client unreplicated expected throughput is number_clients * device_throughput_mbs * replication_stripewidth
+multi_client_unreplicated_striped = number_clients * device_throughput_mbs * replication_stripewidth
+multi_client_write_throughput_unreplicated_mbs = min(client_network_throughput_capacity, cluster_device_throughput_capacity, cluster_network_throughput_capacity, multi_client_unreplicated_striped)
+multi_client_write_throughput_unreplicated_MBs = round(multi_client_write_throughput_unreplicated_mbs / 8, 2)
+
 
 print("")
 print("# Welcome!")
@@ -128,7 +155,15 @@ print("## Performance")
 print("")
 print("### Theoretical max. single client/ single stream performance data stored %sx replicated, stripe_width %s):" % (replication_factor, replication_stripewidth))
 print("%s MB/s" % (single_client_write_throughput_replicated_MBs))
+print("The upper limit is determined by %s (%s mb/s)" % (single_client_replicated_bottleneck_key, single_client_replicated_bottleneck_val))
 print("")
+print("### Theoretical max. multi client/ multi stream performance data stored %sx replicated, stripe_width %s):" % (replication_factor, replication_stripewidth))
+print("%s MB/s" % (multi_client_write_throughput_replicated_MBs))
+print("")
+print("### Theoretical max. multi client/ multi stream performance data stored unreplicated, stripe_width %s):" % (replication_stripewidth))
+print("%s MB/s" % (multi_client_write_throughput_unreplicated_MBs))
+print("")
+
 
 print("### Theoretical max. single client/ single stream performance (data stored EC%s+%s):" % (ec_datastripes, ec_codingstripes))
 print("%s MB/s" % (single_client_write_throughput_ec_MBs))
