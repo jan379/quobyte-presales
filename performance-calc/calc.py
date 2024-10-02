@@ -96,7 +96,7 @@ single_client_write_throughput_replicated_mbs = min(client_nic_mbs, cluster_devi
 single_client_write_throughput_replicated_MBs = round(single_client_write_throughput_replicated_mbs / 8, 2)
 # get the name of the bottleneck
 single_client_write_throughput_replicated_mbs_dict = {
-        client_nic_mbs: "Client network interface bandwidth. Adding frontend network capabilities will increase performance.", 
+        client_nic_mbs: "client network interface bandwidth. Adding frontend network capabilities will increase performance.", 
         cluster_device_replication_capacity: "storage device bandwidth including replication penalty. Adding more (or faster) storage devices will increase performance.", 
         cluster_network_replication_capacity: "storage network including replication penalty. Adding more backend network capabilities will increase performance.", 
         single_client_replicated_striped: "device performance, including striping factor. Using faster devices or a broader stripe_width will increase performance."
@@ -111,7 +111,7 @@ single_client_ec_frontend_capacity = client_nic_mbs - single_client_ec_frontend_
 ## A single client EC is limited by cluster_network_throughput_capacity.
 ## A single client EC is limited by cluster_device_throughput_capacity.
 ## A single  client EC has the expected throughput of "device_throughput_mbs * data stripe count"
-single_client_ec = device_throughput_mbs * ec_codingstripes 
+single_client_ec = device_throughput_mbs * ec_datastripes 
 single_client_write_throughput_ec_mbs = min(single_client_ec_frontend_capacity, cluster_network_throughput_capacity, cluster_device_throughput_capacity, single_client_ec)
 single_client_write_throughput_ec_MBs = round(single_client_write_throughput_ec_mbs / 8, 2)
 # get the name of the bottleneck
@@ -139,10 +139,10 @@ multi_client_write_throughput_replicated_mbs = min(client_network_throughput_cap
 multi_client_write_throughput_replicated_MBs = round(multi_client_write_throughput_replicated_mbs / 8, 2)
 # get the name of the bottleneck
 multi_client_write_throughput_replicated_mbs_dict = {
-        client_network_throughput_capacity: "total client bandwidth. Adding frontend network capabilities will increase performance.", 
+        client_network_throughput_capacity: "total client network interface bandwidth. Adding frontend network capabilities will increase performance.", 
         cluster_device_replication_capacity: "total storage device throughput, including replication penalty. Adding more storage devices will increase performance.", 
         cluster_network_replication_capacity: "total storage network bandwidth, including replication penalty. Adding backend network capabilities will increase performance.", 
-        multi_client_replicated_striped: "total device throughput across all clients, including striping. Using more clients will increase performance"
+        multi_client_replicated_striped: "device throughput of devices clients write to, including striping. Using more clients or more stripes will increase performance."
         }
 multi_client_replicated_bottleneck_val = min(multi_client_write_throughput_replicated_mbs_dict)
 multi_client_replicated_bottleneck_key = (multi_client_write_throughput_replicated_mbs_dict[multi_client_replicated_bottleneck_val])
@@ -157,20 +157,40 @@ multi_client_write_throughput_unreplicated_mbs = min(client_network_throughput_c
 multi_client_write_throughput_unreplicated_MBs = round(multi_client_write_throughput_unreplicated_mbs / 8, 2)
 # get the name of the bottleneck
 multi_client_write_throughput_unreplicated_mbs_dict = {
-        client_network_throughput_capacity: "total client bandwidth. Adding frontend network capabilities will increase performance.", 
+        client_network_throughput_capacity: "total client network bandwidth. Adding frontend network capabilities will increase performance.", 
         cluster_device_throughput_capacity: "total storage device throughput. Adding more storage devices will increase performance.", 
         cluster_network_throughput_capacity: "total storage network bandwidth, including replication penalty. Adding backend network capabilities will increase performance.", 
-        multi_client_unreplicated_striped: "total device throughput across all clients, including striping. Using more clients will increase performance"
+        multi_client_unreplicated_striped: "device throughput of devices clients write to, including striping. Using more clients or broader stripe_width will increase performance"
         }
 multi_client_unreplicated_bottleneck_val = min(multi_client_write_throughput_unreplicated_mbs_dict)
 multi_client_unreplicated_bottleneck_key = (multi_client_write_throughput_unreplicated_mbs_dict[multi_client_unreplicated_bottleneck_val])
 
+# Multi client, multi stream performance, EC 
+## Multi client EC is limited by frontend network capacity minus coding_stripe_bandwidth.
+multi_client_ec_frontend_capacity = single_client_ec_frontend_capacity * number_clients
+## Multi client EC is limited by cluster_network_throughput_capacity.
+## Multi client EC is limited by cluster_device_throughput_capacity.
+## Multi client EC has the expected throughput of "device_throughput_mbs * data stripe count * number_clients"
+multi_client_ec = device_throughput_mbs * ec_datastripes * number_clients
+multi_client_write_throughput_ec_mbs = min(multi_client_ec_frontend_capacity, cluster_network_throughput_capacity, cluster_device_throughput_capacity, multi_client_ec)
+multi_client_write_throughput_ec_MBs = round(multi_client_write_throughput_ec_mbs / 8, 2)
+# get the name of the bottleneck
+multi_client_write_throughput_ec_mbs_dict = {
+        multi_client_ec_frontend_capacity: "total client network bandwidth, including EC overhead. Adding frontend network capabilities will increase performance.", 
+        cluster_device_throughput_capacity: "total storage device throughput capacity. Adding storage devices will increase performance.", 
+        cluster_network_throughput_capacity: "total storage network capacity. Adding backend network capabilities will increase performance.", 
+        multi_client_ec: "the performance of all data stripes written by all clients. Using faster devices or more data stripes will increase performance."
+        }
+multi_client_ec_bottleneck_val = min(multi_client_write_throughput_ec_mbs_dict)
+multi_client_ec_bottleneck_key = (multi_client_write_throughput_ec_mbs_dict[multi_client_ec_bottleneck_val])
 
 
 print("")
 print("# Welcome!")
 print("")
-print("Your storage cluster consists of %s storagenodes." % number_storagenodes)
+print("Your storage cluster consists of:")
+print("%s storagenodes" % (number_storagenodes))
+print("%s clientnodes"  % (number_storagenodes))
 print("")
 print("## Capacity")
 print("")
@@ -191,17 +211,20 @@ print("### Theoretical max. single client/ single stream performance data stored
 print("%s MB/s" % (single_client_write_throughput_replicated_MBs))
 print("The upper limit is determined by %s (%s mb/s)" % (single_client_replicated_bottleneck_key, single_client_replicated_bottleneck_val))
 print("")
-print("### Theoretical max. multi client/ multi stream performance data stored %sx replicated, stripe_width %s):" % (replication_factor, replication_stripewidth))
+print("### Theoretical max. multi client/ multi stream performance data stored %sx replicated, stripe_width %s, %s clients):" % (replication_factor, replication_stripewidth, number_clients))
 print("%s MB/s" % (multi_client_write_throughput_replicated_MBs))
 print("The upper limit is determined by %s (%s mb/s)" % (multi_client_replicated_bottleneck_key, multi_client_replicated_bottleneck_val))
 print("")
-print("### Theoretical max. multi client/ multi stream performance data stored unreplicated, stripe_width %s):" % (replication_stripewidth))
+print("### Theoretical max. multi client/ multi stream performance data stored unreplicated, stripe_width %s, %s clients):" % (replication_stripewidth, number_clients))
 print("%s MB/s" % (multi_client_write_throughput_unreplicated_MBs))
 print("The upper limit is determined by %s (%s mb/s)" % (multi_client_unreplicated_bottleneck_key, multi_client_unreplicated_bottleneck_val))
 print("")
 
-
 print("### Theoretical max. single client/ single stream performance (data stored EC%s+%s):" % (ec_datastripes, ec_codingstripes))
 print("%s MB/s" % (single_client_write_throughput_ec_MBs))
 print("The upper limit is determined by %s (%s mb/s)" % (single_client_ec_bottleneck_key, single_client_ec_bottleneck_val))
+print("")
+print("### Theoretical max. multi client/ multi stream performance (data stored EC%s+%s), %s clients:" % (ec_datastripes, ec_codingstripes, number_clients))
+print("%s MB/s" % (multi_client_write_throughput_ec_MBs))
+print("The upper limit is determined by %s (%s mb/s)" % (multi_client_ec_bottleneck_key, multi_client_ec_bottleneck_val))
 print("")
