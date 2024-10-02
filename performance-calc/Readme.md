@@ -43,14 +43,3 @@ The upper limit is determined by the performance of all data stripes written by 
 800.0 MB/s
 The upper limit is determined by the performance of all data stripes written by all clients. Using faster devices or more data stripes will increase performance. (6400 mb/s)
 
-(failed reverse-i-search)`dd if': git commit -m"a^C ec multi client" calc.py 
-(failed reverse-i-search)`if= ': git d^Cf high_performance.ini
-[jan@jan performance-calc]$ dd if=/dev/zero of=testfile bs=8m count=10
-dd: invalid number: ‘8m’
-[jan@jan performance-calc]$ dd if=/dev/zero of=testfile bs=8M count=10
-10+0 records in
-10+0 records out
-83886080 bytes (84 MB, 80 MiB) copied, 0.063862 s, 1.3 GB/s
-```
-
-
