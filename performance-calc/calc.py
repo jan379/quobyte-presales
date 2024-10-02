@@ -199,10 +199,8 @@ print("| ------------------------------- \t| ------- \t| ------- \t| -------- \t
 print("| Capacity RAW\t                  \t| %s   \t| %s   \t| %s    \t|" % (cluster_capacity_raw_GB, cluster_capacity_raw_TB, cluster_capacity_raw_PB))
 print("| Capacity usable (EC %s+%s)      \t| %s   \t| %s   \t| %s    \t|" % (ec_datastripes,ec_codingstripes, cluster_capacity_ec_GB, cluster_capacity_ec_TB, cluster_capacity_ec_PB))
 print("| Capacity usable (Replicated %sx)\t| %s   \t| %s   \t| %s    \t|" % (replication_factor,cluster_capacity_repl_GB, cluster_capacity_repl_TB, cluster_capacity_repl_PB))
-##print("%s GB\t | %s TB\t | %s PB" % (cluster_capacity_repl_GB, cluster_capacity_repl_TB, cluster_capacity_repl_PB))
 print("")
 
-print("")
 print("## Performance")
 print("")
 print("### Theoretical max. single client/ single stream performance data stored %sx replicated, stripe_width %s):" % (replication_factor, replication_stripewidth))
