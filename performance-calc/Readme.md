@@ -2,7 +2,9 @@
 
 ```
 jan@host.name% ./calc.py -c high_performance.ini 
+```
 
+```
 # Welcome!
 
 Your storage cluster consists of:
