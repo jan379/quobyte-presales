@@ -4,7 +4,8 @@
 jan@host.name% ./calc.py -c high_performance.ini 
 ```
 
-```
+Sample output: 
+
 # Welcome!
 
 Your storage cluster consists of:
@@ -42,4 +43,3 @@ The upper limit is determined by the performance of all data stripes written by 
 The upper limit is determined by the performance of all data stripes written by all clients. Using faster devices or more data stripes will increase performance.
 
 
-```
