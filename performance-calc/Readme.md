@@ -1,5 +1,15 @@
 # Usage
 
+You can write down infrastructure variables in a file, see "default.ini" as an example. 
+You can change asptects as used Erasure Code, Replication striping width but also 
+use device throughput limits, NIC capacity etc. as input variable.
+
+Disclaimer: This script displays theoretical upper boundaries, i.e. what is to expect under ideal 
+conditions. So rather an indication, but certainly something you should come close to when benchmarking 
+in real life.
+
+Simply invoke the python script + your hardware configuration: 
+
 ```
 jan@host.name% ./calc.py -c high_performance.ini 
 ```
