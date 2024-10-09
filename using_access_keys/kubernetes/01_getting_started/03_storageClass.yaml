@@ -5,7 +5,7 @@ metadata:
   name: quobyte-default
 parameters:
   # The following requires existing namespace "quobyte" + secret "quobyte-secret"
-  csi.storage.k8s.io/controller-expand-secret-name: quobyte-managed-secret
+  csi.storage.k8s.io/controller-expand-secret-name: quobyte-management-secret
   csi.storage.k8s.io/controller-expand-secret-namespace: quobyte
   csi.storage.k8s.io/provisioner-secret-name: quobyte-management-secret
   csi.storage.k8s.io/provisioner-secret-namespace: quobyte
@@ -16,7 +16,7 @@ parameters:
   accessMode: "777"
 
   # A Quobyte tenant with that name must exist. 
-  quobyteTenant: "database" 
+  quobyteTenant: "prod-team" 
   # You can set labels here that are accessible in Quobyte
   # as key:value pairs.
   labels: "site:cloud"
