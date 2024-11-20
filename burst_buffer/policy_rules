@@ -1,0 +1,181 @@
+policy_rule {
+  uuid: "339db3ab-d621-4f7a-9667-303f97b32718"
+  name: "archiveStorage"
+  description: ""
+  creator: "storageadmin"
+  enabled: true
+  ordering_number: 5
+  scope {
+    file {
+      filter_type: LAST_ACCESS_AGE_S
+      operator: LARGER_THAN
+      numeric_value: 900
+    }
+    files_operator: ALL_OF
+  }
+  policies {
+    file_tag_based_placement {
+      required_tag: "hdd"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+    file_redundancy {
+      redundancy: EC
+    }
+    ec_redundancy_details {
+      file_structure {
+        block_size_bytes: 65536
+        object_size_bytes: 5242880
+        segment_size_bytes: 41943040000
+      }
+      distribution_schema {
+        data_stripe_count: 5
+        coding_stripe_count: 3
+        striping_method: BLOCK_LEVEL
+      }
+      ec_metadata_format: EC_COMMIT_IDS
+    }
+    file_recode {
+      target_redundancy: EC
+    }
+  }
+}
+policy_rule {
+  uuid: "145daca7-e8d5-4569-a94b-e6af05f51f81"
+  name: "intermediateStorage"
+  description: "Place files on SSD and add redundancy"
+  creator: "storageadmin"
+  enabled: true
+  ordering_number: 4
+  scope {
+    file {
+      filter_type: LAST_ACCESS_AGE_S
+      operator: LARGER_THAN
+      numeric_value: 300
+    }
+    files_operator: ALL_OF
+  }
+  policies {
+    file_redundancy {
+      redundancy: REPLICATION
+    }
+    replication_redundancy_details {
+      file_structure {
+        block_size_bytes: 4096
+        object_size_bytes: 8388608
+        segment_size_bytes: 10737418240
+      }
+      distribution_schema {
+        data_stripe_count: 1
+        striping_method: OBJECT_LEVEL
+      }
+      replication_factor: 3
+    }
+  }
+}
+policy_rule {
+  uuid: "988e4107-e98c-4fde-9572-27012d018671"
+  name: "burstBuffer"
+  description: "Place files on NVMe with a broad striping and no redundancy"
+  creator: "storageadmin"
+  enabled: true
+  ordering_number: 3
+  scope {
+    global: true
+  }
+  policies {
+    file_tag_based_placement {
+      required_tag: "burst"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+    file_redundancy {
+      redundancy: REPLICATION
+    }
+    replication_redundancy_details {
+      file_structure {
+        block_size_bytes: 4096
+        object_size_bytes: 8388608
+        segment_size_bytes: 2671813255495680
+      }
+      distribution_schema {
+        data_stripe_count: 6
+        striping_method: OBJECT_LEVEL
+      }
+      replication_factor: 1
+    }
+  }
+}
+policy_rule {
+  uuid: "a6d73e6e-300e-4fdc-8d41-327690b04775"
+  name: "Automatic data replication"
+  description: "Automatically enables data replication when there are enough data devices provisioned."
+  creator: "Quobyte"
+  enabled: true
+  default: false
+  ordering_number: 2
+  scope {
+    global: true
+  }
+  policy_preset {
+    id: "redundancy/auto_replicated_files"
+    name: "Automatic replication redundancy for files on any data device type"
+    description: "Optimizes file replication factor for usable services and data devices."
+    policies {
+      file_tag_based_placement {
+      }
+      file_failure_domain_placement {
+        type: MACHINE
+      }
+      file_redundancy {
+        redundancy: REPLICATION
+      }
+      internal_on_disk_format {
+        crc_method: CRC_32_ISCSI
+        persistent_format: V2_METADATA_HEADER_4K
+      }
+      replication_redundancy_details {
+        file_structure {
+          block_size_bytes: 4096
+          object_size_bytes: 8388608
+          segment_size_bytes: 10737418240
+        }
+        distribution_schema {
+          data_stripe_count: 1
+          striping_method: OBJECT_LEVEL
+        }
+        replication_factor: 3
+      }
+    }
+    deprecated: false
+  }
+}
+policy_rule {
+  uuid: "f21a2a66-dfc7-4890-8ebe-a7d94bc4dfef"
+  name: "Automatic metadata replication"
+  description: "Automatically enables metadata replication when there are enough metadata devices provisioned."
+  creator: "Quobyte"
+  enabled: true
+  default: false
+  ordering_number: 1
+  scope {
+    global: true
+  }
+  policy_preset {
+    id: "redundancy/auto_metadata_replication"
+    name: "Automatic volume metadata replication factor"
+    description: "Optimizes volume metadata replication factor for usable services."
+    policies {
+      metadata_replication {
+        replication_factor: 3
+      }
+      metadata_tag_based_placement {
+      }
+      metadata_failure_domain_placement {
+        type: MACHINE
+      }
+    }
+    deprecated: false
+  }
+}
+
