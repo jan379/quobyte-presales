@@ -1,6 +1,11 @@
 - hosts: localhost
   become: yes
   tasks:
-    - name: Stop elbencho
+    - name: Stop elbencho on clients
       shell:
-        cmd: elbencho --quit --hostsfile /home/deploy/elbencho-clients.list 
+        cmd: elbencho --quit --hostsfile /home/deploy/benchmarks/elbencho-clients.list
+
+    - name: Stop elbencho on services 
+      shell:
+        cmd: elbencho --quit --hostsfile /home/deploy/benchmarks/elbencho-dataserver.list
+
