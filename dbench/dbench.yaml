@@ -1,0 +1,37 @@
+- hosts: clients 
+  become: yes
+  tasks:
+    - name: Install Debian packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+        allow_unauthenticated: "{{ check_packages_signature | default('no', false) }}"
+      vars:
+        packages:
+        - dbench 
+      when: ansible_facts['os_family'] == "Debian"
+ 
+    - name: Install RPM packages
+      yum: 
+        update_cache: yes
+        allow_downgrade: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - dbench 
+      when: ansible_facts['os_family'] == "RedHat" 
+
+    - name: Install RPM packages on Suse Linux 
+      zypper: 
+        update_cache: yes
+        oldpackage: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - dbench 
+      when: ansible_facts['os_family'] == "Suse"
+
+
