@@ -13,7 +13,7 @@
         cmd: qmgmt -u {{ api_service }} volume list | grep "^{{ my_volume }} " | awk '{print $1}'
       register: my_volume_test
 
-    - name: Create volume using policy rules
+    - name: Create volume
       shell:
         cmd: qmgmt -u {{ api_service }} volume create "{{ my_volume }}" deploy deploy 
       when: my_volume not in my_volume_test.stdout 
