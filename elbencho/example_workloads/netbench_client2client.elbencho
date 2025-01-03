@@ -1,0 +1,17 @@
+# Let's first bench the network, then the storage
+
+# Network benchmark. Needs elbencho deployed && started on all hosts that participate
+## Clients send data
+label=arg="One client sends data to another client (frontend throughput)"
+resfile=/home/deploy/benchmarks/results/elbencho-netbench.txt
+netbench=1
+servers=quobyte-client1
+clients=quobyte-client0
+block=10m
+respsize=1
+threads=32
+size=100g
+timelimit=60
+lat=1
+
+
