@@ -17,3 +17,4 @@ deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=10	# Number of files to create
 
+lat=1
