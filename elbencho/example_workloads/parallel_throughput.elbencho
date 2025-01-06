@@ -10,7 +10,7 @@ resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput.txt
 size=12G	# A file spanning more than one (10G) segment.
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
-threads=16	# Do parallel requests from each client
+threads=8	# Do parallel requests from each client
 mkdirs=1	# Create directories if necessary
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
