@@ -1,0 +1,51 @@
+policy_rule {
+  name: "ssd_only_volume"
+  description: "Place files on SSD for specific volume"
+  enabled: true
+  scope {
+    volume {
+      name_regex: "ssd_volume"
+    }
+  }
+  policies {
+    file_tag_based_placement {
+      required_tag: "ssd"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+  }
+}
+policy_rule {
+  name: "nvme_only_volume"
+  description: "Place files on NVMe for specific volume"
+  enabled: true
+  scope {
+    volume {
+      name_regex: "nvme_volume"
+    }
+  }
+  policies {
+    file_tag_based_placement {
+      required_tag: "nvme"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+  }
+}
+policy_rule {
+  name: "hdd_only_volume"
+  description: "Place files on HDD for specific volume"
+  enabled: true
+  scope {
+    volume {
+      name_regex: "hdd_volume"
+    }
+  }
+  policies {
+    file_tag_based_placement {
+      required_tag: "hdd"
+      soften_tag_requirements: false
+      automatic_constraints: NONE
+    }
+  }
+}
