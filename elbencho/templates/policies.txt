@@ -49,3 +49,90 @@ policy_rule {
     }
   }
 }
+policy_rule {
+  name: "redundancy_label_replication"
+  description: "Switch to replication based on volume label"
+  enabled: true
+  scope {
+    volume {
+      label_pattern {
+        name_regex: "redundancy"
+        value_regex: "replication"
+      }
+    }
+  }
+  policies {
+    file_redundancy {
+      redundancy: REPLICATION
+    }
+    replication_redundancy_details {
+      file_structure {
+        block_size_bytes: 4096
+        object_size_bytes: 8388608
+        segment_size_bytes: 257698037760
+      }
+      distribution_schema {
+        data_stripe_count: 6
+        striping_method: OBJECT_LEVEL
+      }
+      replication_factor: 3
+    }
+  }
+}
+policy_rule {
+  name: "redundancy_label_ec"
+  description: "Switch redundancy according to volume labels"
+  enabled: true
+  scope {
+    volume {
+      label_pattern {
+        name_regex: "redundancy"
+        value_regex: "ec"
+      }
+    }
+  }
+  policies {
+    file_redundancy {
+      redundancy: EC
+    }
+    ec_redundancy_details {
+      file_structure {
+        block_size_bytes: 65536
+        object_size_bytes: 5242880
+        segment_size_bytes: 41943040000
+      }
+      distribution_schema {
+        data_stripe_count: 5
+        coding_stripe_count: 3
+        striping_method: BLOCK_LEVEL
+      }
+      ec_metadata_format: EC_COMMIT_IDS
+    }
+  }
+}
+
+policy_rule {
+  name: "redundancy_label_unreplicated"
+  description: "Write unreplicated but striped data, controlled by volume label"
+  enabled: true
+  scope {
+    global: true
+  }
+  policies {
+    file_redundancy {
+      redundancy: REPLICATION
+    }
+    replication_redundancy_details {
+      file_structure {
+        block_size_bytes: 4096
+        object_size_bytes: 8388608
+        segment_size_bytes: 64424509440
+      }
+      distribution_schema {
+        data_stripe_count: 6
+        striping_method: OBJECT_LEVEL
+      }
+      replication_factor: 1
+    }
+  }
+}
