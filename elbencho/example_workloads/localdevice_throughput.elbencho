@@ -8,7 +8,7 @@ label=arg="Localhost writes a large file to local storage device"
 hosts=localhost
 resfile=/home/deploy/benchmarks/results/elbencho-localdevice_throughput.txt
 
-size=120G	# A file spanning more than one (10G) segment.
+size=40G	# A file spanning more than one (10G) segment, also larger than possible device buffer sizes
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=1	# Do parallel requests from each client
