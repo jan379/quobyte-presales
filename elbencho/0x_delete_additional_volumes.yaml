@@ -1,0 +1,16 @@
+- hosts: registryservices[0]
+  ignore_errors: yes
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+  vars: 
+    - my_volume_prefix: "r"
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Create volumes
+      with_sequence: start=0 end=299 
+      shell:
+        cmd: qmgmt -f -u {{ api_service }} volume delete "{{ my_volume_prefix }}{{ item }}" 

@@ -1,0 +1,18 @@
+# Let's first bench the network, then the storage
+
+# Network benchmark. Needs elbencho deployed && started on all hosts that participate
+## Clients send data
+label=arg="All clients send data to all servers (parallel throughput)"
+resfile=/home/deploy/benchmarks/results/elbencho-netbench.txt
+netbench=1
+serversfile=/home/deploy/benchmarks/elbencho-dataserver.list
+clientsfile=/home/deploy/benchmarks/elbencho-clients.list
+block=10m
+respsize=1
+threads=32
+size=100g
+timelimit=60
+lat=1
+
+
+lat=1

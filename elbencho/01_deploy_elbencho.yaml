@@ -35,6 +35,21 @@
         line: "{{ item }}"
       with_items: "{{ groups.clients }}"
 
+    - name: Create first client file
+      lineinfile:
+        path: /home/deploy/benchmarks/elbencho-firstclient.list
+        create: true
+        line: "{{ item }}"
+      with_items: "{{ groups.clients[0] }}"
+
+    - name: Create second client file
+      lineinfile:
+        path: /home/deploy/benchmarks/elbencho-secondclient.list
+        create: true
+        line: "{{ item }}"
+      with_items: "{{ groups.clients[1] }}"
+
+
 # All other nodes are used for "netbench"
     - name: Create dataserver list
       lineinfile:
@@ -42,6 +57,21 @@
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.dataservices }}"
+
+    - name: Create first dataservice file 
+      lineinfile:
+        path: /home/deploy/benchmarks/elbencho-firstdataserver.list
+        create: true
+        line: "{{ item }}"
+      with_items: "{{ groups.dataservices[0] }}"
+
+    - name: Create second dataservice file
+      lineinfile:
+        path: /home/deploy/benchmarks/elbencho-seconddataserver.list
+        create: true
+        line: "{{ item }}"
+      with_items: "{{ groups.dataservices[1] }}"
+
 
 - hosts: quobyteservers,clients 
   become: yes

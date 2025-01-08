@@ -18,3 +18,16 @@
         cmd: qmgmt -u {{ api_service }} volume create "{{ my_volume }}" deploy deploy 
       when: my_volume not in my_volume_test.stdout 
 
+    - name: Create HDD volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "hdd_volume" deploy deploy 
+
+    - name: Create SSD volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "ssd_volume" deploy deploy 
+
+    - name: Create NVMe volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "nvme_volume" deploy deploy 
+
+

@@ -1,5 +1,5 @@
 # Create some volumes to work in parallel to distribute metadata workload/ saturate metadata services:
-for i in $(seq 0 319); do qmgmt volume create r$i root root; done
+##for i in $(seq 0 319); do qmgmt volume create r$i root root; done
 
 # Let's first bench the network, then the storage
 

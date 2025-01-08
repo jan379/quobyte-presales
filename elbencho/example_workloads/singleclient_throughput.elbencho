@@ -1,0 +1,21 @@
+# Create one large file using a sigle client.
+# Expected result is device performance * data stripe count
+# You can observe differences for different stripe widths.
+# Example call:
+# elbencho -c parallel_throughput.elbencho /quobyte/elbencho
+
+label=arg="One client writes one large file (like dd)"
+hostsfile=/home/deploy/benchmarks/elbencho-firstclient.list
+resfile=/home/deploy/benchmarks/results/elbencho-singleclient_throughput.txt
+
+size=120G	# A file spanning more than one (10G) segment.
+write=1		# Files are only created if "write=1"
+read=1		# Let's collect read performance
+threads=1	# Do parallel requests from each client
+mkdirs=1	# Create directories if necessary
+delfiles=1	# Delete files
+deldirs=1	# Delete directories
+dirs=1		# Number of directories per worker thread
+files=1		# Number of files to create
+
+lat=1
