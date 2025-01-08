@@ -116,12 +116,18 @@ policy_rule {
   description: "Write unreplicated but striped data, controlled by volume label"
   enabled: true
   scope {
-    global: true
+    volume {
+      label_pattern {
+        name_regex: "redundancy"
+        value_regex: "unreplicated"
+      }
+    }
   }
   policies {
     file_redundancy {
       redundancy: REPLICATION
     }
+
     replication_redundancy_details {
       file_structure {
         block_size_bytes: 4096
