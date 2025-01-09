@@ -1,0 +1,21 @@
+# Create large files in parallel.
+# You can benchmark data performance/ throughput using this test.
+# You can observe differences for different stripe widths.
+# Example call:
+# elbencho -c iops.elbencho /quobyte/elbencho
+
+hostsfile=/home/deploy/benchmarks/elbencho-clients.list
+resfile=/home/deploy/benchmarks/results/iops.txt
+
+size=100M	# A file spanning more than one (10G) segment.
+write=1		# Files are only created if "write=1"
+read=1		# Let's collect read performance
+threads=8	# Do parallel requests from each client
+mkdirs=1	# Create directories if necessary
+delfiles=1	# Delete files
+deldirs=1	# Delete directories
+dirs=1		# Number of directories per worker thread
+files=200	# Number of files to create
+block=4k	# Smallest write unit in QB
+
+lat=1
