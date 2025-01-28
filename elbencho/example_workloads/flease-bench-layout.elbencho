@@ -1,0 +1,21 @@
+# Create a bunch of empty files.
+# You can benchmark metadata performance using this test.
+# You can observe differences in performance when writing into one large volume vs. spread out across many volumes.
+# Example using one volume:
+# elbencho -c zerobytefiles.elbencho /quobyte/elbencho
+# Example using many volumes (requires volumes with a naming schem of "r0", "r1", "rN" to exist):
+# elbencho -c zerobytefiles.elbencho /quobyte
+
+hostsfile=/home/deploy/benchmarks/elbencho-clients.list
+resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
+
+size=0		# Empty files to not involve data services
+write=1		# Files are only created if "write=1"
+read=0		# Skip read phase
+threads=128	# Do parallel requests from each client
+mkdirs=1	# Create directories if necessary
+delfiles=0	# Delete files
+deldirs=0	# Delete directories
+dirs=1		# Number of directories per worker thread
+files=3000	# Number of files to create
+lat=1
