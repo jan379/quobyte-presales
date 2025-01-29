@@ -10,12 +10,12 @@ hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
 
 size=0		# Empty files to not involve data services
-write=1		# Files are only created if "write=1"
+write=0		# Files are only created if "write=1"
 read=0		# Skip read phase
-threads=512	# Do parallel requests from each client
-mkdirs=1	# Create directories if necessary
-delfiles=0	# Delete files
-deldirs=0	# Delete directories
+threads=128	# Do parallel requests from each client
+mkdirs=0	# Create directories if necessary
+delfiles=1	# Delete files
+deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=3000	# Number of files to create
 lat=1
