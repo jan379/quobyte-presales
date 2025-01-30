@@ -1,0 +1,16 @@
+- hosts: registryservices[0]
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: Create io500 binary volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "io500-bin" deploy deploy 
+
+    - name: Create io500 data volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "io500-data" deploy deploy 
