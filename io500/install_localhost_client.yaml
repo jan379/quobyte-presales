@@ -1,0 +1,124 @@
+- hosts: localhost 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+
+  tasks:
+    
+    - set_fact: 
+        package_url: https://packages.quobyte.com/repo/3/{{ repo_id }}
+      when: repo_id is defined 
+
+    - set_fact: 
+        package_url: https://packages.quobyte.com/repo/v3 
+      when: repo_id is not defined 
+
+    - set_fact: 
+        rpm_distribution_string: "RHEL"
+      when: ansible_distribution is regex('^RedHat*') 
+
+    - set_fact: 
+        rpm_distribution_string: "RHEL"
+      when: ansible_distribution is regex('^OracleLinux*') 
+
+    - set_fact:
+        rpm_distribution_string: "RockyLinux"
+      when: ansible_distribution is regex('^Rocky*')
+
+    - set_fact: 
+        rpm_distribution_string: "CentOS"
+      when: ansible_distribution is regex('^CentOS*') 
+
+    - set_fact: 
+        rpm_distribution_string: "SLE"
+      when: ansible_distribution is regex('SLES') 
+
+    - name: Add Quobyte repository signing key
+      apt_key:
+        url: "{{ dedicated_mirror | default(package_url) }}/apt/pubkey.gpg"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Add Quobyte apt repository to sources list
+      apt_repository:
+        repo: "deb {{ dedicated_mirror | default(package_url) }}/apt {{ ansible_distribution_release }} main"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+    - name: Add Quobyte YUM repository to sources list
+      yum_repository:
+        name: quobyte
+        description: Quobyte rpm repo
+        baseurl: "{{ dedicated_mirror | default(package_url) }}/rpm/{{ rpm_distribution_string }}_{{ ansible_distribution_major_version }}"
+        gpgkey: "{{ dedicated_mirror | default(package_url) }}/rpm/{{ rpm_distribution_string }}_{{ ansible_distribution_major_version }}/repodata/repomd.xml.key"
+        gpgcheck: "{{ check_package_signature | default('yes', true) }}"
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Add Quobyte Zypper repository to sources list
+      zypper_repository:
+        name: quobyte
+        description: Quobyte rpm repo
+        repo: "{{ dedicated_mirror | default(package_url) }}/rpm/{{ rpm_distribution_string }}_{{ ansible_distribution_major_version }}"
+        auto_import_keys: yes
+        disable_gpg_check: "{{ check_packages_signature | default('no', false) }}"
+      when: ansible_facts['os_family'] == "Suse"
+
+
+    - name: Install Debian packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+        allow_unauthenticated: "{{ check_packages_signature | default('no', false) }}"
+      vars:
+        packages:
+        - quobyte-client
+      when: ansible_facts['os_family'] == "Debian"
+ 
+    - name: Install RPM packages
+      yum: 
+        update_cache: yes
+        allow_downgrade: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - quobyte-client
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Install RPM packages on Suse Linux 
+      zypper: 
+        update_cache: yes
+        oldpackage: yes
+        state: present
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - quobyte-client
+      when: ansible_facts['os_family'] == "Suse"
+
+    - name: Write /etc/quobyte/client-service.cfg
+      template:
+        src: templates/client-service.cfg.jinja2
+        dest: "/etc/quobyte/client-service.cfg"
+          
+    - name: Write /etc/quobyte/client-service.env
+      template:
+        src: templates/client-service.env.jinja2
+        dest: "/etc/quobyte/client-service.env"
+
+
+    - name: Create client mount point /quobyte 
+      file:
+        path: /quobyte
+        state: directory
+        owner: quobyte
+
+    - name: Enable Quobyte client service
+      service:
+        enabled: yes
+        state: started
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-client
+
