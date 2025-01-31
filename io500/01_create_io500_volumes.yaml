@@ -9,8 +9,8 @@
 
     - name: Create io500 binary volume
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "io500-bin" deploy deploy 
+        cmd: qmgmt -u {{ api_service }} volume create "My Tenant/io500-bin" deploy deploy 
 
     - name: Create io500 data volume
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "io500-data" deploy deploy 
+        cmd: qmgmt -u {{ api_service }} volume create "My Tenant/io500-data" deploy deploy 
