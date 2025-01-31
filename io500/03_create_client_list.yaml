@@ -3,7 +3,7 @@
   tasks:
     - name: Create client list
       lineinfile:
-        path: /home/deploy/io500/io500-clients.list
+        path: /quobyte/io500-bin/io500-clients.list
         create: true
         line: "{{ item }} slots=8"
       with_items: "{{ groups.clients }}"
