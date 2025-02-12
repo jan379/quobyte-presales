@@ -1,10 +1,6 @@
-# Create a bunch of empty files.
-# You can benchmark metadata performance using this test.
-# You can observe differences in performance when writing into one large volume vs. spread out across many volumes.
-# Example using one volume:
-# elbencho -c zerobytefiles.elbencho /quobyte/elbencho
-# Example using many volumes (requires volumes with a naming schem of "r0", "r1", "rN" to exist):
-# elbencho -c zerobytefiles.elbencho /quobyte
+# 
+# Delete a bunch of existing files
+#
 
 hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
