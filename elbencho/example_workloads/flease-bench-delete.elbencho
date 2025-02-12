@@ -12,7 +12,7 @@ resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
 size=0		# Empty files to not involve data services
 write=0		# Files are only created if "write=1"
 read=0		# Skip read phase
-threads=128	# Do parallel requests from each client
+threads=512	# Do parallel requests from each client
 mkdirs=0	# Create directories if necessary
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
