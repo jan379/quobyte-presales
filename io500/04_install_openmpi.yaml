@@ -1,0 +1,12 @@
+- hosts: clients 
+  become: yes
+  tasks:
+    - name: Install Debian packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - openmpi-bin 
+      when: ansible_facts['os_family'] == "Debian"
+ 

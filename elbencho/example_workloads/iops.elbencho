@@ -2,12 +2,12 @@
 # You can benchmark data performance/ throughput using this test.
 # You can observe differences for different stripe widths.
 # Example call:
-# elbencho -c parallel_throughput.elbencho /quobyte/elbencho
+# elbencho -c iops.elbencho /quobyte/elbencho
 
 hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput.txt
+resfile=/home/deploy/benchmarks/results/iops.txt
 
-size=24G	# A file spanning more than one (10G) segment.
+size=100M	# A file spanning more than one (10G) segment.
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=8	# Do parallel requests from each client
@@ -15,7 +15,7 @@ mkdirs=1	# Create directories if necessary
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
-files=2		# Number of files to create
-iodepth=2	# >1 enables async I/O
+files=200	# Number of files to create
+block=4k	# Smallest write unit in QB
 
 lat=1

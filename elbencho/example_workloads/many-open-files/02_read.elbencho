@@ -1,0 +1,17 @@
+# 
+# Read a bunch of existing files
+#
+
+hostsfile=/home/deploy/benchmarks/elbencho-clients.list
+resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
+
+size=0		# Empty files to not involve data services
+write=0		# Files are only created if "write=1"
+read=1		# Skip read phase
+threads=512	# Do parallel requests from each client
+mkdirs=0	# Create directories if necessary
+delfiles=0	# Delete files
+deldirs=0	# Delete directories
+dirs=1		# Number of directories per worker thread
+files=3000	# Number of files to create
+lat=1		# Print file creation time latency
