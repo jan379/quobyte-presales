@@ -4,7 +4,9 @@
     - name: Get elbencho binary archive
       get_url: 
         #url: https://github.com/breuner/elbencho/releases/download/v2.2-5/elbencho-static-x86_64.tar.gz
-        url: https://github.com/breuner/elbencho/releases/download/v3.0-7/elbencho-static-x86_64.tar.gz 
+        #url: https://github.com/breuner/elbencho/releases/download/v3.0-7/elbencho-static-x86_64.tar.gz 
+        url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-x86_64.tar.gz
+        force: true
         dest: /tmp/elbencho.tar.gz
 
     - name: Unpack elbencho archive
