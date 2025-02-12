@@ -16,5 +16,6 @@ delfiles=1	# Delete files
 deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=2		# Number of files to create
+iodepth=2	# >1 enables async I/O
 
 lat=1
