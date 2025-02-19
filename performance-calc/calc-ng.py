@@ -62,7 +62,7 @@ def cluster_throughput_device(number_storagenodes, host_throughput_device):
 def cluster_throughput_controller(number_storagenodes, host_throughput_controller):
     return number_storagenodes * host_throughput_controller
     
-# Cluster line rate network thoughput
+# Cluster line rate network throughput
 def cluster_throughput_network(number_nodes, host_throughput_network):
     return round(float(number_nodes * host_throughput_network),2 )
 
@@ -85,8 +85,8 @@ def single_client_ec_writes_mbs(client_nic_mbs, device_throughput_mbs, cluster_t
 ## A single client replication is limited by cluster_controller_throughput_capacity / 3.
 ## A single client replication is limited by client_.
 ## A single client replication has the expected throughput of "device_throughput_mbs * stripe_width"
-def single_client_repl_writes_mbs(client_nic_mbs, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, replication_factor, stripe_width):
-    single_client_mbs = (device_throughput_mbs * stripe_width)
+def single_client_repl_writes_mbs(client_nic_mbs, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth):
+    single_client_mbs = (device_throughput_mbs * replication_stripewidth)
     single_client_frontend_network_limit = (client_nic_mbs)
     single_client_backend_network_limit = (cluster_throughput_network / replication_factor)
     single_client_backend_device_limit = (cluster_throughput_device / replication_factor)
@@ -94,6 +94,49 @@ def single_client_repl_writes_mbs(client_nic_mbs, device_throughput_mbs, cluster
     bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_writes'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
     return bottleneck_tuple
 
+# Multi client, multi stream performance, ununreplicated
+## Multi client unreplicated performance is limited by client_network_throughput_capacity
+## Multi client unreplicated is limited by cluster_network_replication_capacity
+## Multi client unreplicated is limited by cluster_device_replication_capacity
+## Multi client unreplicated is limited by cluster_controller_replication_capacity
+## Multi client unreplicated expected throughput is number_clients * device_throughput_mbs
+def multi_client_unrepl_writes_mbs(number_clients, client_throughput_network, cluster_throughput_device, cluster_throughput_network, cluster_throughput_controller, replication_stripewidth):
+	multi_client_unreplicated_striped_mbs = number_clients * device_throughput_mbs * replication_stripewidth
+	unreplicated_cluster_network_limit = cluster_throughput_network
+	unreplicated_cluster_device_throughput_limit = cluster_throughput_device
+	unreplicated_cluster_controller_throughput_limit = cluster_throughput_controller
+	bottleneck_tuple = min((multi_client_unreplicated_striped_mbs, 'unreplicated_writes'), (client_throughput_network, 'client_network'), (unreplicated_cluster_network_limit, 'storage_network'), (unreplicated_cluster_device_throughput_limit, 'backend_device_limit'), (unreplicated_cluster_controller_throughput_limit, 'backend_controller_limit'))
+	return bottleneck_tuple
+
+# Multi client, multi stream performance, replicated
+## Multi client replicated performance is limited by client_network_throughput_capacity
+## Multi client replicated is limited by cluster_network_replication_capacity
+## Multi client replicated is limited by cluster_device_replication_capacity
+## Multi client replicated is limited by cluster_controller_replication_capacity
+## Multi client replicated expected throughput is number_clients * device_throughput_mbs * replication_stripewidth
+def multi_client_repl_writes_mbs(number_clients, client_throughput_network, cluster_throughput_device, cluster_throughput_network, cluster_throughput_controller, replication_factor, replication_stripewidth):
+	multi_client_replicated_striped_mbs = number_clients * device_throughput_mbs * replication_stripewidth
+	replicated_client_network_limit = client_throughput_network
+	replicated_cluster_network_limit = cluster_throughput_network / replication_factor
+	replicated_cluster_device_throughput_limit = cluster_throughput_device / replication_factor
+	replicated_cluster_controller_throughput_limit = cluster_throughput_controller / replication_factor
+	bottleneck_tuple = min((multi_client_replicated_striped_mbs, 'replicated_writes'), (replicated_client_network_limit, 'client_network'), (replicated_cluster_network_limit, 'storage_network'), (replicated_cluster_device_throughput_limit, 'backend_device_limit'), (replicated_cluster_controller_throughput_limit, 'backend_controller_limit'))
+	return bottleneck_tuple
+
+# Multi client, multi stream performance, EC 
+## Multi client EC is limited by frontend network capacity minus coding_stripe_bandwidth.
+## Multi client EC is limited by cluster_network_throughput_capacity.
+## Multi client EC is limited by cluster_device_throughput_capacity.
+## Multi client EC is limited by cluster_controller_throughput_capacity.
+## Multi client EC has the expected throughput of "device_throughput_mbs * data stripe count * number_clients"
+def multi_client_ec_writes_mbs(number_clients, client_throughput_network, cluster_throughput_device, cluster_throughput_network, cluster_throughput_controller, ec_datastripes, ec_codingstripes):
+	multi_client_ec_striped_mbs = number_clients * device_throughput_mbs * ec_datastripes
+	ec_client_network_limit = (client_throughput_network / (ec_datastripes + ec_codingstripes)) * ec_codingstripes
+	ec_cluster_network_limit = cluster_throughput_network
+	ec_cluster_device_throughput_limit = cluster_throughput_device
+	ec_cluster_controller_throughput_limit = cluster_throughput_controller
+	bottleneck_tuple = min((multi_client_ec_striped_mbs, 'ec_writes'), (ec_client_network_limit, 'client_network'), (ec_cluster_network_limit, 'storage_network'), (ec_cluster_device_throughput_limit, 'backend_device_limit'), (ec_cluster_controller_throughput_limit, 'backend_controller_limit'))
+	return bottleneck_tuple
 
 # See if we can open/ read a config file
 def get_configfile():
@@ -160,9 +203,9 @@ def read_configvalues():
     storagenode_nic_mbs = float(storagenode_nic_gbs * 1000)
     number_storagenodes = int(config.get('storagenodes', 'number_nodes', fallback=1))
     number_storagenode_devices = int(config.get('storagenodes', 'number_devices', fallback=1))
-    number_storagenode_device_controller = int(config.get('storagenodes', 'number_device_controller', fallback=1))
+    number_storagenode_device_controller = int(config.get('storagenodes', 'number_device_controller', fallback=4))
     device_throughput_mbs = int(config.get('storagenodes', 'device_throughput_mbs', fallback=100))
-    controller_throughput_mbs = int(config.get('storagenodes', 'controller_throughput_mbs', fallback=100))
+    controller_throughput_mbs = int(config.get('storagenodes', 'controller_throughput_mbs', fallback=24000))
     device_capacity_GB = int(config.get('storagenodes', 'capacity_devices_GB', fallback=100))
     ec_datastripes = int(config.get('storageconfig', 'ec_datastripes', fallback=5))  
     ec_codingstripes = int(config.get('storageconfig', 'ec_codingstripes', fallback=3))  
@@ -195,7 +238,17 @@ client_cluster_throughput_network_mbs  = client_cluster_throughput_network  * 10
 
 # Calculate single client EC writes
 single_write_ec   = single_client_ec_writes_mbs(client_nic_mbs, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
+# Calculate single client replicated writes
 single_write_repl = single_client_repl_writes_mbs(client_nic_mbs, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
+
+# Calculate multi client unreplicated write
+multi_write_unrepl = multi_client_unrepl_writes_mbs(number_clients, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, replication_stripewidth)
+
+# Calculate multi client replicated writes
+multi_write_repl = multi_client_repl_writes_mbs(number_clients, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, replication_factor, replication_stripewidth)
+
+# Calculate multi client Erasure Coding writes
+multi_write_ec = multi_client_ec_writes_mbs(number_clients, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
 
 ## Debug
 print()
@@ -223,4 +276,16 @@ print()
 print("Single client, Replication")
 print("Replication single write bottleneck: %s" % single_write_repl[1])
 print("Replication single write performance: %s Megabit/s" % single_write_repl[0])
+print()
+print("Multi client, no replication")
+print("Multi client write bottleneck, unreplicated: %s" % multi_write_unrepl[1])
+print("Multi client write performance, unreplicated: %s Megabit/s" % round(multi_write_unrepl[0], 2))
+print()
+print("Multi client, Replication")
+print("Replication multi client write bottleneck: %s" % multi_write_repl[1])
+print("Replication multi client write performance: %s Megabit/s" % round(multi_write_repl[0], 2))
+print()
+print("Multi client, Erasure Coding")
+print("EC multi write bottleneck: %s" % multi_write_ec[1])
+print("EC multi write performance: %s Megabit/s" % multi_write_ec[0])
 print()
