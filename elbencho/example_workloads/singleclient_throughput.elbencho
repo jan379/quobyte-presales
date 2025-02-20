@@ -9,6 +9,7 @@ hostsfile=/home/deploy/benchmarks/elbencho-firstclient.list
 resfile=/home/deploy/benchmarks/results/elbencho-singleclient_throughput.txt
 
 size=120G	# A file spanning more than one (10G) segment.
+block=8M		# A convenient block size. 
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=1	# Do parallel requests from each client
