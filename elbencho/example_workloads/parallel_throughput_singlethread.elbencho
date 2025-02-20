@@ -9,6 +9,7 @@ hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput-3.24.txt
 
 size=80M	# A lot of 80MB files will distribute fairly across available devices. 
+block=8M	# A convenient block size
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=1	# Do parallel requests from each client
