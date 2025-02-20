@@ -8,6 +8,7 @@ hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput.txt
 
 size=24G	# A file spanning more than one (10G) segment.
+block=8M	# A convenient block size
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=8	# Do parallel requests from each client
@@ -17,5 +18,5 @@ deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=2		# Number of files to create
 iodepth=2	# >1 enables async I/O
-
-lat=1
+cpu=1		# We are interested in client CPUs as upper boundary
+lat=1		# Latencies can explain a lot
