@@ -7,7 +7,7 @@
 hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/iops.txt
 
-size=100M	# A file spanning more than one (10G) segment.
+size=80M	# A file spanning more than one (10G) segment.
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=8	# Do parallel requests from each client
@@ -17,5 +17,5 @@ deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=200	# Number of files to create
 block=4k	# Smallest write unit in QB
-
+cpu=1
 lat=1

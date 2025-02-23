@@ -8,8 +8,8 @@ label=arg="One client writes one large file (like dd)"
 hostsfile=/home/deploy/benchmarks/elbencho-firstclient.list
 resfile=/home/deploy/benchmarks/results/elbencho-singleclient_throughput.txt
 
-size=12G	# A file spanning more than one (10G) segment.
-block=8M		# A convenient block size. 
+size=80M	# A file spanning more than one (10G) segment.
+block=8M	# A convenient block size. 
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
 threads=8	# Do parallel requests from each client
@@ -17,6 +17,6 @@ mkdirs=1	# Create directories if necessary
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
-files=1		# Number of files to create
+files=400	# Number of files to create
 cpu=1		# Especially for EC we are interested in CPU upper boundary
 lat=1
