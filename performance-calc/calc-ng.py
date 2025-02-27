@@ -169,9 +169,10 @@ def get_multi_client_ec_reads_mbs(number_clients, client_threads, client_through
 def get_configfile():
     parser = argparse.ArgumentParser(
         description='Calculate Capacity and Performance for given hardware configurations.',
-        epilog='Provide your own config file ("./calc.py -c myconfig.ini")')
+        epilog='Provide your own config file ("./calc-ng.py -c myconfig.ini")')
     
     parser.add_argument('-c', '--configfile')
+    parser.add_argument('-f', '--format', default="text")
     
     args = parser.parse_args()
     
@@ -182,6 +183,7 @@ def get_configfile():
     
     print()
     print("Using configuration file: %s" % args.configfile)
+    print("Output format: %s" % args.format)
     
     # Check if configfile is readable
     try:
@@ -346,3 +348,4 @@ print("Multi client read, Erasure Coding")
 print("EC multi read bottleneck: %s" % multi_read_ec[1])
 print("EC multi read performance: %s %s" % (pretty_multi_read_ec[0], pretty_multi_read_ec[1]))
 print()
+
