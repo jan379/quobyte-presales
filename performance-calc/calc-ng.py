@@ -204,7 +204,6 @@ def read_configvalues():
     global client_threads # how many parallel threads will the application use? 
     global client_nic_gbs 
     global client_nic_mbs 
-    global client_network_throughput_capacity_mbs 
     ## Storage nodes
     global storagenode_nic_gbs 
     global storagenode_nic_mbs 
@@ -224,10 +223,8 @@ def read_configvalues():
     number_clients = int(config.get('clients', 'number_clients', fallback=1))
     client_threads = int(config.get('clients', 'number_threads', fallback=1))
     client_nic_gbs = float(config.get('clients', 'capacity_nic_gbs', fallback=1.0))
-    client_nic_mbs = float(client_nic_gbs*1000)
     
     storagenode_nic_gbs = float(config.get('storagenodes', 'capacity_nic_gbs', fallback=1.0))
-    storagenode_nic_mbs = float(storagenode_nic_gbs * 1000)
     number_storagenodes = int(config.get('storagenodes', 'number_nodes', fallback=1))
     number_storagenode_devices = int(config.get('storagenodes', 'number_devices', fallback=1))
     number_storagenode_device_controller = int(config.get('storagenodes', 'number_device_controller', fallback=4))
@@ -257,21 +254,36 @@ node_throughput_device = get_host_throughput_device(number_storagenode_devices, 
 node_throughput_device_read = get_host_throughput_device(number_storagenode_devices, device_throughput_mbs_read) 
 node_throughput_controller = get_host_throughput_controller(number_storagenode_device_controller, controller_throughput_mbs)
 cluster_throughput_device = get_cluster_throughput_device(number_storagenodes, node_throughput_device)
-# Fix variable name scheme asap
-#cluster_throughput_device_read = number_storagenodes * node_throughput_device_read
 cluster_throughput_device_read = get_cluster_throughput_device(number_storagenodes, node_throughput_device_read)
 cluster_throughput_controller = get_cluster_throughput_controller(number_storagenodes, node_throughput_controller)
+# pretty units, pretty numbers
+pretty_node_throughput_device = get_pretty_performance(node_throughput_device)
+pretty_node_throughput_device_read = get_pretty_performance(node_throughput_device_read)
+pretty_node_throughput_controller = get_pretty_performance(node_throughput_controller)
+pretty_cluster_throughput_device = get_pretty_performance(cluster_throughput_device)
+pretty_cluster_throughput_device_read = get_pretty_performance(cluster_throughput_device_read)
+pretty_cluster_throughput_controller = get_pretty_performance(cluster_throughput_controller)
 
 # Calculate network throughput limits
+storagenode_nic_mbs = storagenode_nic_gbs * 1000
+client_nic_mbs = client_nic_gbs * 1000
 storage_cluster_throughput_network = get_cluster_throughput_network(number_storagenodes, storagenode_nic_gbs)
 client_cluster_throughput_network  = get_cluster_throughput_network(number_clients, client_nic_gbs)
 storage_cluster_throughput_network_mbs = storage_cluster_throughput_network * 1000
 client_cluster_throughput_network_mbs  = client_cluster_throughput_network  * 1000
+# pretty units, pretty numbers
+pretty_storagenode_nic_mbs = get_pretty_performance(storagenode_nic_mbs) 
+pretty_client_nic_mbs = get_pretty_performance(client_nic_mbs)
+pretty_storage_cluster_throughput_network = get_pretty_performance(storage_cluster_throughput_network_mbs)
+pretty_client_cluster_throughput_network = get_pretty_performance(client_cluster_throughput_network_mbs)
 
 # Calculate single client EC writes
 single_write_ec   = get_single_client_ec_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
+pretty_single_write_ec = get_pretty_performance(single_write_ec[0])
+
 # Calculate single client replicated writes
 single_write_repl = get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
+pretty_single_write_repl = get_pretty_performance(single_write_repl[0])
 
 # Calculate multi client unreplicated write
 multi_write_unrepl = get_multi_client_unrepl_writes_mbs(number_clients, client_threads, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, replication_stripewidth)
@@ -298,25 +310,25 @@ print("Cluster EC capacity: %s" % get_pretty_capacity(cluster_capacity_ec))
 print("Cluster replication capacity: %s" % get_pretty_capacity(cluster_capacity_repl))
 print()
 print("Device performance:")
-print("Single Node device throughput: %s Mebibyte/s" % get_megabit_to_mebibyte(node_throughput_device))
-print("Single Node device controller throughput: %s Mebibytes/s" % get_megabit_to_mebibyte(controller_throughput_mbs))
-print("Cluster wide device throughput write: %s Mebibyte/s" % get_megabit_to_mebibyte(cluster_throughput_device))
-print("Cluster wide device throughput read: %s Mebibyte/s" % get_megabit_to_mebibyte(cluster_throughput_device_read))
-print("Cluster wide controller throughput: %s Mebibytes/s" % get_megabit_to_mebibyte(cluster_throughput_controller))
+print("Single Node device throughput: %s %s" % (pretty_node_throughput_device[0], pretty_node_throughput_device[1]))
+print("Single Node device controller throughput: %s %s" % (pretty_node_throughput_controller[0], pretty_node_throughput_controller[1]))
+print("Cluster wide device throughput write: %s %s" % (pretty_cluster_throughput_device[0], pretty_cluster_throughput_device[1]))
+print("Cluster wide device throughput read: %s %s" % (pretty_cluster_throughput_device_read[0], pretty_cluster_throughput_device_read[1]))
+print("Cluster wide controller throughput: %s %s" % (pretty_cluster_throughput_controller[0], pretty_cluster_throughput_controller[1]))
 print()
 print("Network performance:")
-print("Single storage node network throughput: %s Mebibyte/s" % get_megabit_to_mebibyte(storagenode_nic_mbs))
-print("Single client node network throughput: %s Mebibyte/s" % get_megabit_to_mebibyte(client_nic_mbs))
-print("Storage cluster network throughput: %s Mebibyte/s" % get_megabit_to_mebibyte(storage_cluster_throughput_network_mbs))
-print("Client cluster network throughput: %s Mebibyte/s" % get_megabit_to_mebibyte(client_cluster_throughput_network_mbs))
+print("Single storage node network throughput: %s %s" % (pretty_storagenode_nic_mbs[0], pretty_storagenode_nic_mbs[1]))
+print("Single client node network throughput: %s %s" % (pretty_client_nic_mbs[0], pretty_client_nic_mbs[1]))
+print("Storage cluster network throughput: %s %s" % (pretty_storage_cluster_throughput_network[0], pretty_storage_cluster_throughput_network[1]))
+print("Client cluster network throughput: %s %s" % (pretty_client_cluster_throughput_network[0], pretty_client_cluster_throughput_network[1]))
 print()
 print("Single client, EC")
 print("EC single write bottleneck: %s" % single_write_ec[1])
-print("EC single write performance: %s Mebibyte/s" % get_megabit_to_mebibyte(single_write_ec[0]))
+print("EC single write performance: %s %s" % (pretty_single_write_ec[0], pretty_single_write_ec[1]))
 print()
 print("Single client, Replication")
 print("Replication single write bottleneck: %s" % single_write_repl[1])
-print("Replication single write performance: %s Mebibyte/s" % get_megabit_to_mebibyte(single_write_repl[0]))
+print("Replicated single write performance: %s %s" % (pretty_single_write_repl[0], pretty_single_write_repl[1]))
 print()
 print("Multi client, no replication")
 print("Multi client write bottleneck, unreplicated: %s" % multi_write_unrepl[1])
