@@ -31,13 +31,13 @@ def get_pretty_capacity(capacity_gb):
 def get_pretty_performance(performance_mbs):
     performance_mebibyte = get_megabit_to_mebibyte(performance_mbs)
     if performance_mebibyte < 1024:
-        performance_unit = "MiB"
+        performance_unit = "MiB/s"
         performance_value = performance_mebibyte 
     elif performance_mebibyte >= 1024 and performance_mebibyte < 1024 * 1024:
-        performance_unit = "GiB"
+        performance_unit = "GiB/s"
         performance_value = performance_mebibyte / 1024 
     elif performance_mebibyte >= 1024 * 1024 and performance_mebibyte < 1024 * 1024 * 1024:
-        performance_unit = "TiB" 
+        performance_unit = "TiB/s" 
         performance_value = performance_mebibyte / 1024 / 1024
     else:
         performance_unit = "not implemented" 
