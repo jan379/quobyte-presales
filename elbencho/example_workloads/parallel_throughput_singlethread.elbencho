@@ -1,9 +1,8 @@
-# Create large files in parallel.
+# Create large files in parallel, using only one thread per client.
 # You can benchmark data performance/ throughput using this test.
 # You can observe differences for different stripe widths.
 # Example call:
-# elbencho -c parallel_throughput.elbencho /quobyte/elbencho
-# Exptected result for single thread writes: local_device_bandwidth * client_count
+# elbencho -c parallel_throughput_singlethread.elbencho /quobyte/elbencho
 
 hostsfile=/home/deploy/benchmarks/elbencho-clients.list
 resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput-3.24.txt
@@ -12,12 +11,13 @@ size=80M	# A lot of 80MB files will distribute fairly across available devices.
 block=8M	# A convenient block size
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
-threads=1	# Do parallel requests from each client
+threads=1	# Do *not* do parallel requests from each client
 mkdirs=1	# Create directories if necessary
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=2000	# Number of files to create
 iodepth=2	# >1 enables async I/O
-cpu=1
-lat=1
+trunc=1		# Truncate files if they are re-written. Avoids read-modify-write cycles.
+cpu=1		# We are interested in client CPUs as upper boundary
+lat=1		# Latencies can explain a lot
