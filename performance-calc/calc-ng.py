@@ -303,49 +303,64 @@ pretty_multi_write_ec = get_pretty_performance(multi_write_ec[0])
 multi_read_ec = get_multi_client_ec_reads_mbs(number_clients, client_threads, client_cluster_throughput_network_mbs, cluster_throughput_device_read, storage_cluster_throughput_network_mbs, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
 pretty_multi_read_ec = get_pretty_performance(multi_read_ec[0])
 
+# all data in one dictionary
+mycluster = {
+        # Capacity
+        "capacity_raw":get_pretty_capacity(cluster_capacity_raw),
+        "capacity_ec":get_pretty_capacity(cluster_capacity_ec),
+        "capacity_repl":get_pretty_capacity(cluster_capacity_repl),
+        # Single Node Performance
+        "single_node_device_throughput": {"value": pretty_node_throughput_device[0], "unit": pretty_node_throughput_device[1]},
+        "single_node_controller_throughput": {"value": pretty_node_throughput_controller[0], "unit": pretty_node_throughput_controller[1]},
+        "single_node_network_throughput": {"value": pretty_storagenode_nic_mbs[0], "unit": pretty_storagenode_nic_mbs[1]},
+        # Cluster Performance
+        "aggregated_device_throughput_write": {"value": pretty_cluster_throughput_device[0], "unit": pretty_cluster_throughput_device[1]},
+        "aggregated_device_throughput_read": {"value": pretty_cluster_throughput_device_read[0], "unit": pretty_cluster_throughput_device_read[1]}, 
+        "aggregated_controller_throughput": {"value": pretty_cluster_throughput_controller[0], "unit": pretty_cluster_throughput_controller[1]}
+    }
 
 ## Output
 print()
 print("Capacity:")
-print("Cluster raw capacity: %s" % get_pretty_capacity(cluster_capacity_raw))
-print("Cluster EC capacity: %s" % get_pretty_capacity(cluster_capacity_ec))
-print("Cluster replication capacity: %s" % get_pretty_capacity(cluster_capacity_repl))
+print("Cluster raw capacity: %s" % mycluster["capacity_raw"])
+print("Cluster EC capacity: %s" % mycluster["capacity_ec"])
+print("Cluster replication capacity: %s" % mycluster["capacity_repl"])
 print()
 print("Device performance:")
-print("Single Node device throughput: %s %s" % (pretty_node_throughput_device[0], pretty_node_throughput_device[1]))
-print("Single Node device controller throughput: %s %s" % (pretty_node_throughput_controller[0], pretty_node_throughput_controller[1]))
-print("Cluster wide device throughput write: %s %s" % (pretty_cluster_throughput_device[0], pretty_cluster_throughput_device[1]))
-print("Cluster wide device throughput read: %s %s" % (pretty_cluster_throughput_device_read[0], pretty_cluster_throughput_device_read[1]))
-print("Cluster wide controller throughput: %s %s" % (pretty_cluster_throughput_controller[0], pretty_cluster_throughput_controller[1]))
+print("Single Node device throughput: %s %s" % (mycluster["single_node_device_throughput"]["value"], mycluster["single_node_device_throughput"]["unit"]))
+print("Single Node device controller throughput: %s %s" % (mycluster["single_node_controller_throughput"]["value"],mycluster["single_node_controller_throughput"]["unit"]))
+print("Cluster wide device throughput write: %s %s" % (mycluster["aggregated_device_throughput_write"]["value"], mycluster["aggregated_device_throughput_write"]["unit"]))
+print("Cluster wide device throughput read: %s %s" % (mycluster["aggregated_device_throughput_read"]["value"], mycluster["aggregated_device_throughput_read"]["unit"]))
+print("Cluster wide controller throughput: %s %s" % (mycluster["aggregated_controller_throughput"]["value"], mycluster["aggregated_controller_throughput"]["unit"]))
 print()
 print("Network performance:")
-print("Single storage node network throughput: %s %s" % (pretty_storagenode_nic_mbs[0], pretty_storagenode_nic_mbs[1]))
+print("Single storage node network throughput: %s %s" % (mycluster["single_node_network_throughput"]["value"], mycluster["single_node_network_throughput"]["unit"]))
 print("Single client node network throughput: %s %s" % (pretty_client_nic_mbs[0], pretty_client_nic_mbs[1]))
 print("Storage cluster network throughput: %s %s" % (pretty_storage_cluster_throughput_network[0], pretty_storage_cluster_throughput_network[1]))
 print("Client cluster network throughput: %s %s" % (pretty_client_cluster_throughput_network[0], pretty_client_cluster_throughput_network[1]))
 print()
 print("Single client write, EC")
 print("EC single write bottleneck: %s" % single_write_ec[1])
-print("EC single write performance: %s %s" % (pretty_single_write_ec[0], pretty_single_write_ec[1]))
+print("EC single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_ec[0], pretty_single_write_ec[1]))
 print()
-print("Single client write , Replication")
+print("Single client write, Replication")
 print("Replication single write bottleneck: %s" % single_write_repl[1])
-print("Replicated single write performance: %s %s" % (pretty_single_write_repl[0], pretty_single_write_repl[1]))
+print("Replicated single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_repl[0], pretty_single_write_repl[1]))
 print()
 print("Multi client write, no replication")
 print("Multi client write bottleneck, unreplicated: %s" % multi_write_unrepl[1])
-print("Unreplicated multi write performance: %s %s" % (pretty_multi_write_unrepl[0], pretty_multi_write_unrepl[1]))
+print("Unreplicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_unrepl[0], pretty_multi_write_unrepl[1]))
 print()
 print("Multi client write, Replication")
 print("Replication multi client write bottleneck: %s" % multi_write_repl[1])
-print("Replicated multi write performance: %s %s" % (pretty_multi_write_repl[0], pretty_multi_write_repl[1]))
+print("Replicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_repl[0], pretty_multi_write_repl[1]))
 print()
 print("Multi client write, Erasure Coding")
 print("EC multi write bottleneck: %s" % multi_write_ec[1])
-print("EC multi write performance: %s %s" % (pretty_multi_write_ec[0], pretty_multi_write_ec[1]))
+print("EC multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_ec[0], pretty_multi_write_ec[1]))
 print()
 print("Multi client read, Erasure Coding")
 print("EC multi read bottleneck: %s" % multi_read_ec[1])
-print("EC multi read performance: %s %s" % (pretty_multi_read_ec[0], pretty_multi_read_ec[1]))
+print("EC multi read performance, %s threads per client: %s %s" % (client_threads, pretty_multi_read_ec[0], pretty_multi_read_ec[1]))
 print()
 
