@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import drawsvg as draw
 
 company_color_primary="#262262"
@@ -15,7 +16,6 @@ d = draw.Drawing(800, 600, origin='center', font_family='Nunito Sans', dominant_
 
 # Draw text
 d.append(draw.Text('Quobyte rulez', 24, -380, -280, fill=company_color_accent1))  # 8pt text at (-10, -35)
-
 
 # Draw a rectangle2
 r = draw.Rectangle(-395, -195, box_width, box_height, rx='10', ry='10', fill=company_color_primary)
@@ -46,7 +46,7 @@ d.append(draw.Line(30, 20, 0, 10,
         stroke='red', stroke_width=2, fill='none',
         marker_end=arrow))  # Add an arrow to the end of a line
 
-d.set_pixel_scale(2)  # Set number of pixels per geometry unit
+d.set_pixel_scale(3)  # Set number of pixels per geometry unit
 #d.set_render_size(400, 200)  # Alternative to set_pixel_scale
 d.save_svg('example.svg')
 
