@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import json
 import argparse 
 import configparser
 
@@ -102,7 +103,7 @@ def get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_thr
     single_client_frontend_network_limit = (client_nic_mbs)
     single_client_backend_network_limit = (cluster_throughput_network / replication_factor)
     single_client_backend_device_limit = (cluster_throughput_device / replication_factor)
-    single_client_backend_controller_limit = (cluster_throughput_device / replication_factor)
+    single_client_backend_controller_limit = (cluster_throughput_controller / replication_factor)
     bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_writes'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
     return bottleneck_tuple
 
@@ -364,3 +365,6 @@ print("EC multi read bottleneck: %s" % multi_read_ec[1])
 print("EC multi read performance, %s threads per client: %s %s" % (client_threads, pretty_multi_read_ec[0], pretty_multi_read_ec[1]))
 print()
 
+# WIP
+myjson = json.dumps(mycluster)
+##print(myjson)
