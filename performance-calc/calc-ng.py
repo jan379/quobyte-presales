@@ -107,12 +107,11 @@ def get_single_client_ec_reads_mbs(client_nic_mbs, client_threads, device_throug
     bottleneck_tuple =  min((single_client_ec_frontend_network_limit, 'client_network'), (single_client_mbs, 'ec_writes'), (ec_cluster_controller_throughput_limit, 'storage_network'),(ec_cluster_device_throughput_limit, 'backend_device_limit'),(ec_cluster_controller_throughput_limit, 'backend_controller'))
     return bottleneck_tuple
 
-## A single client replication limited by client_node_network_capacity.
-## A single client replication limited by cluster_network_throughput_capacity / 3.
-## A single client replication is limited by cluster_device_throughput_capacity / 3.
-## A single client replication is limited by cluster_controller_throughput_capacity / 3.
-## A single client replication is limited by client_.
-## A single client replication has the expected throughput of "device_throughput_mbs * stripe_width * client_threads"
+## A single client replication write is limited by client_node_network_capacity.
+## A single client replication write is limited by cluster_network_throughput_capacity / replication_factor.
+## A single client replication write is limited by cluster_device_throughput_capacity / replication_factor.
+## A single client replication write is limited by cluster_controller_throughput_capacity / replication_factor.
+## A single client replication read has the expected throughput of "device_throughput_mbs * stripe_width * client_threads"
 def get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth):
     single_client_mbs = (device_throughput_mbs * replication_stripewidth * client_threads)
     single_client_frontend_network_limit = (client_nic_mbs)
@@ -121,6 +120,21 @@ def get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_thr
     single_client_backend_controller_limit = (cluster_throughput_controller / replication_factor)
     bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_writes'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
     return bottleneck_tuple
+
+## A single client replication read is limited by client_node_network_capacity.
+## A single client replication read is limited by cluster_network_throughput_capacity.
+## A single client replication read is limited by cluster_device_throughput_capacity.
+## A single client replication read is limited by cluster_controller_throughput_capacity.
+## A single client replication read has the expected throughput of "device_throughput_mbs * stripe_width * client_threads"
+def get_single_client_repl_reads_mbs(client_nic_mbs, client_threads, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth):
+    single_client_mbs = (device_throughput_mbs * replication_stripewidth * client_threads)
+    single_client_frontend_network_limit = client_nic_mbs
+    single_client_backend_network_limit = cluster_throughput_network
+    single_client_backend_device_limit = cluster_throughput_device
+    single_client_backend_controller_limit = cluster_throughput_controller
+    bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_writes'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
+    return bottleneck_tuple
+
 
 # Multi client, multi stream performance, unreplicated
 ## Multi client unreplicated performance is limited by client_network_throughput_capacity
@@ -307,6 +321,11 @@ pretty_single_read_ec = get_pretty_performance(single_read_ec[0])
 single_write_repl = get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
 pretty_single_write_repl = get_pretty_performance(single_write_repl[0])
 
+# Calculate single client replicated reads
+single_read_repl = get_single_client_repl_reads_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
+pretty_single_read_repl = get_pretty_performance(single_read_repl[0])
+
+
 # Calculate multi client unreplicated write
 multi_write_unrepl = get_multi_client_unrepl_writes_mbs(number_clients, client_threads, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, replication_stripewidth)
 pretty_multi_write_unrepl = get_pretty_performance(multi_write_unrepl[0])
@@ -323,7 +342,7 @@ pretty_multi_write_ec = get_pretty_performance(multi_write_ec[0])
 multi_read_ec = get_multi_client_ec_reads_mbs(number_clients, client_threads, client_cluster_throughput_network_mbs, cluster_throughput_device_read, storage_cluster_throughput_network_mbs, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
 pretty_multi_read_ec = get_pretty_performance(multi_read_ec[0])
 
-# all data in one dictionary
+# WIP, all data in one dictionary
 mycluster = {
         # Capacity
         "capacity_raw":get_pretty_capacity(cluster_capacity_raw),
@@ -341,24 +360,25 @@ mycluster = {
 
 ## Output
 print()
-print("Capacity:")
+print("## Capacity:")
 print("Cluster raw capacity: %s" % mycluster["capacity_raw"])
 print("Cluster EC capacity: %s" % mycluster["capacity_ec"])
 print("Cluster replication capacity: %s" % mycluster["capacity_repl"])
 print()
-print("Device performance:")
+print("## Device performance:")
 print("Single Node device throughput: %s %s" % (mycluster["single_node_device_throughput"]["value"], mycluster["single_node_device_throughput"]["unit"]))
 print("Single Node device controller throughput: %s %s" % (mycluster["single_node_controller_throughput"]["value"],mycluster["single_node_controller_throughput"]["unit"]))
 print("Cluster wide device throughput write: %s %s" % (mycluster["aggregated_device_throughput_write"]["value"], mycluster["aggregated_device_throughput_write"]["unit"]))
 print("Cluster wide device throughput read: %s %s" % (mycluster["aggregated_device_throughput_read"]["value"], mycluster["aggregated_device_throughput_read"]["unit"]))
 print("Cluster wide controller throughput: %s %s" % (mycluster["aggregated_controller_throughput"]["value"], mycluster["aggregated_controller_throughput"]["unit"]))
 print()
-print("Network performance:")
+print("## Network performance:")
 print("Single storage node network throughput: %s %s" % (mycluster["single_node_network_throughput"]["value"], mycluster["single_node_network_throughput"]["unit"]))
 print("Single client node network throughput: %s %s" % (pretty_client_nic_mbs[0], pretty_client_nic_mbs[1]))
 print("Storage cluster network throughput: %s %s" % (pretty_storage_cluster_throughput_network[0], pretty_storage_cluster_throughput_network[1]))
 print("Client cluster network throughput: %s %s" % (pretty_client_cluster_throughput_network[0], pretty_client_cluster_throughput_network[1]))
 print()
+print("## Erasure Coding:")
 print("Single client write, EC")
 print("EC single write bottleneck: %s" % single_write_ec[1])
 print("EC single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_ec[0], pretty_single_write_ec[1]))
@@ -367,18 +387,6 @@ print("Single client read, EC")
 print("EC single write bottleneck: %s" % single_read_ec[1])
 print("EC single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_read_ec[0], pretty_single_read_ec[1]))
 print()
-print("Single client write, Replication")
-print("Replication single write bottleneck: %s" % single_write_repl[1])
-print("Replicated single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_repl[0], pretty_single_write_repl[1]))
-print()
-print("Multi client write, no replication")
-print("Multi client write bottleneck, unreplicated: %s" % multi_write_unrepl[1])
-print("Unreplicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_unrepl[0], pretty_multi_write_unrepl[1]))
-print()
-print("Multi client write, Replication")
-print("Replication multi client write bottleneck: %s" % multi_write_repl[1])
-print("Replicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_repl[0], pretty_multi_write_repl[1]))
-print()
 print("Multi client write, Erasure Coding")
 print("EC multi write bottleneck: %s" % multi_write_ec[1])
 print("EC multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_ec[0], pretty_multi_write_ec[1]))
@@ -386,6 +394,24 @@ print()
 print("Multi client read, Erasure Coding")
 print("EC multi read bottleneck: %s" % multi_read_ec[1])
 print("EC multi read performance, %s threads per client: %s %s" % (client_threads, pretty_multi_read_ec[0], pretty_multi_read_ec[1]))
+print()
+print("## Replication:")
+print("Single client write, Replication")
+print("Replication single write bottleneck: %s" % single_write_repl[1])
+print("Replicated single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_read_repl[0], pretty_single_read_repl[1]))
+print()
+print("Single client read, Replication")
+print("Replication single read bottleneck: %s" % single_write_repl[1])
+print("Replicated single read performance, %s threads per client: %s %s" % (client_threads, pretty_single_read_repl[0], pretty_single_read_repl[1]))
+print()
+print("Multi client write, Replication")
+print("Replication multi client write bottleneck: %s" % multi_write_repl[1])
+print("Replicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_repl[0], pretty_multi_write_repl[1]))
+print()
+print("## No Redundancy:")
+print("Multi client write, no replication")
+print("Multi client write bottleneck, unreplicated: %s" % multi_write_unrepl[1])
+print("Unreplicated multi write performance, %s threads per client: %s %s" % (client_threads, pretty_multi_write_unrepl[0], pretty_multi_write_unrepl[1]))
 print()
 
 # WIP
