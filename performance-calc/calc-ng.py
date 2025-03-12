@@ -92,6 +92,21 @@ def get_single_client_ec_writes_mbs(client_nic_mbs, client_threads, device_throu
     bottleneck_tuple =  min((single_client_ec_frontend_network_limit, 'client_network'), (single_client_mbs, 'ec_writes'), (ec_cluster_controller_throughput_limit, 'storage_network'),(ec_cluster_device_throughput_limit, 'backend_device_limit'),(ec_cluster_controller_throughput_limit, 'backend_controller'))
     return bottleneck_tuple
 
+# Calculate single client reads
+## A single client EC read is limited by host network capacity.
+## A single client EC read is limited by cluster_network_throughput_capacity.
+## A single client EC read is limited by cluster_device_throughput_capacity.
+## A single client EC read is limited by cluster_controller_throughput_capacity.
+## A single  client EC has the expected throughput of "device_throughput_mbs * data stripe count * client_threads"
+def get_single_client_ec_reads_mbs(client_nic_mbs, client_threads, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, ec_datastripes, ec_codingstripes):
+    single_client_mbs = (device_throughput_mbs * ec_datastripes * client_threads)
+    single_client_ec_frontend_network_limit = client_nic_mbs
+    ec_cluster_network_limit = cluster_throughput_network
+    ec_cluster_device_throughput_limit = cluster_throughput_device
+    ec_cluster_controller_throughput_limit = cluster_throughput_controller
+    bottleneck_tuple =  min((single_client_ec_frontend_network_limit, 'client_network'), (single_client_mbs, 'ec_writes'), (ec_cluster_controller_throughput_limit, 'storage_network'),(ec_cluster_device_throughput_limit, 'backend_device_limit'),(ec_cluster_controller_throughput_limit, 'backend_controller'))
+    return bottleneck_tuple
+
 ## A single client replication limited by client_node_network_capacity.
 ## A single client replication limited by cluster_network_throughput_capacity / 3.
 ## A single client replication is limited by cluster_device_throughput_capacity / 3.
@@ -151,7 +166,7 @@ def get_multi_client_ec_writes_mbs(number_clients, client_threads, client_throug
 	bottleneck_tuple = min((multi_client_ec_striped_mbs, 'ec_writes'), (ec_client_network_limit, 'client_network'), (ec_cluster_network_limit, 'storage_network'), (ec_cluster_device_throughput_limit, 'backend_device_limit'), (ec_cluster_controller_throughput_limit, 'backend_controller_limit'))
 	return bottleneck_tuple
 
-# Multi client, multi stream write performance, EC 
+# Multi client, multi stream read performance, EC 
 ## Multi client EC is limited by frontend network
 ## Multi client EC is limited by cluster_network_throughput_capacity.
 ## Multi client EC is limited by cluster_device_throughput_capacity.
@@ -280,9 +295,13 @@ pretty_client_nic_mbs = get_pretty_performance(client_nic_mbs)
 pretty_storage_cluster_throughput_network = get_pretty_performance(storage_cluster_throughput_network_mbs)
 pretty_client_cluster_throughput_network = get_pretty_performance(client_cluster_throughput_network_mbs)
 
-# Calculate single client EC writes
+# Calculate single client Erasure Coding writes
 single_write_ec   = get_single_client_ec_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
 pretty_single_write_ec = get_pretty_performance(single_write_ec[0])
+
+# Calculate single client Erasure Coding reads 
+single_read_ec   = get_single_client_ec_reads_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, ec_datastripes, ec_codingstripes)
+pretty_single_read_ec = get_pretty_performance(single_read_ec[0])
 
 # Calculate single client replicated writes
 single_write_repl = get_single_client_repl_writes_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
@@ -343,6 +362,10 @@ print()
 print("Single client write, EC")
 print("EC single write bottleneck: %s" % single_write_ec[1])
 print("EC single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_ec[0], pretty_single_write_ec[1]))
+print()
+print("Single client read, EC")
+print("EC single write bottleneck: %s" % single_read_ec[1])
+print("EC single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_read_ec[0], pretty_single_read_ec[1]))
 print()
 print("Single client write, Replication")
 print("Replication single write bottleneck: %s" % single_write_repl[1])
