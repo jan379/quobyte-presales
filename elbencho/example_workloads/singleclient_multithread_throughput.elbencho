@@ -19,4 +19,5 @@ deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=400	# Number of files to create
 cpu=1		# Especially for EC we are interested in CPU upper boundary
+trunc=1		# Truncate files if they are re-written. Avoids read-modify-write cycles.
 lat=1
