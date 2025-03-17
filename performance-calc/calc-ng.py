@@ -134,10 +134,25 @@ def get_single_client_repl_reads_mbs(client_nic_mbs, client_threads, device_thro
     single_client_backend_network_limit = cluster_throughput_network
     single_client_backend_device_limit = cluster_throughput_device
     single_client_backend_controller_limit = cluster_throughput_controller
-    bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_writes'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
+    bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'replicated_reads'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
     return bottleneck_tuple
 
-#  Multi client, multi stream writes, unreplicated
+#  Single client unreplicated read/ write
+## Single client unreplicated I/O is limited by client_node_network_capacity.
+## Single client unreplicated I/O is limited by cluster_network_throughput_capacity.
+## Single client unreplicated I/O is limited by cluster_device_throughput_capacity.
+## Single client unreplicated I/O is limited by cluster_controller_throughput_capacity.
+## Single client unreplicated I/O has the expected throughput of "device_throughput_mbs * stripe_width * client_threads"
+def get_single_client_unrepl_readwrite_mbs(client_nic_mbs, client_threads, device_throughput_mbs, cluster_throughput_network, cluster_throughput_device, cluster_throughput_controller, replication_stripewidth):
+    single_client_mbs = (device_throughput_mbs * replication_stripewidth * client_threads)
+    single_client_frontend_network_limit = client_nic_mbs
+    single_client_backend_network_limit = cluster_throughput_network
+    single_client_backend_device_limit = cluster_throughput_device
+    single_client_backend_controller_limit = cluster_throughput_controller
+    bottleneck_tuple =  min((single_client_frontend_network_limit, 'client_network'), (single_client_mbs, 'unreplicated_readwrite'), (single_client_backend_network_limit, 'storage_network'), (single_client_backend_device_limit, 'backend_device_limit'), (single_client_backend_controller_limit, 'backend_controller'))
+    return bottleneck_tuple
+
+#  Multi client, multi stream reads/writes, unreplicated
 ## Multi client unreplicated performance is limited by client_network_throughput_capacity
 ## Multi client unreplicated is limited by cluster_network_replication_capacity
 ## Multi client unreplicated is limited by cluster_device_replication_capacity
@@ -341,6 +356,14 @@ pretty_single_write_repl = get_pretty_performance(single_write_repl[0])
 single_read_repl = get_single_client_repl_reads_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_factor, replication_stripewidth)
 pretty_single_read_repl = get_pretty_performance(single_read_repl[0])
 
+# Calculate single client unreplicated reads
+single_read_unrepl = get_single_client_unrepl_readwrite_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_stripewidth)
+pretty_single_read_unrepl = get_pretty_performance(single_read_unrepl[0])
+
+# Calculate single client unreplicated writes
+single_write_unrepl = get_single_client_unrepl_readwrite_mbs(client_nic_mbs, client_threads, device_throughput_mbs, storage_cluster_throughput_network_mbs, cluster_throughput_device, cluster_throughput_controller, replication_stripewidth)
+pretty_single_write_unrepl = get_pretty_performance(single_write_unrepl[0])
+
 # Calculate multi client unreplicated reads/ writes
 multi_readwrite_unrepl = get_multi_client_unrepl_readwrite_mbs(number_clients, client_threads, client_cluster_throughput_network_mbs, cluster_throughput_device, storage_cluster_throughput_network_mbs, cluster_throughput_controller, replication_stripewidth)
 pretty_multi_readwrite_unrepl = get_pretty_performance(multi_readwrite_unrepl[0])
@@ -439,6 +462,14 @@ print()
 print("Multi client read, no replication")
 print("Multi client read bottleneck, unreplicated: %s" % multi_readwrite_unrepl[1])
 print("Unreplicated multi read performance, %s threads per client: %s %s" % (client_threads, pretty_multi_readwrite_unrepl[0], pretty_multi_readwrite_unrepl[1]))
+print()
+print("Single client write, no replication")
+print("Single client write bottleneck, unreplicated: %s" % single_write_unrepl[1])
+print("Unreplicated single write performance, %s threads per client: %s %s" % (client_threads, pretty_single_write_unrepl[0], pretty_single_write_unrepl[1]))
+print()
+print("Single client read, no replication")
+print("Single client read bottleneck, unreplicated: %s" % single_read_unrepl[1])
+print("Unreplicated single read performance, %s threads per client: %s %s" % (client_threads, pretty_single_read_unrepl[0], pretty_single_read_unrepl[1]))
 print()
 
 # WIP
