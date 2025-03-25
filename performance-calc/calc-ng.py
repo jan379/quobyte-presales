@@ -295,7 +295,7 @@ def read_configvalues():
     storagenode_nic_gbs = float(config.get('storagenodes', 'capacity_nic_gbs', fallback=1.0))
     number_storagenodes = int(config.get('storagenodes', 'number_nodes', fallback=1))
     number_storagenode_devices = int(config.get('storagenodes', 'number_devices', fallback=1))
-    number_storagenode_device_controller = int(config.get('storagenodes', 'number_device_controller', fallback=4))
+    number_storagenode_device_controller = int(config.get('storagenodes', 'number_device_controller', fallback=1))
     device_throughput_mbs = int(config.get('storagenodes', 'device_throughput_mbs', fallback=100))
     device_throughput_mbs_read = int(config.get('storagenodes', 'device_throughput_mbs_read', fallback=100))
     controller_throughput_mbs = int(config.get('storagenodes', 'controller_throughput_mbs', fallback=24000))
