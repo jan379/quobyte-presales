@@ -13,6 +13,3 @@ threads=32
 size=100g
 timelimit=60
 lat=1
-
-
-lat=1
