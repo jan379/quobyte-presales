@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import drawsvg as draw
+import json
 
 company_color_primary="#262262"
 company_color_secondary="#1A4B7E"
@@ -9,43 +10,48 @@ company_color_accent1="#5B84EC"
 company_color_accent2="#343534"
 company_color_accent3="#E6E6E6"
 
-box_width=50
-box_height=60
-
-d = draw.Drawing(800, 600, origin='center', font_family='Nunito Sans', dominant_baseline='hanging')
+viewbox_width = 800
+viewbox_height = 600
+d = draw.Drawing(viewbox_width, viewbox_height, origin=(0,0), font_family='Nunito Sans')
 
 # Draw text
-d.append(draw.Text('Quobyte rulez', 24, -380, -280, fill=company_color_accent1))  # 8pt text at (-10, -35)
+d.append(draw.Text('Quobyte Rulez', 24, viewbox_width / 3, viewbox_height / 6, fill=company_color_text))  # 8pt text at (-10, -35)
 
-# Draw a rectangle2
-r = draw.Rectangle(-395, -195, box_width, box_height, rx='10', ry='10', fill=company_color_primary)
-r.append_title("Another Quobyte data service!")  # Add a tooltip
-d.append(r)
-d.append(draw.Text([' ', 'Metadata', 'Service'], 8, path=r, text_anchor='start', center=True, fill=company_color_text))
+def draw_server(x, y, size, title):
+    # rounded corners, that is why we use rx/ry
+    server_length = size
+    server_height = size / 4
+    server_center = [ server_length / 2, server_height / 2 ]
+    padding = 4
+    server = draw.Group(id='metadata', fill='none', stroke='none')
+    # outline
+    server.append(draw.Rectangle(x, y, server_length, server_height, rx='10', ry='10', fill=company_color_primary))
+    server.append(draw.Text(title, 12, x - padding, y - padding, fill=company_color_text))
+    d.append(server)
+    print("Print a server")
 
-# Draw a rectangle2
-r = draw.Rectangle(-245, -195, box_width, box_height, rx='10', ry='10', fill=company_color_secondary)
-r.append_title("Another Quobyte data service!")  # Add1 a tooltip
-d.append(r)
-d.append(draw.Text([' ', 'Data', 'Service'], 8, path=r, text_anchor='start', center=True, fill=company_color_text))
+server_start_x = 100
+server_start_y = 200
+for x in range (0, 3):
+    server_start_x_previous = server_start_x
+    server_start_y_previous = server_start_y
+    server_start_x = server_start_x + 120
+    draw_server(x=server_start_x, y=server_start_y, size=100, title="MyNode" + str(x))
+    ##### Draw a line
+    arrow_start = [ server_start_x_previous , server_start_y_previous ] 
+    arrow_end = [ server_start_x , server_start_y ]
+    d.append(draw.Line(*arrow_start, *arrow_end, 
+        stroke=company_color_primary, 
+        stroke_width=4, 
+        fill='none',
+        ))
 
 # Draw an arbitrary path (a triangle in this case)
-p = draw.Path(stroke_width=6, stroke=company_color_secondary, fill=company_color_text, fill_opacity=0.2)
-p.M(0, 0)  # Start path at point (-55, -10)
-p.C(-40, -30, -40, 30, 40, 00)  # Draw a curve to (70, -20)
-d.append(p)
-
-# Draw arrows
-arrow = draw.Marker(-0.1, -0.51, 0.9, 0.5, scale=4, orient='auto')
-arrow.append(draw.Lines(-0.1, 0.5, -0.1, -0.5, 0.9, 0, fill=company_color_tertiary, close=True))
-p = draw.Path(stroke='red', stroke_width=2, fill='none',
-        marker_end=arrow)  # Add an arrow to the end of a path
-p.M(20, 40).L(20, 27).L(0, 20)  # Chain multiple path commands
-d.append(p)
-d.append(draw.Line(30, 20, 0, 10,
-        stroke='red', stroke_width=2, fill='none',
-        marker_end=arrow))  # Add an arrow to the end of a line
-
+###p = draw.Path(stroke_width=6, stroke=company_color_secondary, fill=company_color_text, fill_opacity=0.2)
+###p.M(0, 0)  # Start point
+###p.C(-40, -30, -40, 30, 40, 00)  # Draw a curve to (70, -20)
+###d.append(p)
+###
 d.set_pixel_scale(3)  # Set number of pixels per geometry unit
 #d.set_render_size(400, 200)  # Alternative to set_pixel_scale
 d.save_svg('example.svg')
