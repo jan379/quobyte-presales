@@ -18,10 +18,34 @@
         packages:
         - openmpi
       when: ansible_facts['os_family'] == "RedHat"
+
+    - name: Ensure PATH is set
+      lineinfile:
+        path: /home/deploy/.bashrc
+        line: export PATH=$PATH:/usr/lib64/openmpi/bin 
+        create: yes
+      when: ansible_facts['os_family'] == "RedHat"
+ 
+    - name: Ensure LIB PATH is set
+      lineinfile:
+        path: /home/deploy/.bashrc
+        line: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/
+        create: yes
+      when: ansible_facts['os_family'] == "RedHat"
+ 
  
 - hosts: localhost 
   become: yes
   tasks:
+    - name: Install Debian packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - openmpi-bin 
+      when: ansible_facts['os_family'] == "Debian"
+
     - name: Install RPM packages
       dnf:
         name: "{{ packages }}"
@@ -31,15 +55,18 @@
         - openmpi-devel
         - automake
       when: ansible_facts['os_family'] == "RedHat"
+
     - name: Ensure PATH is set
       lineinfile:
         path: /home/deploy/.bashrc
         line: export PATH=$PATH:/usr/lib64/openmpi/bin 
         create: yes
+      when: ansible_facts['os_family'] == "RedHat"
  
     - name: Ensure LIB PATH is set
       lineinfile:
         path: /home/deploy/.bashrc
         line: export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/
         create: yes
+      when: ansible_facts['os_family'] == "RedHat"
  
