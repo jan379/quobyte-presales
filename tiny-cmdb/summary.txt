@@ -1,0 +1,26 @@
+# Infra set up
+
+Dedicated METADADATA?
+Dedicated DATA?
+Dedicated REGISTRY?
+
+
+## Data Service overview
+
+### Devices
+Number data services: 6
+NVMe per Node:        No NVMe defined
+HDD  per Node:        No HDD defined
+SSD  per Node:        No SSD defined
+
+### CPU 
+CPU architecture:     x86_64
+CPU count:            24
+CPU model:            Intel(R) Xeon(R) CPU @ 2.00GHz
+
+### Memory
+Memory total:         Could not get total memory
+Memory Heap:          Could not get heap memory
+Memory Buffer:        Could not get buffer settings
+Memory CGroup:        Could not get CGroup limits
+

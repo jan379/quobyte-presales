@@ -1,0 +1,26 @@
+# Infra set up
+
+Dedicated METADADATA?
+Dedicated DATA?
+Dedicated REGISTRY?
+
+
+## Data Service overview
+
+### Devices
+Number data services: {{ number_dataservices }}
+NVMe per Node:        {{ number_data_nvme | default("No NVMe defined") }}
+HDD  per Node:        {{ number_data_hdd | default("No HDD defined") }}
+SSD  per Node:        {{ number_data_ssd | default("No SSD defined") }}
+
+### CPU 
+CPU architecture:     {{ dataservice_cpu_architecture | default("Could not get architecture for data service machines") }}
+CPU count:            {{ dataservice_cpu_count | default("Could not get cpu count for data service machines") }}
+CPU model:            {{ dataservice_cpu_model | default("Could not get CPU model for data service machines") }}
+
+### Memory
+Memory total:         {{ dataservice_memory_total | default("Could not get total memory") }}
+Memory Heap:          {{ dataservice_heap | default("Could not get heap memory") }}
+Memory Buffer:        {{ dataservice_buffer | default("Could not get buffer settings") }}
+Memory CGroup:        {{ dataservice_cgroup | default("Could not get CGroup limits") }}
+

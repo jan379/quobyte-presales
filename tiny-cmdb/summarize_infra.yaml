@@ -1,0 +1,36 @@
+
+
+# architecture 
+# number clients
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: count services 
+      set_fact: 
+         number_clients: "{{ groups.clients | length }}"
+         number_dataservices: "{{ groups.dataservices | length }}"
+         number_metadataservices: "{{ groups.metadataservices | length }}"
+
+# CPU model data service
+    - name: Collect processor type dataservices  
+      set_fact: 
+        dataservice_cpu_model: "{{ ansible_processor.2 }}"
+      delegate_to: dataservices[0]
+    - name: Collect processor count on dataservices  
+      set_fact: 
+        dataservice_cpu_count: "{{ ansible_processor | length }}"
+      delegate_to: dataservices[0]
+    - name: Collect processor architecture dataservices  
+      set_fact: 
+        dataservice_cpu_architecture: "{{ ansible_architecture }}"
+      delegate_to: dataservices[0]
+
+    - name: Write summary 
+      template:
+        src: templates/infra.jinja2
+        dest: summary.txt
+
+
+
+# policies in action
+# Shared hosts or dedicated services?
