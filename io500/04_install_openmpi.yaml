@@ -16,7 +16,7 @@
         state: present
       vars:
         packages:
-        - openmpi
+        - openmpi 
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Ensure PATH is set
@@ -54,6 +54,8 @@
         packages:
         - openmpi-devel
         - automake
+          # push our results back home using s3cmd
+        - s3cmd
       when: ansible_facts['os_family'] == "RedHat"
 
     - name: Ensure PATH is set
