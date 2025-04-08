@@ -24,6 +24,10 @@
       set_fact: 
         dataservice_cpu_architecture: "{{ ansible_architecture }}"
       delegate_to: dataservices[0]
+    - name: Collect memory total per machine  
+      set_fact: 
+        dataservice_memory_total: "{{ ansible_memtotal_mb }} MB"
+      delegate_to: dataservices[0]
 
     - name: Write summary 
       template:
