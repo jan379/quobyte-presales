@@ -28,7 +28,7 @@
     - name: Write summary 
       template:
         src: templates/infra.jinja2
-        dest: summary.txt
+        dest: /tmp/infra-summary.txt
 
 
 
