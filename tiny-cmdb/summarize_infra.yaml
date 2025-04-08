@@ -16,46 +16,39 @@
          number_metadataservices: "{{ groups.metadataservices | length }}"
 
 # Data service
+    - name: Delegate all facts from first dataserver
+      setup:
+      delegate_to: "{{ item }}" 
+      delegate_facts: true 
+      loop: "{{ [groups['dataservices'][0]] }}"
     - name: Collect processor type dataservices  
+      #delegate_to: dataservices[0]
       set_fact: 
-        dataservice_cpu_model: "{{ ansible_processor.2 }}"
-      delegate_to: dataservices[0]
-    - name: Collect processor cores on dataservices  
-      set_fact: 
-        dataservice_cpu_cores: "{{ ansible_processor_cores }}"
-      delegate_to: dataservices[0]
-    - name: Collect processor threads per core on dataservices  
-      set_fact: 
-        dataservice_cpu_threads: "{{ ansible_processor_threads_per_core }}"
-      delegate_to: dataservices[0]
-    - name: Collect processor architecture dataservices  
-      set_fact: 
-        dataservice_cpu_architecture: "{{ ansible_architecture }}"
-      delegate_to: dataservices[0]
-    - name: Collect memory total per machine  
-      set_fact: 
-        dataservice_memory_total: "{{ ansible_memtotal_mb }} MB"
-      delegate_to: dataservices[0]
-    - name: Collect OS release  
-      set_fact: 
-        dataservice_os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
-      delegate_to: dataservices[0]
+        dataservice_cpu_architecture: "{{ hostvars[groups['dataservices'][0]].ansible_architecture }}"
+        dataservice_os:               "{{ hostvars[groups['dataservices'][0]].ansible_distribution }} {{ hostvars[groups['dataservices'][0]].ansible_distribution_version }}"
+        dataservice_cpu_model:        "{{ hostvars[groups['dataservices'][0]].ansible_processor.2 }}"
+        dataservice_cpu_cores:        "{{ hostvars[groups['dataservices'][0]].ansible_processor_count }}"
+        dataservice_cpu_threads:      "{{ hostvars[groups['dataservices'][0]].ansible_processor_threads_per_core }}"
+        dataservice_memory_total:     "{{ hostvars[groups['dataservices'][0]].ansible_memtotal_mb }} MB"
+        dataservice_devices:          "{{ hostvars[groups['dataservices'][0]].ansible_devices }}"
     - name: Get SATA devices
-      delegate_to: dataservices[0]
+      delegate_to: dataservices[1]
+      delegate_facts: true
       set_fact:
         dataservice_sata: "{{ dataservice_sata + [item.key] }}"
-      with_dict: "{{ ansible_devices }}"
+      with_dict: "{{ dataservice_devices }}"
       when: "item.value.host.startswith('SATA controller:')"
     - name: Get NVMe devices
       delegate_to: dataservices[0]
       set_fact:
         dataservice_nvme: "{{ dataservice_nvme + [item.key] }}"
-      with_dict: "{{ ansible_devices }}"
+      with_dict: "{{ dataservice_devices }}"
       when: "item.value.host.startswith('Non-Volatile memory controller:')"
     - name: Count devices 
       set_fact: 
          dataservice_nvme_count: "{{ dataservice_nvme | length }}"
          dataservice_sata_count: "{{ dataservice_sata | length }}"
+
 
 # Shared hosts or dedicated services?
 
