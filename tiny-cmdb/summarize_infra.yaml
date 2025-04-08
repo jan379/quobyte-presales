@@ -5,20 +5,28 @@
 - hosts: localhost
   become: yes
   tasks:
+    - name: initialize empty list for devices
+      set_fact:
+        dataservice_nvme: []
+        dataservice_sata: []
     - name: count services 
       set_fact: 
          number_clients: "{{ groups.clients | length }}"
          number_dataservices: "{{ groups.dataservices | length }}"
          number_metadataservices: "{{ groups.metadataservices | length }}"
 
-# CPU model data service
+# Data service
     - name: Collect processor type dataservices  
       set_fact: 
         dataservice_cpu_model: "{{ ansible_processor.2 }}"
       delegate_to: dataservices[0]
-    - name: Collect processor count on dataservices  
+    - name: Collect processor cores on dataservices  
       set_fact: 
-        dataservice_cpu_count: "{{ ansible_processor | length }}"
+        dataservice_cpu_cores: "{{ ansible_processor_cores }}"
+      delegate_to: dataservices[0]
+    - name: Collect processor threads per core on dataservices  
+      set_fact: 
+        dataservice_cpu_threads: "{{ ansible_processor_threads_per_core }}"
       delegate_to: dataservices[0]
     - name: Collect processor architecture dataservices  
       set_fact: 
@@ -28,13 +36,33 @@
       set_fact: 
         dataservice_memory_total: "{{ ansible_memtotal_mb }} MB"
       delegate_to: dataservices[0]
+    - name: Collect OS release  
+      set_fact: 
+        dataservice_os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+      delegate_to: dataservices[0]
+    - name: Get SATA devices
+      delegate_to: dataservices[0]
+      set_fact:
+        dataservice_sata: "{{ dataservice_sata + [item.key] }}"
+      with_dict: "{{ ansible_devices }}"
+      when: "item.value.host.startswith('SATA controller:')"
+    - name: Get NVMe devices
+      delegate_to: dataservices[0]
+      set_fact:
+        dataservice_nvme: "{{ dataservice_nvme + [item.key] }}"
+      with_dict: "{{ ansible_devices }}"
+      when: "item.value.host.startswith('Non-Volatile memory controller:')"
+    - name: Count devices 
+      set_fact: 
+         dataservice_nvme_count: "{{ dataservice_nvme | length }}"
+         dataservice_sata_count: "{{ dataservice_sata | length }}"
 
+# Shared hosts or dedicated services?
+
+# Summary
     - name: Write summary 
       template:
         src: templates/infra.jinja2
         dest: /tmp/infra-summary.txt
 
-
-
 # policies in action
-# Shared hosts or dedicated services?

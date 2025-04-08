@@ -7,18 +7,26 @@ Dedicated REGISTRY?
 
 ## Data Service overview
 
-### Devices
-Number data services: {{ number_dataservices }}
-NVMe per Node:        {{ number_data_nvme | default("No NVMe defined") }}
-HDD  per Node:        {{ number_data_hdd | default("No HDD defined") }}
-SSD  per Node:        {{ number_data_ssd | default("No SSD defined") }}
+### OS
 
-### CPU 
+OS data services:     {{ dataservice_os }}
+
+### Devices
+
+Number data services: {{ number_dataservices }}
+NVMe per node:        {{ dataservice_nvme_count | default("Could not get NVMe count") }}
+HDD  per node:        {{ dataservice_hdd_count   | default("Could not get HDD count") }}
+SATA per node:        {{ dataservice_sata_count | default("Could not get SATA count") }}
+
+### CPU
+ 
 CPU architecture:     {{ dataservice_cpu_architecture | default("Could not get architecture for data service machines") }}
-CPU count:            {{ dataservice_cpu_count | default("Could not get cpu count for data service machines") }}
+CPU cores:            {{ dataservice_cpu_cores | default("Could not get cpu count for data service machines") }}
+CPU threads/core:     {{ dataservice_cpu_threads | default("Could not get cpu threads for data service machines") }}
 CPU model:            {{ dataservice_cpu_model | default("Could not get CPU model for data service machines") }}
 
 ### Memory
+
 Memory total:         {{ dataservice_memory_total | default("Could not get total memory") }}
 Memory Heap:          {{ dataservice_heap | default("Could not get heap memory") }}
 Memory Buffer:        {{ dataservice_buffer | default("Could not get buffer settings") }}
