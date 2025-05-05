@@ -11,45 +11,76 @@ in real life.
 Simply invoke the python script + your hardware configuration: 
 
 ```
-jan@host.name% ./calc.py -c high_performance.ini 
+$ ./calc.py -c defaultconfig.ini 
+
+## Capacity:
+Cluster raw capacity: 244.8 TB
+Cluster EC capacity: 153.0 TB
+Cluster replication capacity: 81.6 TB
+
+## Device performance:
+Single Node device throughput: 96.11 GiB/s
+Single Node device controller throughput: 2.79 GiB/s
+Cluster wide device throughput write: 576.67 GiB/s
+Cluster wide device throughput read: 938.77 GiB/s
+Cluster wide controller throughput: 16.76 GiB/s
+
+## Network performance:
+Single storage node network throughput: 2.91 GiB/s
+Single client node network throughput: 2.91 GiB/s
+Storage cluster network throughput: 17.46 GiB/s
+Client cluster network throughput: 5.82 GiB/s
+
+## Erasure Coding:
+Single client write, EC
+EC single write bottleneck: client_network
+EC single write performance, 2 threads per client: 1.82 GiB/s
+
+Single client read, EC
+EC single write bottleneck: client_network
+EC single write performance, 2 threads per client: 2.91 GiB/s
+
+Multi client write, Erasure Coding
+EC multi write bottleneck: client_network
+EC multi write performance, 2 threads per client: 3.64 GiB/s
+
+Multi client read, Erasure Coding
+EC multi read bottleneck: client_network
+EC multi read performance, 2 threads per client: 5.82 GiB/s
+
+## Replication:
+Single client write, Replication
+Replication single write bottleneck: client_network
+Replicated single write performance, 2 threads per client: 2.91 GiB/s
+
+Single client read, Replication
+Replication single read bottleneck: client_network
+Replicated single read performance, 2 threads per client: 2.91 GiB/s
+
+Multi client write, Replication
+Replication multi client write bottleneck: backend_controller_limit
+Replicated multi write performance, 2 threads per client: 5.59 GiB/s
+
+Multi client read, Replication
+Replication multi client read bottleneck: client_network
+Replicated multi read performance, 2 threads per client: 5.82 GiB/s
+
+## No Redundancy:
+Multi client write, no replication
+Multi client write bottleneck, unreplicated: client_network
+Unreplicated multi write performance, 2 threads per client: 5.82 GiB/s
+
+Multi client read, no replication
+Multi client read bottleneck, unreplicated: client_network
+Unreplicated multi read performance, 2 threads per client: 5.82 GiB/s
+
+Single client write, no replication
+Single client write bottleneck, unreplicated: client_network
+Unreplicated single write performance, 2 threads per client: 2.91 GiB/s
+
+Single client read, no replication
+Single client read bottleneck, unreplicated: client_network
+Unreplicated single read performance, 2 threads per client: 2.91 GiB/s
+
 ```
-
-Sample output: 
-
-# Welcome!
-
-Your storage cluster consists of:
-16	storage nodes
-32	client nodes
-
-## Capacity
-
-| Redundancy                      	| GB      	| TB      	| PB       	|
-| ------------------------------- 	| ------- 	| ------- 	| -------- 	|
-| Capacity RAW	                  	| 652800   	| 652.8   	| 0.65    	|
-| Capacity usable (EC 8+3)      	| 474763.64   	| 474.76   	| 0.47    	|
-| Capacity usable (Replicated 3x)	| 217600.0   	| 217.6   	| 0.22    	|
-
-## Performance
-
-### Theoretical max. single client/ single stream performance data stored 3x replicated, stripe_width 16):
-6720.0 MB/s
-The upper limit is determined by device performance, including striping factor. Using faster devices or a broader stripe_width will increase performance.
-
-### Theoretical max. multi client/ multi stream performance data stored 3x replicated, stripe_width 16, 32 clients):
-53760.0 MB/s
-The upper limit is determined by total storage device throughput, including replication penalty. Adding more storage devices will increase performance.
-
-### Theoretical max. multi client/ multi stream performance data stored unreplicated, stripe_width 16, 32 clients):
-161280.0 MB/s
-The upper limit is determined by total storage device throughput. Adding more storage devices will increase performance.
-
-### Theoretical max. single client/ single stream performance (data stored EC8+3):
-3360.0 MB/s
-The upper limit is determined by the performance of all data stripes written by a single client. Using faster devices or more data stripes will increase performance.
-
-### Theoretical max. multi client/ multi stream performance (data stored EC8+3), 32 clients:
-107520.0 MB/s
-The upper limit is determined by the performance of all data stripes written by all clients. Using faster devices or more data stripes will increase performance.
-
 
