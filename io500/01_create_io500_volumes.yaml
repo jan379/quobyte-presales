@@ -7,10 +7,24 @@
       shell:
         cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
 
+    - name: Test if tenant io500 exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} tenant list | grep "^io500" | awk '{print $1}'
+      register: my_tenant_test
+
+    - name: Create io500 tenant
+      shell:
+        cmd: qmgmt -u {{ api_service }} tenant create "io500"  
+      when: "'io500' not in my_tenant_test.stdout"
+
     - name: Create io500 binary volume
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "My Tenant/io500-bin" deploy deploy 
+        cmd: qmgmt -u {{ api_service }} volume create "io500/io500-bin" deploy deploy 
 
     - name: Create io500 data volume
       shell:
-        cmd: qmgmt -u {{ api_service }} volume create "My Tenant/io500-data" deploy deploy 
+        cmd: qmgmt -u {{ api_service }} volume create "io500/io500-data" deploy deploy 
+
+    - name: Create io500 results volume
+      shell:
+        cmd: qmgmt -u {{ api_service }} volume create "io500/io500-results" deploy deploy 
