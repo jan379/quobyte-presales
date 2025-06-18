@@ -14,6 +14,8 @@ parameters:
 
   createQuota: "true"
   accessMode: "777"
+  user: nginx
+  group: nginx
 
   # A Quobyte tenant with that name must exist. 
   quobyteTenant: "prod-team" 

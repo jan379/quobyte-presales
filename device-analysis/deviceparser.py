@@ -2,7 +2,7 @@
 
 import json
 import pathlib
-path = pathlib.Path('devices.txt')
+path = pathlib.Path('DEVICES.txt')
 
 started = False
 values = []

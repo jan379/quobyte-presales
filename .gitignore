@@ -8,4 +8,4 @@ Spread-Cluster With Local Data/terraform/terraform.tfstate
 Spread-Cluster With Local Data/terraform/provisioning/ansible-vars
 Spread-Cluster With Local Data/terraform/provisioning/ansible-inventory.yaml
 openstack-accesskeys/terraform/account_vars.tf
-
+device-analysis/DEVICES.txt
