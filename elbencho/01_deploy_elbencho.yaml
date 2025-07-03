@@ -1,21 +1,6 @@
 - hosts: localhost
   become: yes
   tasks:
-    - name: Get elbencho binary archive
-      get_url: 
-        #url: https://github.com/breuner/elbencho/releases/download/v2.2-5/elbencho-static-x86_64.tar.gz
-        #url: https://github.com/breuner/elbencho/releases/download/v3.0-7/elbencho-static-x86_64.tar.gz 
-        url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-x86_64.tar.gz
-        # ARM:
-        #url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-aarch64.tar.gz
-        force: true
-        dest: /tmp/elbencho.tar.gz
-
-    - name: Unpack elbencho archive
-      unarchive:
-        src: /tmp/elbencho.tar.gz
-        dest: /tmp/
-          
 
     - name: Create benchmark directory
       file:
@@ -80,11 +65,24 @@
 - hosts: quobyteservers,clients 
   become: yes
   tasks:
-    - name: Deploy elbencho binary 
-      copy:
-       src: /tmp/elbencho
-       dest: /usr/local/bin/elbencho
-       mode: "755"
-       force: yes
 
+    - name: Set architecture specific variables
+      set_fact:
+        arch: "{{ 'aarch64' if ansible_facts.architecture == 'aarch64' else 'x86_64' }}"
+
+    - name: Get elbencho binary archive
+      get_url: 
+        #url: https://github.com/breuner/elbencho/releases/download/v2.2-5/elbencho-static-x86_64.tar.gz
+        #url: https://github.com/breuner/elbencho/releases/download/v3.0-7/elbencho-static-x86_64.tar.gz 
+        ##url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-x86_64.tar.gz
+        # ARM:
+        url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-{{ arch }}.tar.gz
+        force: true
+        dest: /tmp/elbencho.tar.gz
+
+    - name: Unpack elbencho archive
+      unarchive:
+        src: /tmp/elbencho.tar.gz
+        remote_src: yes
+        dest: /usr/local/bin/
 
