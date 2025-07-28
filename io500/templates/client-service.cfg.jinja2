@@ -4,5 +4,11 @@ registry={{ registry_frontend }}
 {% else %}
 registry={{ registry }}
 {% endif %}
-mount_point=/quobyte
 
+{% if mountpoint is defined %}
+mount_point={{ mountpoint }}
+{% else %}
+mount_point=/quobyte
+{% endif %}
+# activate multi tenant mounts
+multi-tenant
