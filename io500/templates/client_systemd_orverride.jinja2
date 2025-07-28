@@ -1,0 +1,2 @@
+[Service]
+ExecStartPost=sudo -u johnd qinfo set-access-key --secret {{ ansible_facts['accesskey_secret'] }} --scope user {{ ansible_facts.accesskey_id }} /quobyte
