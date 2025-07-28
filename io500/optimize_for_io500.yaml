@@ -1,0 +1,36 @@
+- hosts: localhost,clients 
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Add the user 'johnd'
+      ansible.builtin.user:
+        name: johnd
+        comment: John Doe
+
+    - name: Enable "multi-tenant" in client service cfg. 
+      template:
+        src: templates/client-service.cfg.jinja2
+        dest: "/etc/quobyte/client-service.cfg"
+
+
+- hosts: registryservices[0]
+  vars_files:
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+
+    - name: See if Quobyte user exists 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config list| grep "^johnd" | awk '{print $1}'
+      register: my_user_test
+
+    - name: Create io500 user 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user config add --admin-of-tenant=io500 --member-of-tenant=io500 --primary-group=johnd johnd john@doe.org UNPRIVILEGED_USER "johndoeDoesNotRememberThisPassword" 
+      when: "'johnd' not in my_user_test.stdout"
+
+
