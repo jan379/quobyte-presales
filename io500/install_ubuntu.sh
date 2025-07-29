@@ -14,6 +14,6 @@ make
 # hierarchy is: /mountpoint/tenant/volumename/
 sed -i s#./datafiles#/quobyte/io500/io500-data#g /quobyte/io500/io500-bin/fullconfig.ini 
 
-echo mpirun  --hostfile /quobyte/io500/io500-bin/io500-clients.list /quobyte/io500/io500-bin/io500/io500 /quobyte/io500-bin/fullconfig.ini
+echo mpirun  --hostfile /quobyte/io500/io500-bin/io500-clients.list /quobyte/io500/io500-bin/io500/io500 /quobyte/io500/io500-bin/fullconfig.ini
 
 
