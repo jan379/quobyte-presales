@@ -1,4 +1,4 @@
-- hosts: localhost 
+- hosts: clients,localhost 
   vars_files:
     - /home/deploy/quobyte-ansible/vars/ansible-vars
   become: yes
@@ -107,12 +107,11 @@
         src: templates/client-service.env.jinja2
         dest: "/etc/quobyte/client-service.env"
 
-
     - name: Create client mount point /quobyte 
       file:
         path: /quobyte
         state: directory
-        owner: quobyte
+          #owner: quobyte
 
     - name: Enable Quobyte client service
       service:

@@ -17,14 +17,21 @@
         cmd: qmgmt -u {{ api_service }} tenant create "io500"  
       when: "'io500' not in my_tenant_test.stdout"
 
+    - name: Whitelist frontend and backend networks for io500 tenant
+      shell:
+        cmd: qmgmt -u {{ api_service }} tenant update restrict_to_network io500 172.16.0.0/16,192.168.1.0/24  
+
     - name: Create io500 binary volume
+      ignore_errors: true
       shell:
         cmd: qmgmt -u {{ api_service }} volume create "io500/io500-bin" deploy deploy 
 
     - name: Create io500 data volume
+      ignore_errors: true
       shell:
         cmd: qmgmt -u {{ api_service }} volume create "io500/io500-data" deploy deploy 
 
     - name: Create io500 results volume
+      ignore_errors: true
       shell:
         cmd: qmgmt -u {{ api_service }} volume create "io500/io500-results" deploy deploy 
