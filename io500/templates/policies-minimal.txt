@@ -1,43 +1,17 @@
 policy_rule {
-  name: "ior_hard_150_global_mpi_ranks"
-  description: "Special block- object- and segment size. Bypass page cache."
+  name: "global_locking"
+  description: "the slow alternative to knowing your workload"
+  creator: "storageadmin"
   enabled: true
-  ordering_number: 47
+  ordering_number: 42 
   scope {
-    file {
-      filter_type: NAME
-      operator: REGEX_MATCHES
-      text_value: "^file$"
-    }
-    files_operator: ALL_OF
+    global: true
   }
   policies {
-    file_redundancy {
-      redundancy: REPLICATION
-    }
-    internal_on_disk_format {
-      crc_method: CRC_32_ISCSI
-      persistent_format: V2_METADATA_HEADER_4K
-    }
-    replication_redundancy_details {
-      file_structure {
-        block_size_bytes: 47008
-        object_size_bytes: 7051200
-        segment_size_bytes: 2115360000
-      }
-      distribution_schema {
-        data_stripe_count: 150
-        striping_method: BLOCK_LEVEL
-      }
-      replication_factor: 3
-    }
-    page_cache {
-      mode: DISABLE_PAGECACHE
-      enable_direct_writebacks: true
-    }
-    client_cache {
-      mode: ENABLE_ALWAYS
-      enable_prefetching: true
+    file_lock {
+      lock_scope: GLOBAL
+      lost_lock_behavior: LOST_LOCK_BLOCK_IO
+      implicit_locking_mode: IO_BLOCKING
     }
   }
 }
@@ -66,52 +40,13 @@ policy_rule {
   enabled: true
   ordering_number: 33
   scope {
-    volume {
-      name_regex: "^.*"
-    }
+    global: true
   }
   policies {
     file_metadata_cache {
       cache_ttl_ms: 6000000
       negative_cache_ttl_ms: 0
       enable_write_back_cache: false
-    }
-  }
-}
-policy_rule {
-  name: "read_path_crc_disabled"
-  description: "Skip CRC checksums after read"
-  enabled: true
-  ordering_number: 32
-  scope {
-    volume {
-      name_regex: "^.*"
-    }
-  }
-  policies {
-    checksum {
-      enable_server_checksum_computation_before_write: true
-      enable_server_checksum_verification_after_read: false
-      enable_client_checksum_computation_before_write: true
-      enable_client_checksum_verification_after_read: false
-    }
-  }
-}
-policy_rule {
-  name: "client_pgcache_bypass"
-  description: "Disable page cache for volumes with 'hard' in their name."
-  creator: "admin"
-  enabled: true
-  ordering_number: 31
-  scope {
-    volume {
-      name_regex: "^.*hard.*"
-    }
-  }
-  policies {
-    page_cache {
-      mode: DISABLE_PAGECACHE
-      enable_direct_writebacks: true
     }
   }
 }
