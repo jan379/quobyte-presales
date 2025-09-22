@@ -79,6 +79,14 @@ check_connectivity() {
     return 0
 }
 
+check_timesync(){
+    local node=$1
+    echo "Checking time sync daemon "
+    for daemon in ntp ntpd chrony chronyd; do
+        ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && echo "Found active time sync daemon $daemon".
+    done
+}
+
 get_distro_info() {
     local node=$1
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
@@ -261,6 +269,10 @@ for node in $NODES; do
     # Check connectivity
     if ! check_connectivity "$node"; then
        echo "Could not connecto to node $node, exit installation"
+       exit 1
+    fi
+    if ! check_timesync "$node"; then
+       echo "Could not find a running time sync daemon on $node, exit installation"
        exit 1
     fi
 done
