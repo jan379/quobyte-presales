@@ -187,7 +187,7 @@ remove_packages() {
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_RPM" 
     elif [ "$package_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_DEB" 
+        ssh "$SSH_USER@$node" "sudo $package_manager purge -y $PACKAGE_NAMES_DEB" 
         ssh "$SSH_USER@$node" "sudo rm /etc/apt/sources.list.d/quobyte.list" 
         ssh "$SSH_USER@$node" "sudo rm /etc/apt/trusted.gpg.d/quobyte.gpg" 
     else
