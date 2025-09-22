@@ -29,7 +29,8 @@ checklist_dialog() {
             * Machines can access the internet\n\
             * No firewall blocking Quobyte traffic\n\
 	      between machines\n\
-            * Port 8080 open to access Quobyte via web browser\n\
+            * Port 8080 open to access Quobyte via\n\
+	      web browser\n\
             * SSH access to all machines\n\
 	    * A time sync daemon (chrony or ntpd)\n\
 	      active on all machines\n\
@@ -37,7 +38,7 @@ checklist_dialog() {
 	      one per line\n\
             \n\
 	    Are you prepared to install Quobyte?\n\
-            " 22 60
+            " 23 60
 }
 
 
@@ -158,7 +159,7 @@ install_packages() {
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG
     elif [ "$package_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager install -y $PACKAGE_NAMES_DEB" >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG
     else
         echo "Unknown package manager ${package_manager}."
         return 1
@@ -316,7 +317,7 @@ for node in $NODES; do
         echo "Joining $node to the bootstrapped cluster..."
         # Your Quobyte cluster join command here
         ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-        ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data" >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
         ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
