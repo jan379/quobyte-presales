@@ -6,7 +6,7 @@
 # --- Configuration Variables ---
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
 PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
-PACKAGE_NAMES_DEB="quobyte-server quobyte-tools openjdk-21-jre-headless"
+PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
 SSH_USER="unset-user"
 TERM="ansi"
 INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
@@ -290,7 +290,7 @@ for node in $NODES; do
         echo "Bootstrapping Quobyte cluster on $node..."
         # Your Quobyte bootstrap command here
         ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-        ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" 2>&1 >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
         ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
