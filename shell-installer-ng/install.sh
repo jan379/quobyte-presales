@@ -1,11 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # A simple Quobyte installer script using whiptail for dialog-based interaction.
 
+
 # --- Configuration Variables ---
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
-PACKAGE_NAMES="quobyte-server quobyte-tools"
-SSH_USER="jan"
+PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
+PACKAGE_NAMES_DEB="quobyte-server quobyte-tools openjdk-21-jre-headless"
+SSH_USER="unset-user"
+TERM="ansi"
+INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
+DEBIAN_FRONTEND=noninteractive
 # For passwordless SSH, you'd use a key. For a password, you might use 'sshpass' or similar.
 # This script assumes SSH keys are in place for security.
 
@@ -15,13 +20,34 @@ welcome_dialog() {
     whiptail --title "Quobyte Installer" --msgbox "Welcome to the Quobyte software installer! This script will guide you through the process of setting up a new Quobyte cluster." 10 60
 }
 
+checklist_dialog() {
+    whiptail --title "Quobyte Installer" --yesno "Requirements Checklist:\n\
+            \n\
+            * At least 4 Linux machines\n\
+            * At least two unformatted devices\n\
+	      per machine\n\
+            * Machines can access the internet\n\
+            * No firewall blocking Quobyte traffic\n\
+	      between machines\n\
+            * Port 8080 open to access Quobyte via web browser\n\
+            * SSH access to all machines\n\
+	    * A time sync daemon (chrony or ntpd)\n\
+	      active on all machines\n\
+	    * A text file containing all machines\n\
+	      one per line\n\
+            \n\
+	    Are you prepared to install Quobyte?\n\
+            " 22 60
+}
+
+
 get_ssh_user() {
     SSH_USER=$(whiptail --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60 3>&1 1>&2 2>&3)
     echo "${SSH_USER}"
 }
 
 get_node_file() {
-    NODE_FILE=$(whiptail --title "Quobyte Installer" --inputbox "Please enter the full path to the file containing your install target nodes, one per line:" 10 60 3>&1 1>&2 2>&3)
+    NODE_FILE=$(whiptail --title "Quobyte Installer" --inputbox "Please enter the full path to the file containing your install target nodes." 10 60 3>&1 1>&2 2>&3)
     
     if [ $? -ne 0 ]; then
         echo "Installation canceled by user."
@@ -56,8 +82,21 @@ get_distro_info() {
     local node=$1
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
     local version=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$VERSION_ID"')
+    local version_codename=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$VERSION_CODENAME"')
     local major_version=$(echo ${version} | awk -F\. '{print $1'})
-    echo "$distro:$version:$major_version"
+    case "$distro" in
+        rocky|almalinux|centos)
+	   package_manager="dnf"
+	   ;;
+        ubuntu|debian)
+	   package_manager="apt"
+	   ;;
+        *)
+	   echo "Unsupported Linux distribution $distro."
+           return 1
+	   ;;
+    esac
+    echo "$distro:$version:$major_version:$package_manager:$version_codename"
 }
 
 install_repo() {
@@ -66,34 +105,34 @@ install_repo() {
     local distro=$(echo "$distro_info" | cut -d':' -f1)
     local version=$(echo "$distro_info" | cut -d':' -f2)
     local major_version=$(echo "$distro_info" | cut -d':' -f3)
+    local package_manager=$(echo "$distro_info" | cut -d':' -f4)
+    local version_codename=$(echo "$distro_info" | cut -d':' -f5)
     case "$distro" in
         rocky|almalinux|centos)
             local quobyte_distro_alias="RockyLinux"
             ;;
         *)
-            echo "Unsupported distribution: $distro"
+            echo "Unsupported Linux distribution: $distro"
             return 1
             ;;
     esac
 
-    echo "Installing Quobyte repository on $node ($distro $version)..."
+    echo "Adding Quobyte repository on $node ($distro $version)..."
     
     REPO_URL=""
-    PACKAGE_MANAGER=""
 
     case "$distro" in
         rocky|almalinux|centos)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            PACKAGE_MANAGER="dnf"
-            ssh "$SSH_USER@$node" "sudo dnf config-manager --add-repo ${REPO_URL}quobyte.repo"
+            ssh "$SSH_USER@$node" "sudo ${package_manager} config-manager --add-repo ${REPO_URL}quobyte.repo" >> $INSTALL_LOG
             ;;
         ubuntu|debian)
-            REPO_URL="${QUOBYTE_REPO_URL}/deb/${distro^}_${version}/"
+            REPO_URL="${QUOBYTE_REPO_URL}/apt"
             PACKAGE_MANAGER="apt"
-            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb ${REPO_URL} /\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update"
+            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb ${REPO_URL} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> $INSTALL_LOG
             ;;
         *)
-            echo "Unsupported distribution: $distro"
+            echo "Unsupported Linux distribution: $distro"
             return 1
             ;;
     esac
@@ -109,16 +148,16 @@ install_repo() {
 
 install_packages() {
     local node=$1
-    local pkg_manager=$2
+    local package_manager=$2
 
-    echo "Installing packages on $node using package manager ${pgk_manager}..."
+    echo "Installing packages on $node using package manager ${package_manager}..."
     
-    if [ "$pkg_manager" == "dnf" ] || [ "$pkg_manager" == "yum" ]; then
-        ssh "$SSH_USER@$node" "sudo $pkg_manager install -y $PACKAGE_NAMES"
-    elif [ "$pkg_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "sudo apt-get install -y $PACKAGE_NAMES"
+    if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
+        ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG
+    elif [ "$package_manager" == "apt" ]; then
+        ssh "$SSH_USER@$node" "DEBIAN_FRONTEND=noninteractive sudo $package_manager install -y $PACKAGE_NAMES_DEB" >> $INSTALL_LOG
     else
-        echo "Unknown package manager ${pkg_manager}."
+        echo "Unknown package manager ${package_manager}."
         return 1
     fi
     
@@ -129,6 +168,50 @@ install_packages() {
 
     echo "Packages installed successfully."
     return 0
+}
+
+remove_packages() {
+    local node=$1
+    local package_manager=$2
+
+    echo "Removing packages on $node using package manager ${package_manager}..."
+    ssh "$SSH_USER@$node" "sudo systemctl stop quobyte-data" 
+    ssh "$SSH_USER@$node" "sudo systemctl stop quobyte-metadata" 
+    ssh "$SSH_USER@$node" "sudo systemctl stop quobyte-api" 
+    ssh "$SSH_USER@$node" "sudo systemctl stop quobyte-registry" 
+    ssh "$SSH_USER@$node" "sudo systemctl stop quobyte-webconsole" 
+        
+    if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
+        ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_RPM" 
+    elif [ "$package_manager" == "apt" ]; then
+        ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_DEB" 
+    else
+        echo "Unknown package manager ${package_manager}."
+        return 1
+    fi
+    
+    if [ $? -ne 0 ]; then
+        echo "Failed to remove packages on $node."
+        return 1
+    fi
+
+    echo "Packages removed successfully."
+    return 0
+}
+
+remove_state() {
+    local node=$1
+    local devices=$(ssh $SSH_USER@$node "lsblk -o name,label | grep quobyte-dev | sed s/\ .*//g")
+    for device in $devices; do 
+  	ssh $SSH_USER@$node "sudo umount /dev/$device"
+    done
+    for device in $devices; do 
+  	ssh $SSH_USER@$node "sudo wipefs -a /dev/$device"
+    done
+    echo "removing /var/lib/quobyte"
+    ssh $SSH_USER@$node "sudo rm -rf /var/lib/quobyte"
+    echo "removing /etc/quobyte"
+    ssh $SSH_USER@$node "sudo rm -rf /etc/quobyte"
 }
 
 find_public_ip() {
@@ -145,38 +228,54 @@ find_public_ip() {
 
 # 1. Welcome the user
 welcome_dialog
+checklist_dialog || exit 1
 
 # 2. Get the list of nodes from a file
 NODE_FILE=$(get_node_file)
 NODES=$(cat "$NODE_FILE")
+REGISTRY_STRING="registry=$(for node in $NODES; do echo -n ${node}, ; done | sed s/,$//g)"
+SSH_USER=$(get_ssh_user)
+
+if [ "$1" == "uninstall" ]; then
+   for node in $NODES; do
+       distro_info=$(get_distro_info "$node")
+       package_manager=$(echo "$distro_info" | cut -d':' -f4)
+       remove_packages "$node" "$package_manager"
+       remove_state "$node" 
+   done
+   exit 1
+fi
+
 if [ -z "$NODES" ]; then
     whiptail --title "Error" --msgbox "The node file is empty." 10 60 
     exit 1
 fi
 
-SSH_USER=$(get_ssh_user)
+for node in $NODES; do
+    # Check connectivity
+    if ! check_connectivity "$node"; then
+       echo "Could not connecto to node $node, exit installation"
+       exit 1
+    fi
+done
 
 # 3. Process each node
 first_node_flag=true
 for node in $NODES; do
     echo "Processing node: $node"
 
-    # 3a. Check connectivity
-    if ! check_connectivity "$node"; then
-        continue # Skip to the next node if this one fails
-    fi
 
     # 3b. Find out distribution and version
-    DISTRO_INFO=$(get_distro_info "$node")
-
+    distro_info=$(get_distro_info "$node")
+    package_manager=$(echo "$distro_info" | cut -d':' -f4)
     # 3c. Install software sources list
-    PKG_MANAGER=$(install_repo "$node" "$DISTRO_INFO" | tail -n 1)
-    if [ -z "$PKG_MANAGER" ]; then
+    install_repo "$node" "$distro_info"
+    if [ -z "$package_manager" ]; then
         continue
     fi
 
     # 3d. Install packages
-    if ! install_packages "$node" "$PKG_MANAGER"; then
+    if ! install_packages "$node" "$package_manager"; then
         continue
     fi
     
@@ -184,7 +283,20 @@ for node in $NODES; do
     if $first_node_flag; then
         echo "Bootstrapping Quobyte cluster on $node..."
         # Your Quobyte bootstrap command here
-        # Example: ssh "$SSH_USER@$node" "sudo quobyte-bootstrap-command --init"
+        ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
+        ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
         
         # Find public IP of the bootstrapped node
         PUBLIC_IP=$(find_public_ip "$node")
@@ -198,16 +310,28 @@ for node in $NODES; do
     else
         echo "Joining $node to the bootstrapped cluster..."
         # Your Quobyte cluster join command here
-        # Example: ssh "$SSH_USER@$node" "sudo quobyte-join-command --cluster-ip $PUBLIC_IP"
+        ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
+        ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
     fi
 done
 
 # 4. Final welcome message
 if [ -n "$PUBLIC_IP" ]; then
-    whiptail --title "Installation Complete" --msgbox "Congratulations! The Quobyte cluster has been installed. Please open your web browser and navigate to:\n\nhttps://$PUBLIC_IP:8080\n\nto complete the setup." 15 70
+    whiptail --title "Installation Complete" --msgbox "Congratulations! The Quobyte cluster has been installed. Please open your web browser and navigate to:\n\nhttp://$PUBLIC_IP:8080\n\nto complete the setup." 15 70
 else
     whiptail --title "Installation Failed" --msgbox "The installation could not be completed. Please check the logs for errors." 15 70
 fi
-
 
 
