@@ -87,6 +87,27 @@ check_timesync(){
     done
 }
 
+check_distrosupport(){
+    local node=$1
+    echo "Checking Linux distribution support "
+    local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
+    case "$distro" in
+        rocky|almalinux)
+            local quobyte_distro_alias="RockyLinux"
+            ;;
+        centos)
+	    local quobyte_distro_alias="CentOS"
+            ;;
+        ubuntu|debian)
+            local quobyte_distro_alias="unset"
+            ;;
+        *)
+            echo "Unsupported Linux distribution: $distro"
+            exit 1
+            ;;
+    esac
+}
+
 get_distro_info() {
     local node=$1
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
@@ -276,6 +297,10 @@ for node in $NODES; do
     fi
     if ! check_timesync "$node"; then
        echo "Could not find a running time sync daemon on $node, exit installation"
+       exit 1
+    fi
+    if ! check_distrosupport "$node"; then
+       echo "Found a Linux distribution not supported on $node, exit installation"
        exit 1
     fi
 done
