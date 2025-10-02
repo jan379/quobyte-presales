@@ -102,7 +102,7 @@ get_distro_info() {
 	   ;;
         *)
 	   echo "Unsupported Linux distribution $distro."
-           return 1
+           exit 1
 	   ;;
     esac
     echo "$distro:$version:$major_version:$package_manager:$version_codename"
@@ -128,7 +128,7 @@ install_repo() {
             ;;
         *)
             echo "Unsupported Linux distribution: $distro"
-            return 1
+            exit 1
             ;;
     esac
 
