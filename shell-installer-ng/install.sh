@@ -174,7 +174,7 @@ install_repo() {
             ;;
         *)
             echo "Unsupported Linux distribution: $distro"
-            return 1
+            exit 1
             ;;
     esac
     
@@ -226,6 +226,9 @@ remove_packages() {
         
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_RPM" 
+    elif [ "$package_manager" == "zypper" ]; then
+        ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_RPM" 
+        ssh "$SSH_USER@$node" "sudo $package_manager removerepo quobyte" 
     elif [ "$package_manager" == "apt" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager purge -y $PACKAGE_NAMES_DEB" 
         ssh "$SSH_USER@$node" "sudo rm /etc/apt/sources.list.d/quobyte.list" 
