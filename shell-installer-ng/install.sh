@@ -93,7 +93,7 @@ check_distrosupport(){
     echo "Checking Linux distribution support "
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
     case "$distro" in
-        rocky|almalinux|centos|ubuntu|debian)
+        rocky|almalinux|centos|ubuntu|debian|opensuse-leap)
             echo "Found distribution $distro on $node, proceeding"
             ;;
         *)
@@ -115,6 +115,9 @@ get_distro_info() {
 	   ;;
         ubuntu|debian)
 	   package_manager="apt"
+	   ;;
+        opensuse-leap)
+	   package_manager="zypper"
 	   ;;
         *)
 	   echo "Unsupported Linux distribution $distro."
@@ -142,6 +145,9 @@ install_repo() {
         ubuntu|debian)
             local quobyte_distro_alias="unset"
             ;;
+        opensuse-leap)
+            local quobyte_distro_alias="SLE"
+	    ;;
         *)
             echo "Unsupported Linux distribution: $distro"
             exit 1
@@ -153,7 +159,7 @@ install_repo() {
     REPO_URL=""
 
     case "$distro" in
-        rocky|almalinux|centos)
+        rocky|almalinux|centos|opensuse-leap)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
             ssh "$SSH_USER@$node" "sudo ${package_manager} config-manager --add-repo ${REPO_URL}quobyte.repo" >> $INSTALL_LOG
             ;;
