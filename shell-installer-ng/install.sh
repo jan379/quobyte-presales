@@ -96,7 +96,7 @@ check_distrosupport(){
             echo "Found distribution $distro on $node, proceeding"
             ;;
         *)
-            echo "Unsupported Linux distribution: $distro"
+            echo "Unsupported Linux distribution: $distro on node $node"
             exit 1
             ;;
     esac
