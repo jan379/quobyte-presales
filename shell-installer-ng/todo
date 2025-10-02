@@ -6,7 +6,7 @@
 * --erase-data vs. --uninstall?
 [* --scaleout-dataservices]
 Support SUSE
-
+make node file handling easier
 
 --> split quobyte-packages and JRE names
 --> make sure these distros from packages.quobyte.com work:
