@@ -1,0 +1,9 @@
+# things left:
+* User facing communication when deleting things
+* --help
+* --base-install
+* --client-install
+* --erase-data vs. --uninstall?
+[* --scaleout-dataservices]
+Support SUSE
+
