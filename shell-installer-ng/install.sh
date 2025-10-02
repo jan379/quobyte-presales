@@ -157,20 +157,20 @@ install_repo() {
     echo "Adding Quobyte repository on $node ($distro $version)..."
     
     REPO_URL=""
-
+    failed_repo=0
     case "$distro" in
         rocky|almalinux|centos)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            ssh "$SSH_USER@$node" "sudo ${package_manager} config-manager --add-repo ${REPO_URL}quobyte.repo" >> $INSTALL_LOG
+            ssh "$SSH_USER@$node" "sudo ${package_manager} config-manager --add-repo ${REPO_URL}quobyte.repo" >> $INSTALL_LOG || failed_repo=1
             ;;
         opensuse-leap)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            ssh "$SSH_USER@$node" "sudo ${package_manager} addrepo ${REPO_URL} quobyte" >> $INSTALL_LOG
+            ssh "$SSH_USER@$node" "sudo ${package_manager} addrepo ${REPO_URL} quobyte" >> $INSTALL_LOG || failed_repo=1
             ;;
         ubuntu|debian)
             REPO_URL="${QUOBYTE_REPO_URL}/apt"
-            ssh "$SSH_USER@$node" "sudo sh -c 'curl -s ${REPO_URL}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> $INSTALL_LOG
-            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${REPO_URL} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> $INSTALL_LOG
+            ssh "$SSH_USER@$node" "sudo sh -c 'curl -s ${REPO_URL}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> $INSTALL_LOG || failed_repo=1
+            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${REPO_URL} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> $INSTALL_LOG || failed_repo=1
             ;;
         *)
             echo "Unsupported Linux distribution: $distro"
@@ -178,7 +178,7 @@ install_repo() {
             ;;
     esac
     
-    if [ $? -ne 0 ]; then
+    if [ ${failed_repo} -ne 0 ]; then
         echo "Failed to install repository on $node."
         return 1
     fi
