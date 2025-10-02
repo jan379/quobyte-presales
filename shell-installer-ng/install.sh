@@ -165,7 +165,7 @@ install_repo() {
             ;;
         opensuse-leap)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            ssh "$SSH_USER@$node" "sudo ${package_manager} addrepo ${REPO_URL} quobyte" >> $INSTALL_LOG || failed_repo=1
+            ssh "$SSH_USER@$node" "sudo ${package_manager} addrepo --gpg-auto-import-keys ${REPO_URL} quobyte" >> $INSTALL_LOG || failed_repo=1
             ;;
         ubuntu|debian)
             REPO_URL="${QUOBYTE_REPO_URL}/apt"
