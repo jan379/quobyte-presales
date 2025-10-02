@@ -92,14 +92,8 @@ check_distrosupport(){
     echo "Checking Linux distribution support "
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
     case "$distro" in
-        rocky|almalinux)
-            local quobyte_distro_alias="RockyLinux"
-            ;;
-        centos)
-	    local quobyte_distro_alias="CentOS"
-            ;;
-        ubuntu|debian)
-            local quobyte_distro_alias="unset"
+        rocky|almalinux|centos|ubuntu|debian)
+            echo "Found distribution $distro on $node, proceeding"
             ;;
         *)
             echo "Unsupported Linux distribution: $distro"
