@@ -159,9 +159,13 @@ install_repo() {
     REPO_URL=""
 
     case "$distro" in
-        rocky|almalinux|centos|opensuse-leap)
+        rocky|almalinux|centos)
             REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
             ssh "$SSH_USER@$node" "sudo ${package_manager} config-manager --add-repo ${REPO_URL}quobyte.repo" >> $INSTALL_LOG
+            ;;
+        opensuse-leap)
+            REPO_URL="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
+            ssh "$SSH_USER@$node" "sudo ${package_manager} addrepo ${REPO_URL} quobyte" >> $INSTALL_LOG
             ;;
         ubuntu|debian)
             REPO_URL="${QUOBYTE_REPO_URL}/apt"
