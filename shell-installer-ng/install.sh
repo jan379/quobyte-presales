@@ -6,7 +6,7 @@
 # --- Configuration Variables ---
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
 PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
-PACKAGE_NAMES_DEB="quobyte-server quobyte-tools openjdk-21-jre-headless"
+PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
 SSH_USER="unset-user"
 TERM="ansi"
 INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
@@ -29,7 +29,8 @@ checklist_dialog() {
             * Machines can access the internet\n\
             * No firewall blocking Quobyte traffic\n\
 	      between machines\n\
-            * Port 8080 open to access Quobyte via web browser\n\
+            * Port 8080 open to access Quobyte via\n\
+	      web browser\n\
             * SSH access to all machines\n\
 	    * A time sync daemon (chrony or ntpd)\n\
 	      active on all machines\n\
@@ -37,7 +38,7 @@ checklist_dialog() {
 	      one per line\n\
             \n\
 	    Are you prepared to install Quobyte?\n\
-            " 22 60
+            " 23 60
 }
 
 
@@ -78,6 +79,14 @@ check_connectivity() {
     return 0
 }
 
+check_timesync(){
+    local node=$1
+    echo "Checking time sync daemon "
+    for daemon in ntp ntpd chrony chronyd; do
+        ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && echo "Found active time sync daemon $daemon".
+    done
+}
+
 get_distro_info() {
     local node=$1
     local distro=$(ssh "$SSH_USER@$node" 'source /etc/os-release && echo "$ID"')
@@ -111,6 +120,9 @@ install_repo() {
         rocky|almalinux|centos)
             local quobyte_distro_alias="RockyLinux"
             ;;
+        ubuntu|debian)
+            local quobyte_distro_alias="unset"
+            ;;
         *)
             echo "Unsupported Linux distribution: $distro"
             return 1
@@ -128,8 +140,8 @@ install_repo() {
             ;;
         ubuntu|debian)
             REPO_URL="${QUOBYTE_REPO_URL}/apt"
-            PACKAGE_MANAGER="apt"
-            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb ${REPO_URL} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> $INSTALL_LOG
+            ssh "$SSH_USER@$node" "sudo sh -c 'curl -s ${REPO_URL}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> $INSTALL_LOG
+            ssh "$SSH_USER@$node" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${REPO_URL} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> $INSTALL_LOG
             ;;
         *)
             echo "Unsupported Linux distribution: $distro"
@@ -155,7 +167,7 @@ install_packages() {
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG
     elif [ "$package_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "DEBIAN_FRONTEND=noninteractive sudo $package_manager install -y $PACKAGE_NAMES_DEB" >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG
     else
         echo "Unknown package manager ${package_manager}."
         return 1
@@ -184,7 +196,9 @@ remove_packages() {
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_RPM" 
     elif [ "$package_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "sudo $package_manager remove -y $PACKAGE_NAMES_DEB" 
+        ssh "$SSH_USER@$node" "sudo $package_manager purge -y $PACKAGE_NAMES_DEB" 
+        ssh "$SSH_USER@$node" "sudo rm /etc/apt/sources.list.d/quobyte.list" 
+        ssh "$SSH_USER@$node" "sudo rm /etc/apt/trusted.gpg.d/quobyte.gpg" 
     else
         echo "Unknown package manager ${package_manager}."
         return 1
@@ -257,6 +271,10 @@ for node in $NODES; do
        echo "Could not connecto to node $node, exit installation"
        exit 1
     fi
+    if ! check_timesync "$node"; then
+       echo "Could not find a running time sync daemon on $node, exit installation"
+       exit 1
+    fi
 done
 
 # 3. Process each node
@@ -284,18 +302,18 @@ for node in $NODES; do
         echo "Bootstrapping Quobyte cluster on $node..."
         # Your Quobyte bootstrap command here
         ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-        ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" 2>&1 >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
         
         # Find public IP of the bootstrapped node
@@ -311,18 +329,18 @@ for node in $NODES; do
         echo "Joining $node to the bootstrapped cluster..."
         # Your Quobyte cluster join command here
         ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-        ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data"
+        ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data" >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-registry"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-api"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-webconsole"	>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-data"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"	>> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
     fi
 done
