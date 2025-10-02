@@ -194,7 +194,7 @@ install_packages() {
 
     echo "Installing packages on $node using package manager ${package_manager}..."
     
-    if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
+    if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ] || [ "$package_manager" == "zypper" ]; then
         ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG || failed_packages=1
     elif [ "$package_manager" == "apt" ]; then
         ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG || failed_packages=1
@@ -205,6 +205,7 @@ install_packages() {
     
     if [ ${failed_packages} -ne 0 ]; then
         echo "Failed to install packages on $node."
+        echo "Installation was not successful."
         exit 1
     fi
 
