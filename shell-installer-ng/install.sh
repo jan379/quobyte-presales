@@ -197,7 +197,7 @@ install_packages() {
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ] ; then
         ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG || failed_packages=1
     elif [ "$package_manager" == "zypper" ]; then
-        ssh "$SSH_USER@$node" "sudo $package_manager install -y --gpg-auto-import-keys $PACKAGE_NAMES_RPM" >> $INSTALL_LOG || failed_packages=1
+        ssh "$SSH_USER@$node" "sudo $package_manager --gpg-auto-import-keys --non-interactive install $PACKAGE_NAMES_RPM" >> $INSTALL_LOG || failed_packages=1
     elif [ "$package_manager" == "apt" ]; then
         ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG || failed_packages=1
     else
