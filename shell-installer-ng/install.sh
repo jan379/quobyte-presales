@@ -10,7 +10,8 @@ PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
 SSH_USER="unset-user"
 TERM="ansi"
 INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
-DEBIAN_FRONTEND=noninteractive
+# Set Quobyte green background
+export NEWT_COLORS="root=,green:"
 # For passwordless SSH, you'd use a key. For a password, you might use 'sshpass' or similar.
 # This script assumes SSH keys are in place for security.
 
