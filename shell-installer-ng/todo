@@ -7,3 +7,22 @@
 [* --scaleout-dataservices]
 Support SUSE
 
+
+--> split quobyte-packages and JRE names
+--> make sure these distros from packages.quobyte.com work:
+-> ubuntu
+	noble
+	focal
+-> debian
+	bookworm
+	trixie
+-> SLE
+	15
+-> RHEL
+	8
+	9
+-> Rocky
+	9
+
+
+	 

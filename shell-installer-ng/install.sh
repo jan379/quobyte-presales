@@ -117,8 +117,11 @@ install_repo() {
     local package_manager=$(echo "$distro_info" | cut -d':' -f4)
     local version_codename=$(echo "$distro_info" | cut -d':' -f5)
     case "$distro" in
-        rocky|almalinux|centos)
+        rocky|almalinux)
             local quobyte_distro_alias="RockyLinux"
+            ;;
+        centos)
+	    local quobyte_distro_alias="CentOS"
             ;;
         ubuntu|debian)
             local quobyte_distro_alias="unset"
