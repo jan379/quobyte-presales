@@ -190,21 +190,22 @@ install_repo() {
 install_packages() {
     local node=$1
     local package_manager=$2
+    local failed_packages=0
 
     echo "Installing packages on $node using package manager ${package_manager}..."
     
     if [ "$package_manager" == "dnf" ] || [ "$package_manager" == "yum" ]; then
-        ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo $package_manager install -y $PACKAGE_NAMES_RPM" >> $INSTALL_LOG || failed_packages=1
     elif [ "$package_manager" == "apt" ]; then
-        ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo DEBIAN_FRONTEND=noninteractive $package_manager -o Apt::Cmd::Disable-Script-Warning=true install -y $PACKAGE_NAMES_DEB" 2>&1 >> $INSTALL_LOG || failed_packages=1
     else
         echo "Unknown package manager ${package_manager}."
-        return 1
+        exit 1
     fi
     
-    if [ $? -ne 0 ]; then
+    if [ ${failed_packages} -ne 0 ]; then
         echo "Failed to install packages on $node."
-        return 1
+        exit 1
     fi
 
     echo "Packages installed successfully."
