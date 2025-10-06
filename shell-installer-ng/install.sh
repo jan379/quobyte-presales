@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# A simple Quobyte installer script using whiptail for dialog-based interaction.
+# A simple Quobyte installer script using menu for dialog-based interaction.
 
 
 # --- Configuration Variables ---
@@ -17,12 +17,17 @@ export NEWT_COLORS="root=,green:"
 
 # --- Function Definitions ---
 
+menu(){
+    whiptail "$@" 3>&1 1>&2 2>&3 3>&- ;
+}
+
+
 welcome_dialog() {
-    whiptail --title "Quobyte Installer" --msgbox "Welcome to the Quobyte software installer! This script will guide you through the process of setting up a new Quobyte cluster." 10 60
+    menu --title "Quobyte Installer" --msgbox "Welcome to the Quobyte software installer! This script will guide you through the process of setting up a new Quobyte cluster." 10 60
 }
 
 checklist_dialog() {
-    whiptail --title "Quobyte Installer" --yesno "Requirements Checklist:\n\
+    menu --title "Quobyte Installer" --yesno "Requirements Checklist:\n\
             \n\
             * At least 4 Linux machines\n\
             * At least two unformatted devices\n\
@@ -44,23 +49,35 @@ checklist_dialog() {
 
 
 get_ssh_user() {
-    SSH_USER=$(whiptail --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60 3>&1 1>&2 2>&3)
+    SSH_USER=$(menu --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60)
     echo "${SSH_USER}"
 }
 
-get_node_file() {
-    NODE_FILE=$(whiptail --title "Quobyte Installer" --inputbox "Please enter the full path to the file containing your install target nodes." 10 60 3>&1 1>&2 2>&3)
-    
-    if [ $? -ne 0 ]; then
-        echo "Installation canceled by user."
-        exit 1
-    fi
-    
-    if [ ! -f "$NODE_FILE" ]; then
-        whiptail --title "Error" --msgbox "The file '$NODE_FILE' was not found." 10 60
-        exit 1
-    fi
-    echo "$NODE_FILE"
+get_nodes() {
+    NODE_FILE="init"
+    while [ "${NODE_FILE}" == "init" ]; do
+        NODE_FILE=$(menu --title "Quobyte Installer" --inputbox "Please enter the full path to a file containing your install target nodes." 10 60)
+        if [ $? -ne 0 ]; then
+          echo "Installation canceled by user."
+          exit 1
+        fi
+
+        if [ ! -f "$NODE_FILE" ]; then
+	  menu --title "Error" --yesno --yes-button "Retry" --no-button "Exit" "The file '$NODE_FILE' was not found." 10 60
+          if [ $? -ne 0 ]; then
+            exit 1
+          else
+	    NODE_FILE="init"
+	  fi
+        fi
+    done
+    while read -r line; do
+	# Skip comment lines in host file
+        case "$line" in \#*) continue ;; esac
+	nodes="${nodes} ${line}"
+    done < ${NODE_FILE}
+    echo "Install on these target nodes: ${nodes}" >> $INSTALL_LOG 
+    echo "$nodes"
 }
 
 check_connectivity() {
@@ -281,8 +298,7 @@ welcome_dialog
 checklist_dialog || exit 1
 
 # 2. Get the list of nodes from a file
-NODE_FILE=$(get_node_file)
-NODES=$(cat "$NODE_FILE")
+NODES=$(get_nodes)
 REGISTRY_STRING="registry=$(for node in $NODES; do echo -n ${node}, ; done | sed s/,$//g)"
 SSH_USER=$(get_ssh_user)
 
@@ -297,7 +313,7 @@ if [ "$1" == "uninstall" ]; then
 fi
 
 if [ -z "$NODES" ]; then
-    whiptail --title "Error" --msgbox "The node file is empty." 10 60 
+    menu --title "Error" --msgbox "The node file is empty." 10 60 
     exit 1
 fi
 
@@ -387,9 +403,9 @@ done
 
 # 4. Final welcome message
 if [ -n "$PUBLIC_IP" ]; then
-    whiptail --title "Installation Complete" --msgbox "Congratulations! The Quobyte cluster has been installed. Please open your web browser and navigate to:\n\nhttp://$PUBLIC_IP:8080\n\nto complete the setup." 15 70
+    menu --title "Installation Complete" --msgbox "Congratulations! The Quobyte cluster has been installed. Please open your web browser and navigate to:\n\nhttp://$PUBLIC_IP:8080\n\nto complete the setup." 15 70
 else
-    whiptail --title "Installation Failed" --msgbox "The installation could not be completed. Please check the logs for errors." 15 70
+    menu --title "Installation Failed" --msgbox "The installation could not be completed. Please check the logs for errors." 15 70
 fi
 
 
