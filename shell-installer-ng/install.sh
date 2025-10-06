@@ -7,7 +7,7 @@
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
 PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
 PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
-SSH_USER="unset-user"
+SSH_USER="$USER"
 TERM="ansi"
 INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
 # Set Quobyte green background
@@ -49,7 +49,7 @@ checklist_dialog() {
 
 
 get_ssh_user() {
-    SSH_USER=$(menu --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60)
+    SSH_USER=$(menu --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60 "$SSH_USER")
     echo "${SSH_USER}"
 }
 
@@ -76,6 +76,7 @@ get_nodes() {
         case "$line" in \#*) continue ;; esac
 	nodes="${nodes} ${line}"
     done < ${NODE_FILE}
+    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes: ${nodes}." 10 60
     echo "Install on these target nodes: ${nodes}" >> $INSTALL_LOG 
     echo "$nodes"
 }
