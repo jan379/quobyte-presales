@@ -76,23 +76,26 @@ get_nodes() {
         case "$line" in \#*) continue ;; esac
 	nodes="${nodes} ${line}"
     done < ${NODE_FILE}
-    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes: \n\n$(for node in ${nodes}; do echo $node; done)" 16 60
+    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes:\n\n$(for node in ${nodes}; do echo $node; done)" 16 60
     echo "Install on these target nodes: ${nodes}" >> $INSTALL_LOG 
     echo "$nodes"
 }
 
 check_connectivity() {
     local node=$1
-    echo "Checking connectivity to $node..."
+    menu --infobox "Checking connectivity on node $node..." 10 60
+    echo "Checking connectivity to $node..." >> $INSTALL_LOG
     # Check SSH availability
     if ! ssh "$SSH_USER@$node" exit; then
-        echo "Error: SSH connection to $node failed."
+        menu --title "Error" --msgbox "Error: SSH connection to $node failed." 10 60
+        echo "Error: SSH connection to $node failed." >> $INSTALL_LOG
         return 1 
     fi
 
     # Check HTTPS connectivity from the target node
     if ! ssh "$SSH_USER@$node" "curl -s -o /dev/null -w '%{http_code}' $QUOBYTE_REPO_URL" | grep -q "200"; then
-        echo "Error: Target $node cannot reach $QUOBYTE_REPO_URL"
+        menu --title "Error" --msgbox "Error: $node cannot reach $QUOBYTE_REPO_URL" 10 60
+        echo "Error: $node cannot reach $QUOBYTE_REPO_URL"
         return 1
     fi
     return 0
@@ -100,9 +103,15 @@ check_connectivity() {
 
 check_timesync(){
     local node=$1
-    echo "Checking time sync daemon "
+    timesyncdaemon="false"
+    echo "Checking time sync daemon on $node" >> $INSTALL_LOG
+    menu --infobox "Checking time sync daemon on $node..." 10 60
     for daemon in ntp ntpd chrony chronyd; do
-        ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && echo "Found active time sync daemon $daemon".
+        ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && timesyncdaemon="true" 
+	if [ $timesyncdaemon == "true" ]; then
+		echo "Found active time sync daemon $daemon"\
+                menu --infobox "Checking time sync daemon on $node..." 10 60
+	fi
     done
 }
 
@@ -338,7 +347,6 @@ done
 first_node_flag=true
 for node in $NODES; do
     echo "Processing node: $node"
-
 
     # 3b. Find out distribution and version
     distro_info=$(get_distro_info "$node")
