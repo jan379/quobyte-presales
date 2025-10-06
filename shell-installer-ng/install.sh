@@ -76,7 +76,7 @@ get_nodes() {
         case "$line" in \#*) continue ;; esac
 	nodes="${nodes} ${line}"
     done < ${NODE_FILE}
-    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes: ${nodes}." 10 60
+    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes: \n\n$(for node in ${nodes}; do echo $node; done)" 16 60
     echo "Install on these target nodes: ${nodes}" >> $INSTALL_LOG 
     echo "$nodes"
 }
