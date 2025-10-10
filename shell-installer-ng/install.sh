@@ -113,7 +113,7 @@ check_timesync(){
                 menu --infobox "Found active time sync daemon on $node..." 10 60
 	else
 		echo "Did not find active time sync daemon $daemon on node $node, exit" >> $INSTALL_LOG
-                menu --msgbox "No active time sync daemon on $node. Please install chrony or ntpd before proceeding." 10 60
+                menu --msgbox "No active time sync daemon on $node. Please install chrony or ntp daemon before proceeding." 10 60
 		exit 1
 	fi
     done
