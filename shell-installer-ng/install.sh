@@ -109,8 +109,12 @@ check_timesync(){
     for daemon in ntp ntpd chrony chronyd; do
         ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && timesyncdaemon="true" 
 	if [ $timesyncdaemon == "true" ]; then
-		echo "Found active time sync daemon $daemon"\
-                menu --infobox "Checking time sync daemon on $node..." 10 60
+		echo "Found active time sync daemon $daemon" >> $INSTALL_LOG
+                menu --infobox "Found active time sync daemon on $node..." 10 60
+	else
+		echo "Did not find active time sync daemon $daemon on node $node, exit" >> $INSTALL_LOG
+                menu --msgbox "No active time sync daemon on $node..." 10 60
+		exit 1
 	fi
     done
 }
