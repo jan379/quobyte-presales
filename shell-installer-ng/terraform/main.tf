@@ -123,6 +123,8 @@ resource "google_compute_instance" "suse_server" {
  boot_disk {
    initialize_params {
      image = "opensuse-cloud/opensuse-leap" 
+     // sles images require an extra fee, use them only if really necessary
+     //image = "projects/suse-cloud/global/images/sles-15-sp7-v20250920-x86-64" 
    }
  }
 
@@ -136,7 +138,22 @@ resource "google_compute_instance" "suse_server" {
   interface = "NVME"
  }
 
+// Seems to be needed for SLES subscriptions to be enabled
+ service_account {
+        email  = var.serviceaccount_email 
+        scopes = [
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/monitoring.write",
+            "https://www.googleapis.com/auth/service.management.readonly",
+            "https://www.googleapis.com/auth/servicecontrol",
+            "https://www.googleapis.com/auth/trace.append",
+        ]
+}
+
+
  metadata = {
+   enable-osconfig = "TRUE"
    "ssh-keys" = <<EOT
    deploy:${file(var.public_ssh_key)}
 EOT
