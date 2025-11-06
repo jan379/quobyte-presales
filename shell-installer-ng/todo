@@ -3,6 +3,7 @@
 * --help
 * --base-install
 * --client-install
+* --reset-infrastructure
 * --erase-data vs. --uninstall?
 [* --scaleout-dataservices]
 Support SUSE
@@ -23,6 +24,7 @@ make node file handling easier
 	9
 -> Rocky
 	9
-
+-> Alma LInux
+	9
 
 	 

@@ -2,3 +2,5 @@ deb-machine
 rocky-machine
 suse-machine
 ubuntu-machine
+
+# comment after empty string
