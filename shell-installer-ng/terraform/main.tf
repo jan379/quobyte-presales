@@ -212,6 +212,54 @@ EOT
  }
 }
 
+resource "google_compute_instance" "alma_server" {
+// alma images are hidden, but can be obtained like this:
+// gcloud compute images list --project almalinux-cloud --no-standard-images
+ count        = 1
+ name         = "alma-machine"
+ machine_type = "n1-standard-8" 
+ zone         = local.cluster_zone
+ allow_stopping_for_update = true
+ scheduling { 
+   provisioning_model = "SPOT"
+   preemptible = true
+   automatic_restart = false
+ }
+ lifecycle {
+    ignore_changes = [attached_disk]
+ }
+
+ boot_disk {
+   initialize_params {
+     //image = "almalinux-cloud/almalinux-9-v20251014"
+     image = "almalinux-cloud/almalinux-9"
+   }
+ }
+
+// one metadata device 
+ scratch_disk {
+  interface = "NVME"
+ }
+
+// one fast data devices 
+ scratch_disk {
+  interface = "NVME"
+ }
+
+ metadata = {
+   "ssh-keys" = <<EOT
+   deploy:${file(var.public_ssh_key)}
+EOT
+ }
+
+ network_interface {
+   network = "default"
+   access_config {
+     // Include this section to give the VM an external ip address
+   }
+ }
+}
+
 
 // output section
 output "bastion-ip" {
