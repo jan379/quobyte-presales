@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # A simple Quobyte installer script using menu for dialog-based interaction.
 
 
 # --- Configuration Variables ---
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
+##QUOBYTE_REPO_URL="https://asdfasdfa.xde"
 PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
 PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
-SSH_USER="$USER"
+SSH_USER_INIT="$USER"
 TERM="ansi"
 INSTALL_LOG="/tmp/quobyte_install_$(date +%F-%T).log"
+UNINSTALL="false"
 # Set Quobyte green background
 export NEWT_COLORS="root=,green:"
 # For passwordless SSH, you'd use a key. For a password, you might use 'sshpass' or similar.
@@ -23,78 +26,114 @@ menu(){
 
 
 welcome_dialog() {
-    menu --title "Quobyte Installer" --msgbox "Welcome to the Quobyte software installer! This script will guide you through the process of setting up a new Quobyte cluster." 10 60
+    menu --title "Quobyte Installer" --msgbox "Welcome to the Quobyte software installer! This script will guide you through the process of setting up a new Quobyte cluster." 10 80
 }
 
 checklist_dialog() {
     menu --title "Quobyte Installer" --yesno "Requirements Checklist:\n\
             \n\
             * At least 4 Linux machines\n\
-            * At least two unformatted devices\n\
-	      per machine\n\
+            * At least two unformatted devices per machine\n\
             * Machines can access the internet\n\
-            * No firewall blocking Quobyte traffic\n\
-	      between machines\n\
-            * Port 8080 open to access Quobyte via\n\
-	      web browser\n\
+            * No firewall blocking Quobyte traffic between machines\n\
+            * Port 8080 open to access Quobyte via web browser\n\
             * SSH access to all machines\n\
-	    * A time sync daemon (chrony or ntpd)\n\
-	      active on all machines\n\
-	    * A text file containing all machines\n\
-	      one per line\n\
+            * A time sync daemon (chrony or ntpd) active on all machines\n\
+            * A text file containing all machines one per line\n\
             \n\
-	    Are you prepared to install Quobyte?\n\
-            " 23 60
+        Are you prepared to install Quobyte?\n\
+            " 23 80
 }
 
+check_user_input() {
+    # Used for ssh user names and node names. 
+    local input="$1"
+    # values should start with a lowercase letter
+    # and may contain dots, dashes and underscores.
+    if [[ "$input" =~ ^[a-z0-9][-a-z0-9_.]*$ ]]; then
+        echo "$input"
+    else
+        echo "Invalid"
+    fi
+}
 
 get_ssh_user() {
-    SSH_USER=$(menu --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 60 "$SSH_USER")
-    echo "${SSH_USER}"
+    local username_accepted="init"
+    while [ "${username_accepted}" == "init" ]; do
+      SSH_USER_RAW=$(menu --title "Quobyte Installer" --inputbox "Please enter the user name to connect via SSH to the target nodes." 10 80 "$SSH_USER_INIT")
+      if [ $? -ne 0 ]; then
+        echo "Installation canceled by user."
+        exit 1
+      fi
+
+      if [[ $(check_user_input "${SSH_USER_RAW}") != "Invalid" ]]; then
+        username_accepted="accepted"
+        echo "${SSH_USER_RAW}"
+      else
+        menu --title "Error" --yesno --yes-button "Retry" --no-button "Exit" "${SSH_USER_RAW} is an invalid user name." 10 80
+        if [ $? -ne 0 ]; then
+          echo "Installation canceled by user."
+          exit 1
+        fi
+      fi
+    done
 }
 
 get_nodes() {
     NODE_FILE="init"
     while [ "${NODE_FILE}" == "init" ]; do
-        NODE_FILE=$(menu --title "Quobyte Installer" --inputbox "Please enter the full path to a file containing your install target nodes." 10 60)
+        NODE_FILE=$(menu --title "Quobyte Installer" --inputbox "Please enter the full path to a file containing your install target nodes." 10 80)
         if [ $? -ne 0 ]; then
           echo "Installation canceled by user."
           exit 1
         fi
 
         if [ ! -f "$NODE_FILE" ]; then
-	  menu --title "Error" --yesno --yes-button "Retry" --no-button "Exit" "The file '$NODE_FILE' was not found." 10 60
-          if [ $? -ne 0 ]; then
-            exit 1
-          else
-	    NODE_FILE="init"
-	  fi
+            menu --title "Error" --yesno --yes-button "Retry" --no-button "Exit" "The file '$NODE_FILE' was not found." 10 80
+            if [ $? -ne 0 ]; then
+                exit 1
+            else
+                NODE_FILE="init"
+            fi
         fi
     done
     while read -r line; do
-	# Skip comment lines in host file
-        case "$line" in \#*) continue ;; esac
-	nodes="${nodes} ${line}"
+        # Skip comment lines in host file
+        case "$line" in 
+            \#*) 
+            continue 
+            ;; 
+        esac
+        # Skip blank lines
+        if [[ -z $line ]]; then
+            continue
+        fi
+        if [[ $(check_user_input "$line") != "Invalid" ]]; then
+            nodes+=( "${line}" )
+        else
+            menu --title "Error" --msgbox "Node \"$line\" is not allowed as hostname." 10 80
+            exit 1
+        fi
     done < ${NODE_FILE}
-    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes:\n\n$(for node in ${nodes}; do echo $node; done)" 16 60
-    echo "Install on these target nodes: ${nodes}" >> $INSTALL_LOG 
-    echo "$nodes"
+    menu --title "Quobyte Installer" --msgbox "Going to install Quobyte on these nodes:\n\n$(for node in ${nodes[@]}; do echo $node; done)" 16 80
+    echo "Install on these target nodes: ${nodes[@]}" >> $INSTALL_LOG 
+    echo "${nodes[@]}"
 }
 
 check_connectivity() {
     local node=$1
-    menu --infobox "Checking connectivity on node $node..." 10 60
+    menu --infobox "Checking connectivity on node $node..." 10 80
     echo "Checking connectivity to $node..." >> $INSTALL_LOG
     # Check SSH availability
-    if ! ssh "$SSH_USER@$node" exit; then
-        menu --title "Error" --msgbox "Error: SSH connection to $node failed." 10 60
+    if ! ssh -o ConnectTimeout=5 "$SSH_USER@$node" "exit"; then
+        menu --title "Error" --msgbox "Error: SSH connection with user $SSH_USER to $node failed." 10 80
         echo "Error: SSH connection to $node failed." >> $INSTALL_LOG
         return 1 
     fi
 
     # Check HTTPS connectivity from the target node
     if ! ssh "$SSH_USER@$node" "curl -s -o /dev/null -w '%{http_code}' $QUOBYTE_REPO_URL" | grep -q "200"; then
-        menu --title "Error" --msgbox "Error: $node cannot reach $QUOBYTE_REPO_URL" 10 60
+        menu --title "Error" --msgbox "Error: $node cannot reach $QUOBYTE_REPO_URL" 10 80
         echo "Error: $node cannot reach $QUOBYTE_REPO_URL"
         return 1
     fi
@@ -105,18 +144,18 @@ check_timesync(){
     local node=$1
     failed_timesyncheck="1"
     echo "Checking time sync daemon on $node" >> $INSTALL_LOG
-    menu --infobox "Checking time sync daemon on $node..." 10 60
+    menu --infobox "Checking time sync daemon on $node..." 10 80
     for daemon in ntp ntpd chrony chronyd; do
         ssh $SSH_USER@$node "sudo systemctl is-active $daemon > /dev/null" && failed_timesyncheck=0
     done
 
     if [ ${failed_timesyncheck} -eq 0 ]; then
         echo "Found active time sync daemon on $node" >> $INSTALL_LOG
-        menu --infobox "Found active time sync daemon on $node..." 10 60
+        menu --infobox "Found active time sync daemon on $node..." 10 80
     else
         echo "Did not find active time sync daemon on $node, exit" >> $INSTALL_LOG
-        menu --msgbox "No active time sync daemon on $node. Please install chrony or ntpd before proceeding." 10 60
-	exit 1
+        menu --msgbox "No active time sync daemon on $node. Please install chrony or ntpd before proceeding." 10 80
+    exit 1
     fi
 }
 
@@ -143,18 +182,18 @@ get_distro_info() {
     local major_version=$(echo ${version} | awk -F\. '{print $1'})
     case "$distro" in
         rocky|almalinux|centos)
-	   package_manager="dnf"
-	   ;;
+       package_manager="dnf"
+       ;;
         ubuntu|debian)
-	   package_manager="apt"
-	   ;;
+       package_manager="apt"
+       ;;
         opensuse-leap|sles)
-	   package_manager="zypper"
-	   ;;
+       package_manager="zypper"
+       ;;
         *)
-	   echo "Unsupported Linux distribution $distro."
+       echo "Unsupported Linux distribution $distro."
            exit 1
-	   ;;
+       ;;
     esac
     echo "$distro:$version:$major_version:$package_manager:$version_codename"
 }
@@ -172,14 +211,14 @@ install_repo() {
             local quobyte_distro_alias="RockyLinux"
             ;;
         centos)
-	    local quobyte_distro_alias="CentOS"
+        local quobyte_distro_alias="CentOS"
             ;;
         ubuntu|debian)
             local quobyte_distro_alias="unset"
             ;;
         opensuse-leap|sles)
             local quobyte_distro_alias="SLE"
-	    ;;
+        ;;
         *)
             echo "Unsupported Linux distribution: $distro"
             exit 1
@@ -285,10 +324,10 @@ remove_state() {
     local node=$1
     local devices=$(ssh $SSH_USER@$node "lsblk -o name,label | grep quobyte-dev | sed s/\ .*//g")
     for device in $devices; do 
-  	ssh $SSH_USER@$node "sudo umount /dev/$device"
+    ssh $SSH_USER@$node "sudo umount /dev/$device"
     done
     for device in $devices; do 
-  	ssh $SSH_USER@$node "sudo wipefs -a /dev/$device"
+    ssh $SSH_USER@$node "sudo wipefs -a /dev/$device"
     done
     echo "removing /var/lib/quobyte"
     ssh $SSH_USER@$node "sudo rm -rf /var/lib/quobyte"
@@ -306,19 +345,47 @@ find_public_ip() {
     echo "$public_ip"
 }
 
+usage() {
+    echo "Usage: $0 [-h]"
+    echo ""
+    echo "Options:"
+    echo "  -h           Show this help message and exit."
+    echo "  -u           Uninstall. Erases any data and deletes your Quobyte cluster"
+    exit 0
+}
+
 # --- Main Script Execution ---
 
-# 1. Welcome the user
+# Parse arguments
+while getopts ":hu" opt; do 
+        case "${opt}" in
+            h)
+                # -h: Help message
+                usage
+                exit 1
+                ;;
+            u)
+                # -u: Uninstall
+                UNINSTALL="true"
+                ;;
+            *)
+                echo "Error: Invalid option: -${OPTARG}" 
+                usage
+                ;;
+        esac
+done
+
+# Welcome the user
 welcome_dialog
 checklist_dialog || exit 1
 
 # 2. Get the list of nodes from a file
 NODES=$(get_nodes)
 REGISTRY_STRING="registry=$(for node in $NODES; do echo -n ${node}, ; done | sed s/,$//g)"
-SSH_USER=$(get_ssh_user)
+SSH_USER=$(get_ssh_user) 
 
-if [ "$1" == "uninstall" ]; then
-   for node in $NODES; do
+if [ "$UNINSTALL" == "true" ]; then
+   for node in "$NODES"; do
        distro_info=$(get_distro_info "$node")
        package_manager=$(echo "$distro_info" | cut -d':' -f4)
        remove_packages "$node" "$package_manager"
@@ -328,7 +395,7 @@ if [ "$1" == "uninstall" ]; then
 fi
 
 if [ -z "$NODES" ]; then
-    menu --title "Error" --msgbox "The node file is empty." 10 60 
+    menu --title "Error" --msgbox "The node file is empty." 10 80 
     exit 1
 fi
 
@@ -375,16 +442,16 @@ for node in $NODES; do
         ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" 2>&1 >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"        >> $INSTALL_LOG
         
         # Find public IP of the bootstrapped node
         PUBLIC_IP=$(find_public_ip "$node")
@@ -402,16 +469,16 @@ for node in $NODES; do
         ssh "$SSH_USER@$node" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data" >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
         ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"		>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"	>> $INSTALL_LOG
-        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"		>> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-api"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-webconsole"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-webconsole"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-data"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-data"        >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-metadata"    >> $INSTALL_LOG
+        ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-metadata"        >> $INSTALL_LOG
     fi
 done
 
