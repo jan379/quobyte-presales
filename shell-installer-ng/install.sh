@@ -94,7 +94,7 @@ wait_for_dns(){
 	srv_record="unset"
 	s3_record="unset"
 	s3_wildcard="unset"
-	while [[ ${arecord} == "unset" | ${srv_record} == "unset" ]]; do
+	while [[ ${arecord} == "unset" || ${srv_record} == "unset" ]]; do
 		testrecord_a=$(host -t a ${dnsdomain}) && arecord=${testrecord}
 		testrecord_srv=$(host -v _quobyte._tcp.${dnsdomain}) && srvrecord=${testrecord}
                 menu --title "Info" --infobox "Waiting for DNS records to be populated..." 10 80
