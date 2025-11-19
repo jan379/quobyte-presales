@@ -83,9 +83,9 @@ get_ssh_user() {
 }
 
 setup_qns(){
-	qns_id=$(uuidgen | head -c12)
-	qns_secret=$(uuidgen | head -c24)
-	REGISTRY_STRING="${qns_id}.myquobyte.net"
+	qns_id=$(uuidgen | tr -d '-' | head -c12)
+	qns_secret=$(uuidgen | tr -d '-' | head -c24 )
+	REGISTRY_STRING="registry = ${qns_id}.myquobyte.net"
         menu --title "Info" --infobox "A new cluster record has been created: ${REGISTRY_STRING}" 10 80
 }
 
@@ -445,6 +445,8 @@ done
 
 # 3. Process each node
 first_node_flag=true
+
+
 for node in $NODES; do
     echo "Processing node: $node"
 
@@ -464,12 +466,18 @@ for node in $NODES; do
     
     # 3e. Quobyte bootstrap and cluster join
     if $first_node_flag; then
+        setup_qns
         echo "Bootstrapping Quobyte cluster on $node..."
+	echo "QNS ID: ${qns_id}"
+	echo "QNS Secret: ${qns_secret}"
+	echo "Registry endpoint: ${REGISTRY_STRING}"
         # Your Quobyte bootstrap command here
         ssh "$SSH_USER@$node" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
         ssh "$SSH_USER@$node" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" 2>&1 >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
-        ssh "$SSH_USER@$node" "sudo sed -i s/^registry.*/${REGISTRY_STRING}/g  /etc/quobyte/host.cfg"
+        ssh "$SSH_USER@$node" "sudo sed -i 's/^registry.*/${REGISTRY_STRING}/g'  /etc/quobyte/host.cfg"
+        ssh "$SSH_USER@$node" "sudo grep 'qns.id' /etc/quobyte/registry.cfg || echo 'qns.id = $qns_id' | sudo tee -a /etc/quobyte/registry.cfg"
+        ssh "$SSH_USER@$node" "sudo grep 'qns.secret' /etc/quobyte/registry.cfg || echo 'qns.secret = $qns_secret' | sudo tee -a /etc/quobyte/registry.cfg"
         ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-registry"    >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl restart quobyte-registry"        >> $INSTALL_LOG
         ssh "$SSH_USER@$node" "sudo systemctl enable --quiet quobyte-api"    >> $INSTALL_LOG
