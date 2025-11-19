@@ -6,7 +6,6 @@ set -euo pipefail
 
 # --- Configuration Variables ---
 QUOBYTE_REPO_URL="https://packages.quobyte.com/repo/current"
-##QUOBYTE_REPO_URL="https://asdfasdfa.xde"
 PACKAGE_NAMES_RPM="quobyte-server quobyte-tools java-21-openjdk-headless"
 PACKAGE_NAMES_DEB="quobyte-server quobyte-tools default-jre-headless"
 SSH_USER_INIT="$USER"
@@ -19,6 +18,10 @@ export NEWT_COLORS="root=,green:"
 # This script assumes SSH keys are in place for security.
 
 # --- Function Definitions ---
+
+check_installer_requirements(){
+    whiptail --version > /dev/null && echo "success" || echo "failure"
+}
 
 menu(){
     whiptail "$@" 3>&1 1>&2 2>&3 3>&- ;
@@ -77,6 +80,26 @@ get_ssh_user() {
         fi
       fi
     done
+}
+
+setup_qns(){
+	qns_id=$(uuidgen | head -c8)
+	REGISTRY_STRING="${qns_id}.myquobyte.net"
+        menu --title "Info" --infobox "A new cluster record has been created: ${REGISTRY_STRING}" 10 80
+}
+
+wait_for_dns(){
+	dnsdomain=$1
+	a_record="unset"
+	srv_record="unset"
+	s3_record="unset"
+	s3_wildcard="unset"
+	while [[ ${arecord} == "unset" | ${srv_record} == "unset" ]]; do
+		testrecord_a=$(host -t a ${dnsdomain}) && arecord=${testrecord}
+		testrecord_srv=$(host -v _quobyte._tcp.${dnsdomain}) && srvrecord=${testrecord}
+                menu --title "Info" --infobox "Waiting for DNS records to be populated..." 10 80
+	done
+        menu --title "Info" --infobox "Waiting for DNS records to be populated..." 10 80
 }
 
 get_nodes() {
@@ -254,8 +277,7 @@ install_repo() {
         return 1
     fi
 
-    echo "Repository installed successfully."
-    echo "$PACKAGE_MANAGER"
+    echo "Repository installed successfully on $node."
 }
 
 install_packages() {
@@ -376,7 +398,12 @@ while getopts ":hu" opt; do
 done
 
 # Welcome the user
-welcome_dialog
+if [[ ! $(check_installer_requirements) == "success" ]]; then
+	echo "This installer script requires 'whiptail' to be installed."
+	exit 1
+else
+	welcome_dialog
+fi
 checklist_dialog || exit 1
 
 # 2. Get the list of nodes from a file
