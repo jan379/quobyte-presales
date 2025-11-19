@@ -83,7 +83,8 @@ get_ssh_user() {
 }
 
 setup_qns(){
-	qns_id=$(uuidgen | head -c8)
+	qns_id=$(uuidgen | head -c12)
+	qns_secret=$(uuidgen | head -c24)
 	REGISTRY_STRING="${qns_id}.myquobyte.net"
         menu --title "Info" --infobox "A new cluster record has been created: ${REGISTRY_STRING}" 10 80
 }
@@ -94,7 +95,7 @@ wait_for_dns(){
 	srv_record="unset"
 	s3_record="unset"
 	s3_wildcard="unset"
-	while [[ ${arecord} == "unset" | ${srv_record} == "unset" ]]; do
+	while [[ ${arecord} == "unset" || ${srv_record} == "unset" ]]; do
 		testrecord_a=$(host -t a ${dnsdomain}) && arecord=${testrecord}
 		testrecord_srv=$(host -v _quobyte._tcp.${dnsdomain}) && srvrecord=${testrecord}
                 menu --title "Info" --infobox "Waiting for DNS records to be populated..." 10 80
@@ -412,7 +413,7 @@ REGISTRY_STRING="registry=$(for node in $NODES; do echo -n ${node}, ; done | sed
 SSH_USER=$(get_ssh_user) 
 
 if [ "$UNINSTALL" == "true" ]; then
-   for node in "$NODES"; do
+   for node in $NODES; do
        distro_info=$(get_distro_info "$node")
        package_manager=$(echo "$distro_info" | cut -d':' -f4)
        remove_packages "$node" "$package_manager"
