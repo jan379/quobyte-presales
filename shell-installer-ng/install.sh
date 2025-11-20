@@ -21,6 +21,8 @@ NODES=""
 SSH_USER=""
 REGISTRY_STRING=""
 PUBLIC_IP=""
+qns_id="" # Variable to hold the generated QNS ID
+qns_secret="" # Variable to hold the generated QNS Secret
 
 # Set Quobyte green background for whiptail
 export NEWT_COLORS="root=,green:"
@@ -37,12 +39,21 @@ menu() {
 }
 
 check_installer_requirements() {
-    # Check if 'whiptail' is installed and executable.
-    if whiptail --version > /dev/null 2>&1; then
-        echo "success"
-    else
+    local missing_tools=()
+
+    # Check local dependencies
+    for tool in whiptail uuidgen curl; do
+        if ! command -v "$tool" > /dev/null 2>&1; then
+            missing_tools+=("$tool")
+        fi
+    done
+
+    if [ ${#missing_tools[@]} -gt 0 ]; then
         echo "failure"
+        echo "Missing required local commands: ${missing_tools[*]}" >&2
+        return 1
     fi
+    echo "success"
 }
 
 welcome_dialog() {
@@ -58,7 +69,8 @@ checklist_dialog() {
 * Machines can access the internet\n\
 * No firewall blocking Quobyte traffic between machines\n\
 * Port 8080 open to access Quobyte via web browser\n\
-* SSH access (preferably key-based) to all machines\n\
+* SSH access (key-based preferred) to all machines\n\
+* SSH user must have NOPASSWD sudo access.\n\
 * A time sync daemon (chrony or ntpd) active on all machines\n\
 * A text file containing all target machines, one per line\n\
 \n\
@@ -71,7 +83,6 @@ Are you prepared to install Quobyte?" 23 80
 
 check_user_input() {
     # Used for ssh user names and node names.
-    # Values should start with a letter/number and may contain dots, dashes, and underscores.
     local input="$1"
     if [[ "$input" =~ ^[a-z0-9][-a-z0-9_.]*$ ]]; then
         echo "$input"
@@ -131,8 +142,9 @@ get_nodes() {
 
     # Read nodes from the validated file
     while IFS= read -r line; do
-        # Remove leading/trailing whitespace
-        local line_trimmed=$(echo "$line" | xargs)
+        # Remove leading/trailing whitespace using robust substitution
+        local line_trimmed="${line##*( )}"
+        line_trimmed="${line_trimmed%%*( )}"
 
         # Skip comment lines and blank lines
         case "$line_trimmed" in
@@ -165,6 +177,21 @@ get_nodes() {
 ## -----------------------------------------------------------------------------
 ## Pre-flight Checks
 ## -----------------------------------------------------------------------------
+
+check_sudo_nopasswd() {
+    local node="$1"
+    echo "Checking passwordless sudo access on $node..." >> "$INSTALL_LOG"
+
+    # Try to execute a benign sudo command (-n means no password prompt)
+    if ! ssh "${SSH_USER}@${node}" "sudo -n true" > /dev/null 2>&1; then
+        menu --title "Error" --msgbox "Error: SSH user ${SSH_USER} on ${node} requires a password for 'sudo'. Please configure NOPASSWD access." 10 80
+        echo "Error: Passwordless sudo check failed on ${node}." >> "$INSTALL_LOG"
+        return 1
+    fi
+
+    echo "Passwordless sudo access verified on $node." >> "$INSTALL_LOG"
+    return 0
+}
 
 check_connectivity() {
     local node="$1"
@@ -213,9 +240,18 @@ check_timesync() {
     fi
 }
 
-check_previous_installation(){
-    local prev_install="true"
-    ssh "${SSH_USER}@${node}" 'sudo grep DIR_DEVICE /var/lib/quobyte/devices/*/QUOBYTE_DEV_SETUP' || prev_install=false
+check_previous_installation() {
+    local node="$1"
+    echo "Checking for previous Quobyte data on $node..." >> "$INSTALL_LOG"
+
+    # Check for the existence of the device setup file, which indicates installed Quobyte data.
+    # Returns 1 if found (true), 0 if not found (false).
+    # What we want is absence of that file.
+    if ssh "${SSH_USER}@${node}" "sudo test -f /var/lib/quobyte/devices/*/QUOBYTE_DEV_SETUP"; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 check_distrosupport() {
@@ -287,23 +323,13 @@ install_repo() {
     local repo_url=""
     local failed_repo=0
 
+    # Determine Quobyte distribution alias
     case "$distro" in
-        rocky|almalinux)
-            quobyte_distro_alias="RockyLinux"
-            ;;
-        centos)
-            quobyte_distro_alias="CentOS"
-            ;;
-        ubuntu|debian)
-            quobyte_distro_alias="" # Not needed for apt method
-            ;;
-        opensuse-leap|sles)
-            quobyte_distro_alias="SLE"
-            ;;
-        *)
-            echo "Unsupported Linux distribution: $distro" >&2
-            exit 1
-            ;;
+        rocky|almalinux) quobyte_distro_alias="RockyLinux" ;;
+        centos) quobyte_distro_alias="CentOS" ;;
+        ubuntu|debian) quobyte_distro_alias="" ;;
+        opensuse-leap|sles) quobyte_distro_alias="SLE" ;;
+        *) echo "Unsupported distribution logic in install_repo." >&2; exit 1 ;;
     esac
 
     echo "Adding Quobyte repository on $node ($distro $version)..." >> "$INSTALL_LOG"
@@ -311,7 +337,6 @@ install_repo() {
     case "$distro" in
         rocky|almalinux|centos)
             repo_url="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            # Note: The original script used 'dnf' config-manager, which should work for CentOS/RHEL 8+
             ssh "${SSH_USER}@${node}" "sudo ${package_manager} config-manager --add-repo ${repo_url}quobyte.repo" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
             ;;
         opensuse-leap|sles)
@@ -320,13 +345,11 @@ install_repo() {
             ;;
         ubuntu|debian)
             repo_url="${QUOBYTE_REPO_URL}/apt"
-            # Add public key
             ssh "${SSH_USER}@${node}" "sudo sh -c 'curl -s ${repo_url}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
-            # Add repo and update
             ssh "${SSH_USER}@${node}" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${repo_url} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
             ;;
         *)
-            echo "Unsupported Linux distribution: $distro" >&2
+            echo "Unsupported distribution logic in install_repo (post-alias)." >&2
             exit 1
             ;;
     esac
@@ -349,10 +372,8 @@ install_packages() {
     if [ "$package_manager" = "dnf" ] || [ "$package_manager" = "yum" ] ; then
         ssh "${SSH_USER}@${node}" "sudo ${package_manager} install -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     elif [ "$package_manager" = "zypper" ]; then
-        # --gpg-auto-import-keys is useful for zypper
         ssh "${SSH_USER}@${node}" "sudo ${package_manager} --gpg-auto-import-keys --non-interactive install ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     elif [ "$package_manager" = "apt" ]; then
-        # DEBIAN_FRONTEND=noninteractive suppresses prompts
         ssh "${SSH_USER}@${node}" "sudo DEBIAN_FRONTEND=noninteractive ${package_manager} -o Apt::Cmd::Disable-Script-Warning=true install -y ${PACKAGE_NAMES_DEB}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     else
         echo "Unknown package manager ${package_manager}." >&2
@@ -375,6 +396,7 @@ setup_qns() {
     local qns_secret_raw=$(uuidgen | tr -d '-')
 
     # Quobyte uses 12 char ID and 24 char secret
+    # Assign to global variables for use in bootstrap_quobyte
     qns_id="${qns_id_raw:0:12}"
     qns_secret="${qns_secret_raw:0:24}"
 
@@ -406,7 +428,6 @@ bootstrap_quobyte() {
 
     # 1. Setup registry data directory and bootstrap
     ssh "${SSH_USER}@${node}" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-    # Use || true to prevent immediate script exit on non-zero status in SSH, though set -e should handle it
     ssh "${SSH_USER}@${node}" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" >> "$INSTALL_LOG" 2>&1
 
     # 2. Set ownership
@@ -493,7 +514,8 @@ remove_state() {
 
     # 1. Unmount and wipe devices (assuming Quobyte labels them)
     local devices
-    devices=$(ssh "${SSH_USER}@${node}" "lsblk -o NAME,LABEL | grep 'quobyte-dev' | awk '{print \$1}'")
+    # Note: Using sed instead of awk/grep here for a potentially more robust one-liner on the remote host
+    devices=$(ssh "${SSH_USER}@${node}" "lsblk -o NAME,LABEL | grep 'quobyte-dev' | sed 's/ .*//g'")
 
     for device in ${devices}; do
         echo "Unmounting /dev/${device}..." >> "$INSTALL_LOG"
@@ -545,8 +567,9 @@ done
 shift $((OPTIND - 1)) # Consume processed arguments
 
 # 1. Welcome and dependency check
-if [[ ! $(check_installer_requirements) == "success" ]]; then
-    echo "This installer script requires 'whiptail' to be installed. Please install it (e.g., 'sudo apt install whiptail' or 'sudo dnf install newt')." >&2
+local_req_status=$(check_installer_requirements)
+if [[ ! "$local_req_status" == "success" ]]; then
+    # Error message is already echoed by check_installer_requirements
     exit 1
 else
     welcome_dialog
@@ -583,6 +606,10 @@ for node in "${nodes_array[@]}"; do
         echo "Could not connect to node $node, exit installation" >&2
         exit 1
     fi
+    if ! check_sudo_nopasswd "$node"; then
+        echo "Passwordless sudo is required on node $node, exit installation" >&2
+        exit 1
+    fi
     # check_timesync includes an exit on failure, so no explicit check here.
     check_timesync "$node"
     # check_distrosupport includes an exit on failure, so no explicit check here.
@@ -607,15 +634,14 @@ for node in "${nodes_array[@]}"; do
 
     # 4c. Quobyte bootstrap and cluster join
     if "$first_node_flag"; then
-        if [[ $(check_previous_installation) == "true" ]]; then
-	    echo "Previous installation detected on ${node}"
-            menu --title "Error" --msgbox "Error: Previous installation detected on ${node}." 10 80
-	    exit 1
-        else
-            setup_qns # Creates $qns_id, $qns_secret, and $REGISTRY_STRING
-            bootstrap_quobyte "$node"
-
+        if check_previous_installation "$node"; then
+            menu --title "Error" --msgbox "Error: Previous Quobyte data detected on ${node}. Please run the uninstallation path (-u) first or remove data manually." 10 80
+            exit 1
         fi
+
+        setup_qns # Creates $qns_id, $qns_secret, and $REGISTRY_STRING
+        bootstrap_quobyte "$node"
+
         # Find public IP for final access message
         PUBLIC_IP=$(find_public_ip "$node" || true) # Use || true to prevent immediate script exit on finding no IP
 
@@ -636,3 +662,4 @@ if [ -n "$PUBLIC_IP" ]; then
 else
     menu --title "Installation Failed" --msgbox "The installation completed, but the public IP could not be determined. Please check the logs in ${INSTALL_LOG} for errors." 15 70
 fi
+
