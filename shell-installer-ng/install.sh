@@ -19,6 +19,7 @@ SSH_USER_INIT="${USER:-$(whoami)}" # Use $USER if set, otherwise fallback to who
 UNINSTALL="false"
 NODES=""
 SSH_USER=""
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -o LogLevel=ERROR"
 REGISTRY_STRING=""
 PUBLIC_IP=""
 qns_id="" # Variable to hold the generated QNS ID
@@ -82,7 +83,7 @@ Are you prepared to install Quobyte?" 23 80
 ## -----------------------------------------------------------------------------
 
 check_user_input() {
-    # Used for ssh user names and node names.
+    # Used for ssh ${SSH_OPTS} user names and node names.
     local input="$1"
     if [[ "$input" =~ ^[a-z0-9][-a-z0-9_.]*$ ]]; then
         echo "$input"
@@ -183,7 +184,7 @@ check_sudo_nopasswd() {
     echo "Checking passwordless sudo access on $node..." >> "$INSTALL_LOG"
 
     # Try to execute a benign sudo command (-n means no password prompt)
-    if ! ssh "${SSH_USER}@${node}" "sudo -n true" > /dev/null 2>&1; then
+    if ! ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo -n true" > /dev/null 2>&1; then
         menu --title "Error" --msgbox "Error: SSH user ${SSH_USER} on ${node} requires a password for 'sudo'. Please configure NOPASSWD access." 10 80
         echo "Error: Passwordless sudo check failed on ${node}." >> "$INSTALL_LOG"
         return 1
@@ -195,18 +196,19 @@ check_sudo_nopasswd() {
 
 check_connectivity() {
     local node="$1"
-    menu --infobox "Checking SSH and repository connectivity on node $node..." 10 80
+    menu --title "Preflight Checks on $node" --infobox "Checking SSH and repository connectivity on node $node..." 10 80
     echo "Checking connectivity to $node..." >> "$INSTALL_LOG"
 
     # Check SSH availability
-    if ! ssh -o ConnectTimeout=5 "${SSH_USER}@${node}" "exit"; then
+    ##if ! ssh ${SSH_OPTS} "${SSH_USER}@${node}" "exit"; then
+    if ! ssh ${SSH_OPTS} "${SSH_USER}@${node}" "exit"; then
         menu --title "Error" --msgbox "Error: SSH connection with user ${SSH_USER} to ${node} failed." 10 80
         echo "Error: SSH connection to ${node} failed." >> "$INSTALL_LOG"
         return 1
     fi
 
     # Check HTTPS connectivity from the target node
-    if ! ssh "${SSH_USER}@${node}" "curl -s -o /dev/null -w '%{http_code}' ${QUOBYTE_REPO_URL}" | grep -q "200"; then
+    if ! ssh ${SSH_OPTS} "${SSH_USER}@${node}" "curl -s -o /dev/null -w '%{http_code}' ${QUOBYTE_REPO_URL}" | grep -q "200"; then
         menu --title "Error" --msgbox "Error: ${node} cannot reach ${QUOBYTE_REPO_URL}" 10 80
         echo "Error: ${node} cannot reach ${QUOBYTE_REPO_URL}" >> "$INSTALL_LOG"
         return 1
@@ -221,10 +223,10 @@ check_timesync() {
     local daemon
 
     echo "Checking time sync daemon on $node" >> "$INSTALL_LOG"
-    menu --infobox "Checking time sync daemon on $node..." 10 80
+    menu --title "Preflight Checks on $node"  --infobox "Checking time sync daemon on $node..." 10 80
 
     for daemon in ntp ntpd chrony chronyd; do
-        if ssh "${SSH_USER}@${node}" "sudo systemctl is-active ${daemon} > /dev/null 2>&1"; then
+        if ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl is-active ${daemon} > /dev/null 2>&1"; then
             failed_timesync_check=0
             break
         fi
@@ -232,10 +234,10 @@ check_timesync() {
 
     if [ ${failed_timesync_check} -eq 0 ]; then
         echo "Found active time sync daemon on $node" >> "$INSTALL_LOG"
-        menu --infobox "Found active time sync daemon on $node..." 10 80
+        menu --title "Preflight Checks on $node" --infobox "Found active time sync daemon on $node..." 10 80
     else
         echo "Did not find active time sync daemon on $node, exit" >> "$INSTALL_LOG"
-        menu --msgbox "No active time sync daemon on $node. Please install chrony or ntpd before proceeding." 10 80
+        menu --title "Preflight Checks on $node" --msgbox "No active time sync daemon on $node. Please install chrony or ntpd before proceeding." 10 80
         exit 1
     fi
 }
@@ -243,14 +245,14 @@ check_timesync() {
 check_previous_installation() {
     local node="$1"
     echo "Checking for previous Quobyte data on $node..." >> "$INSTALL_LOG"
+    menu --title "Preflight Checks on $node" --infobox "Checking for previous Quobyte data on $node..." 10 80
 
     # Check for the existence of the device setup file, which indicates installed Quobyte data.
     # Returns 1 if found (true), 0 if not found (false).
-    # What we want is absence of that file.
-    if ssh "${SSH_USER}@${node}" "sudo test -f /var/lib/quobyte/devices/*/QUOBYTE_DEV_SETUP"; then
-        return 1
-    else
+    if ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo test -f /var/lib/quobyte/devices/registry-data/QUOBYTE_DEV_SETUP"; then
         return 0
+    else
+        return 1
     fi
 }
 
@@ -259,7 +261,7 @@ check_distrosupport() {
     echo "Checking Linux distribution support on $node" >> "$INSTALL_LOG"
     local distro
     # Use 'source' to safely load /etc/os-release and access $ID
-    distro=$(ssh "${SSH_USER}@${node}" 'source /etc/os-release && echo "$ID"')
+    distro=$(ssh ${SSH_OPTS} "${SSH_USER}@${node}" 'source /etc/os-release && echo "$ID"')
 
     case "$distro" in
         rocky|almalinux|centos|ubuntu|debian|opensuse-leap|sles)
@@ -283,7 +285,7 @@ get_distro_info() {
 
     # Get OS details in one SSH call
     local os_info
-    os_info=$(ssh "${SSH_USER}@${node}" 'source /etc/os-release 2>/dev/null; echo "$ID:$VERSION_ID:$VERSION_CODENAME"')
+    os_info=$(ssh ${SSH_OPTS} "${SSH_USER}@${node}" 'source /etc/os-release 2>/dev/null; echo "$ID:$VERSION_ID:$VERSION_CODENAME"')
 
     IFS=':' read -r distro version version_codename <<< "$os_info"
 
@@ -337,16 +339,16 @@ install_repo() {
     case "$distro" in
         rocky|almalinux|centos)
             repo_url="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            ssh "${SSH_USER}@${node}" "sudo ${package_manager} config-manager --add-repo ${repo_url}quobyte.repo" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
+            ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} config-manager --add-repo ${repo_url}quobyte.repo" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
             ;;
         opensuse-leap|sles)
             repo_url="${QUOBYTE_REPO_URL}/rpm/${quobyte_distro_alias}_${major_version}/"
-            ssh "${SSH_USER}@${node}" "sudo ${package_manager} addrepo ${repo_url} quobyte" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
+            ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} addrepo ${repo_url} quobyte" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
             ;;
         ubuntu|debian)
             repo_url="${QUOBYTE_REPO_URL}/apt"
-            ssh "${SSH_USER}@${node}" "sudo sh -c 'curl -s ${repo_url}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
-            ssh "${SSH_USER}@${node}" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${repo_url} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
+            ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo sh -c 'curl -s ${repo_url}/pubkey.gpg | gpg --dearmor > /etc/apt/trusted.gpg.d/quobyte.gpg'" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
+            ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo sh -c 'echo \"deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/quobyte.gpg] ${repo_url} ${version_codename} main\" > /etc/apt/sources.list.d/quobyte.list' && sudo apt-get update" >> "$INSTALL_LOG" 2>&1 || failed_repo=1
             ;;
         *)
             echo "Unsupported distribution logic in install_repo (post-alias)." >&2
@@ -370,11 +372,11 @@ install_packages() {
     echo "Installing packages on $node using package manager ${package_manager}..." >> "$INSTALL_LOG"
 
     if [ "$package_manager" = "dnf" ] || [ "$package_manager" = "yum" ] ; then
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} install -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} install -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     elif [ "$package_manager" = "zypper" ]; then
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} --gpg-auto-import-keys --non-interactive install ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} --gpg-auto-import-keys --non-interactive install ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     elif [ "$package_manager" = "apt" ]; then
-        ssh "${SSH_USER}@${node}" "sudo DEBIAN_FRONTEND=noninteractive ${package_manager} -o Apt::Cmd::Disable-Script-Warning=true install -y ${PACKAGE_NAMES_DEB}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo DEBIAN_FRONTEND=noninteractive ${package_manager} -o Apt::Cmd::Disable-Script-Warning=true install -y ${PACKAGE_NAMES_DEB}" >> "$INSTALL_LOG" 2>&1 || failed_packages=1
     else
         echo "Unknown package manager ${package_manager}." >&2
         exit 1
@@ -401,7 +403,7 @@ setup_qns() {
     qns_secret="${qns_secret_raw:0:24}"
 
     REGISTRY_STRING="registry = ${qns_id}.myquobyte.net"
-    menu --title "Info" --infobox "A new cluster record has been created:\n\n${REGISTRY_STRING}" 10 80
+    menu --title "Generating Cluster UUID" --infobox "A new cluster record has been created:\n\n${qns_id}.myquobyte.net" 10 80
 }
 
 find_public_ip() {
@@ -409,9 +411,10 @@ find_public_ip() {
     local public_ip
 
     # Use a common service to get external IP
-    public_ip=$(ssh "${SSH_USER}@${node}" "curl -s ifconfig.me")
+    public_ip=$(ssh ${SSH_OPTS} "${SSH_USER}@${node}" "curl -s ifconfig.me")
 
     if [ -z "$public_ip" ]; then
+        menu --title "Webconsole Access" --infobox "Could not find public IP for $node." 10 80
         echo "Could not find public IP for $node." >&2
         return 1
     fi
@@ -421,50 +424,58 @@ find_public_ip() {
 
 bootstrap_quobyte() {
     local node="$1"
+    menu --title "Cluster Initialization" --infobox "Bootstrapping a new Quobyte cluster on $node." 10 80
     echo "Bootstrapping Quobyte cluster on $node..." >> "$INSTALL_LOG"
     echo "QNS ID: ${qns_id}" >> "$INSTALL_LOG"
     echo "QNS Secret: ${qns_secret}" >> "$INSTALL_LOG"
     echo "Registry endpoint: ${REGISTRY_STRING}" >> "$INSTALL_LOG"
 
     # 1. Setup registry data directory and bootstrap
-    ssh "${SSH_USER}@${node}" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-    ssh "${SSH_USER}@${node}" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" >> "$INSTALL_LOG" 2>&1
+    menu --title "Cluster Initialization" --infobox "Set up registry devices on $node." 10 80
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry-data" >> "$INSTALL_LOG" 2>&1
 
     # 2. Set ownership
-    ssh "${SSH_USER}@${node}" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
 
     # 3. Configure host.cfg and registry.cfg
-    ssh "${SSH_USER}@${node}" "sudo sed -i 's/^registry.*/${REGISTRY_STRING}/g' /etc/quobyte/host.cfg"
-    ssh "${SSH_USER}@${node}" "sudo grep 'qns.id' /etc/quobyte/registry.cfg || echo 'qns.id = ${qns_id}' | sudo tee -a /etc/quobyte/registry.cfg"
-    ssh "${SSH_USER}@${node}" "sudo grep 'qns.secret' /etc/quobyte/registry.cfg || echo 'qns.secret = ${qns_secret}' | sudo tee -a /etc/quobyte/registry.cfg"
+    menu --title "Cluster Initialization" --infobox "Configure core services on $node." 10 80
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo sed -i 's/^registry.*/${REGISTRY_STRING}/g' /etc/quobyte/host.cfg"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo grep 'qns.id' /etc/quobyte/registry.cfg || echo 'qns.id = ${qns_id}' | sudo tee -a /etc/quobyte/registry.cfg"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo grep 'qns.secret' /etc/quobyte/registry.cfg || echo 'qns.secret = ${qns_secret}' | sudo tee -a /etc/quobyte/registry.cfg"
 
     # 4. Enable and restart services
+    menu --title "Cluster Initialization" --infobox "Start core services on $node." 10 80
     local services=(quobyte-registry quobyte-api quobyte-webconsole quobyte-data quobyte-metadata)
     for service in "${services[@]}"; do
-        ssh "${SSH_USER}@${node}" "sudo systemctl enable --quiet ${service}" >> "$INSTALL_LOG"
-        ssh "${SSH_USER}@${node}" "sudo systemctl restart ${service}" >> "$INSTALL_LOG"
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl enable --quiet ${service}" >> "$INSTALL_LOG"
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl restart ${service}" >> "$INSTALL_LOG"
     done
 }
 
 join_quobyte() {
     local node="$1"
+    menu --title "Cluster Extension" --infobox "Joining $node to the bootstrapped cluster." 10 80
     echo "Joining $node to the bootstrapped cluster..." >> "$INSTALL_LOG"
 
     # 1. Create registry device (for joining nodes)
-    ssh "${SSH_USER}@${node}" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
-    ssh "${SSH_USER}@${node}" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data" >> "$INSTALL_LOG" 2>&1
+    menu --title "Cluster Extension" --infobox "Set up registry devices on $node." 10 80
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo mkdir -p /var/lib/quobyte/devices/registry-data"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo /usr/bin/qmkdev -t REGISTRY -d /var/lib/quobyte/devices/registry-data" >> "$INSTALL_LOG" 2>&1
 
     # 2. Set ownership
-    ssh "${SSH_USER}@${node}" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo chown -R quobyte:quobyte /var/lib/quobyte"
 
     # 3. Configure host.cfg
-    ssh "${SSH_USER}@${node}" "sudo sed -i 's/^registry.*/${REGISTRY_STRING}/g' /etc/quobyte/host.cfg"
+    menu --title "Cluster Extension" --infobox "Configure core services on $node." 10 80
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo sed -i 's/^registry.*/${REGISTRY_STRING}/g' /etc/quobyte/host.cfg"
 
     # 4. Enable and restart services
+    menu --title "Cluster Extension" --infobox "Start core services on $node." 10 80
     local services=(quobyte-registry quobyte-api quobyte-webconsole quobyte-data quobyte-metadata)
     for service in "${services[@]}"; do
-        ssh "${SSH_USER}@${node}" "sudo systemctl enable --quiet ${service}" >> "$INSTALL_LOG"
-        ssh "${SSH_USER}@${node}" "sudo systemctl restart ${service}" >> "$INSTALL_LOG"
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl enable --quiet ${service}" >> "$INSTALL_LOG"
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl restart ${service}" >> "$INSTALL_LOG"
     done
 }
 
@@ -476,24 +487,26 @@ remove_packages() {
     local node="$1"
     local package_manager="$2"
 
+    menu --title "Cluster Deletion" --infobox "Stopping core services on $node..." 10 80
     echo "Stopping Quobyte services on $node..." >> "$INSTALL_LOG"
     local services=(quobyte-data quobyte-metadata quobyte-api quobyte-registry quobyte-webconsole)
     for service in "${services[@]}"; do
-        ssh "${SSH_USER}@${node}" "sudo systemctl stop ${service}" 2>/dev/null || true # Ignore errors if services are not running
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo systemctl stop ${service}" 2>/dev/null || true # Ignore errors if services are not running
     done
 
+    menu --title "Cluster Deletion" --infobox "Removing packages on $node..." 10 80
     echo "Removing packages on $node using package manager ${package_manager}..." >> "$INSTALL_LOG"
 
     local exit_code=0
     if [ "$package_manager" = "dnf" ] || [ "$package_manager" = "yum" ]; then
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} remove -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} remove -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
     elif [ "$package_manager" = "zypper" ]; then
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} remove -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} removerepo quobyte" >> "$INSTALL_LOG" 2>&1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} remove -y ${PACKAGE_NAMES_RPM}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} removerepo quobyte" >> "$INSTALL_LOG" 2>&1
     elif [ "$package_manager" = "apt" ]; then
-        ssh "${SSH_USER}@${node}" "sudo ${package_manager} purge -y ${PACKAGE_NAMES_DEB}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
-        ssh "${SSH_USER}@${node}" "sudo rm -f /etc/apt/sources.list.d/quobyte.list" >> "$INSTALL_LOG" 2>&1
-        ssh "${SSH_USER}@${node}" "sudo rm -f /etc/apt/trusted.gpg.d/quobyte.gpg" >> "$INSTALL_LOG" 2>&1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo ${package_manager} purge -y ${PACKAGE_NAMES_DEB}" >> "$INSTALL_LOG" 2>&1 || exit_code=$?
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo rm -f /etc/apt/sources.list.d/quobyte.list" >> "$INSTALL_LOG" 2>&1
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo rm -f /etc/apt/trusted.gpg.d/quobyte.gpg" >> "$INSTALL_LOG" 2>&1
     else
         echo "Unknown package manager ${package_manager}." >&2
         return 1
@@ -510,25 +523,28 @@ remove_packages() {
 remove_state() {
     local node="$1"
 
+    menu --title "Cluster Deletion" --infobox "Removing data from storage devices on $node..." 10 80
     echo "Removing Quobyte data and configuration state on $node..." >> "$INSTALL_LOG"
 
     # 1. Unmount and wipe devices (assuming Quobyte labels them)
     local devices
     # Note: Using sed instead of awk/grep here for a potentially more robust one-liner on the remote host
-    devices=$(ssh "${SSH_USER}@${node}" "lsblk -o NAME,LABEL | grep 'quobyte-dev' | sed 's/ .*//g'")
+    devices=$(ssh ${SSH_OPTS} "${SSH_USER}@${node}" "lsblk -o NAME,LABEL | grep 'quobyte-dev' | sed 's/ .*//g'")
 
     for device in ${devices}; do
         echo "Unmounting /dev/${device}..." >> "$INSTALL_LOG"
-        ssh "${SSH_USER}@${node}" "sudo umount /dev/${device}" 2>/dev/null || true
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo umount /dev/${device}" 2>/dev/null || true
         echo "Wiping /dev/${device}..." >> "$INSTALL_LOG"
-        ssh "${SSH_USER}@${node}" "sudo wipefs -a /dev/${device}" 2>/dev/null || true
+        ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo wipefs -a /dev/${device}" 2>/dev/null || true
     done
 
     # 2. Remove configuration and data directories
+    menu --title "Cluster Deletion" --infobox "Removing /var/lib/quobyte and /etc/quobyte on $node..." 10 80
     echo "Removing /var/lib/quobyte and /etc/quobyte..." >> "$INSTALL_LOG"
-    ssh "${SSH_USER}@${node}" "sudo rm -rf /var/lib/quobyte"
-    ssh "${SSH_USER}@${node}" "sudo rm -rf /etc/quobyte"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo rm -rf /var/lib/quobyte"
+    ssh ${SSH_OPTS} "${SSH_USER}@${node}" "sudo rm -rf /etc/quobyte"
 
+    menu --title "Cluster Deletion" --infobox "State removed from $node." 10 80
     echo "State removed from $node." >> "$INSTALL_LOG"
 }
 
