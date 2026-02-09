@@ -2,6 +2,15 @@
   vars_files:
     - vars/ansible-vars
   become: yes
+  vars:
+    devices1:
+      - /dev/sdb
+      - /dev/sdc
+    devices2:
+      - /dev/sdd
+      - /dev/nvme0n1
+
+
   tasks:
     - name: Add users 
       ansible.builtin.user:
@@ -47,6 +56,26 @@
       with_items: 
          - quobyte-data-1
          - quobyte-data-2
+
+    - name: Label device partition 1 
+      command:
+        cmd: xfs_admin -L data-1 {{ item }} 
+      with_items: "{{ devices1 }}"
+
+    - name: Label device partition 2 
+      command:
+        cmd: xfs_admin -L data-2 {{ item }} 
+      with_items: "{{ devices2 }}"
+
+    - name: Make sure device labels are up to date 
+      command:
+        cmd: partprobe {{ item }} 
+      with_items: "{{ devices1 }}"
+
+    - name: Make sure device labels are up to date 
+      command:
+        cmd: partprobe {{ item }} 
+      with_items: "{{ devices2 }}"
            
     - name: Disable Quobyte default data services
       service:
