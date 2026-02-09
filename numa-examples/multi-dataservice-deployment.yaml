@@ -1,0 +1,79 @@
+- hosts: dataservices
+  vars_files:
+    - vars/ansible-vars
+  become: yes
+  tasks:
+    - name: Add users 
+      ansible.builtin.user:
+        name: "{{ item }}" 
+        shell: /bin/bash
+        groups: quobyte 
+      with_items: 
+         - quobyte-data-1
+         - quobyte-data-2
+
+    - name: Create .quobyte directory  
+      ansible.builtin.file:
+        path: /home/{{ item }}/.quobyte
+        state: directory
+        owner: "{{ item }}" 
+        group: "{{ item }}"
+      with_items: 
+         - quobyte-data-1
+         - quobyte-data-2
+
+    - name: Place service config for first service
+      template:
+        src: templates/quobyte-data-1.cfg
+        dest: "/home/{{ item }}/.quobyte/data.cfg"
+        owner: "{{ item }}" 
+        group: "{{ item }}"
+      with_items: 
+         - quobyte-data-1
+
+    - name: Place service config for secondary service
+      template:
+        src: templates/quobyte-data-2.cfg
+        dest: "/home/{{ item }}/.quobyte/data.cfg"
+        owner: "{{ item }}"
+        group: "{{ item }}"
+      with_items: 
+         - quobyte-data-2
+
+    - name: Add systemd unit files
+      template:
+        src: templates/quobyte-data-number.service
+        dest: "/etc/systemd/system/{{ item }}.service"
+      with_items: 
+         - quobyte-data-1
+         - quobyte-data-2
+           
+    - name: Disable Quobyte default data services
+      service:
+        enabled: yes
+        state: stopped
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-data
+
+    - name: Enable Quobyte data services
+      service:
+        enabled: yes
+        state: restarted
+        name: "{{ item }}"
+      with_items: 
+         - quobyte-data-1
+         - quobyte-data-2
+
+    - name: Wait for data service to signal readiness
+      uri:
+        url: 'http://localhost:7873/serviceHealth'
+        return_content: no 
+        validate_certs: no
+        status_code:
+        - 200
+      until: uri_output.status == 200
+      retries: 24
+      delay: 5
+      register: uri_output
+

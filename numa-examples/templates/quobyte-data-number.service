@@ -1,0 +1,29 @@
+# /usr/lib/systemd/system/quobyte-data.service
+[Unit]
+Description=Quobyte Data Service
+Documentation=https://support.quobyte.com/
+Requires=network.target network-online.target time-sync.target
+Wants=tuned.service
+After=network.target network-online.target time-sync.target tuned.service
+
+[Service]
+User={{ item }}
+ExecStart=/usr/bin/quobyte-data
+Restart=always
+RestartSec=10
+SuccessExitStatus=143
+LimitNOFILE=1000000
+LimitNPROC=16384
+LimitNICE=-19
+LimitRTPRIO=40
+LimitMEMLOCK=infinity
+Environment=MAX_MEM_DATA=4G
+Environment=MIN_MEM_DATA=1G
+Environment=MAX_BUFFER_DATA=16G
+Environment=MALLOC_ARENA_MAX=2
+MemoryMax=37G
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=quobyte.target
+
