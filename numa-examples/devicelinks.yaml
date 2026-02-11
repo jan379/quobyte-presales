@@ -34,9 +34,10 @@
 
     - name: Link devices into test directories 
       ansible.builtin.file:
-        src: "{{ item }}" 
+        src: "/var/lib/quobyte/mnt/inspector-{{ item | basename}}" 
         dest: "/var/lib/quobyte/data-1/{{ item | basename }}"
         state: link
+        force: yes
       with_items: "{{ devices1 }}"
 
     - name: Link devices into test directories 
