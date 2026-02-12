@@ -23,6 +23,7 @@ Environment=MIN_MEM_DATA=1G
 Environment=MAX_BUFFER_DATA=16G
 Environment=MALLOC_ARENA_MAX=2
 MemoryMax=37G
+CPUAffinity=1
 
 [Install]
 WantedBy=multi-user.target
