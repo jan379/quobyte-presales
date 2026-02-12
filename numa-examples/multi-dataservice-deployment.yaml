@@ -1,6 +1,6 @@
 - hosts: dataservices
   vars_files:
-    - ~/quobyte-ansible/vars/ansible-vars
+   - /home/deploy/quobyte-ansible/vars/ansible-vars
   become: yes
   vars:
     devices1:
@@ -119,7 +119,7 @@
 - hosts: registryservices[0]
   become: yes
   vars_files:
-    - vars/ansible-vars
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
   tasks:
 
     - name: Wait for device inspector to find any unused devices.
