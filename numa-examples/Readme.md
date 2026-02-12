@@ -8,15 +8,19 @@ to use one dataservice per CPU socket.
 This dataservice serves NVMe mapped to that socket.
 This dataservice listens on the interface mapped to that socket.
 
-To start different data services with different config files they will use 
-distinct posix users, since the startup procedure watches out for config files in 
-$HOME/.quobyte.
-
+To start different data services with different config files the respective 
+systemd unit needs to set the current working directory to a specific path.
+Config files can be placed in that path.
+ 
 ## Ingredients
 
 ### Listen-IP / interface
 
 It will be necessary that one dataservice only registers the interface(s) that are "near". I.e. if the service serves NVMe of numa zone 6 or 7 it should use the interface(s) that are part of that numa zone.
+The relevant config parameters are:
+rpc.bind_address = and
+http.bind_address =
+They can be set to an IPv4 address of that interface.
 
 ### NVMe partitioning
 
@@ -29,12 +33,6 @@ Services will need a CPUAffinity= setting applied in their unit files.
 Are NUMAPolicy or NUMAMask settings needed?
 
 Optional: post_sequence tuning script
-
-### Posix users
-
-quobyte-data1
-quobyte-data2
-...
 
 ### resources:
 CPU affinity

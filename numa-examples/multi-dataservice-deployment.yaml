@@ -74,82 +74,6 @@
          - quobyte-data-1
          - quobyte-data-2
            
-#    - name: Create a xfs filesystem on {{ devices1 }}
-#      filesystem:
-#        fstype: xfs 
-#        opts: -isize=1024 
-#        dev: "{{ item }}"
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Create a xfs filesystem on {{ devices2 }}
-#      filesystem:
-#        fstype: xfs 
-#        opts: -isize=1024 -L quobyte-dev
-#        dev: "{{ item }}"
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Label device partition 1 
-#      command:
-#        cmd: xfs_admin -L data-1 {{ item }} 
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Label device partition 2 
-#      command:
-#        cmd: xfs_admin -L data-2 {{ item }} 
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Make sure device labels are up to date 
-#      command:
-#        cmd: partprobe {{ item }} 
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Make sure device labels are up to date 
-#      command:
-#        cmd: partprobe {{ item }} 
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Temp. device mount to create Quobyte devices
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: ephemeral
-#        fstype: xfs
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Temp. device mount to create Quobyte devices
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: ephemeral
-#        fstype: xfs
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Run qmkdev to create Quobyte device 
-#      command:
-#        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
-#        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Run qmkdev to create Quobyte device 
-#      command:
-#        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
-#        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Unmount temporary device mount
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: unmounted
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Unmount temporary device mount
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: unmounted
-#      with_items: "{{ devices2 }}"
-#
     - name: Disable Quobyte default data services
       service:
         enabled: yes
@@ -190,4 +114,47 @@
       retries: 24
       delay: 5
       register: uri_output
+
+
+- hosts: registryservices[0]
+  become: yes
+  vars_files:
+    - vars/ansible-vars
+  tasks:
+
+    - name: Wait for device inspector to find any unused devices.
+      pause: 
+        seconds: 45
+
+    - name: Get Quobyte session 
+      shell:
+        cmd: qmgmt -u {{ api_service }} user login {{ admin_user }} {{ admin_password }} 
+    - name: Create a list of unformatted devices
+      ignore_errors: yes
+      shell:
+        cmd: qmgmt -u {{ api_service }} device list-unformatted | awk '{print $1}' | grep -v -e ^Handle -e ^No
+      register: empty_devices 
+    - debug: 
+       var: empty_devices
+
+    - set_fact: 
+       unformatted_devices: "{{ empty_devices.stdout_lines }}"
+    - debug: 
+        var: unformatted_devices
+
+    - name: Create "make device" tasks 
+      shell:
+        cmd: qmgmt -u {{ api_service }} device make {{ item }} DATA 
+      with_items: "{{ unformatted_devices }}"
+
+    - name: Wait for tasks to finish before proceeding 
+      shell: 
+        cmd: qmgmt -u {{ api_service }} --output json task list RUNNING SCHEDULED QUEUED 
+      register: result
+      until: result.stdout.find("MAKE_DEVICE") < 1
+      retries: 500
+      delay: 10
+
+
+
 
