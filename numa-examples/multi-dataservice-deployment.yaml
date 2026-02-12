@@ -1,6 +1,6 @@
 - hosts: dataservices
   vars_files:
-    - vars/ansible-vars
+    - ~/quobyte-ansible/vars/ansible-vars
   become: yes
   vars:
     devices1:
