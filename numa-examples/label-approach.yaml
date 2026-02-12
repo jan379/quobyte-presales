@@ -34,18 +34,16 @@
 
     - name: Link devices into test directories 
       ansible.builtin.file:
-        src: "/var/lib/quobyte/mnt/inspector-{{ item | basename}}" 
+        src: "{{ item }}" 
         dest: "/var/lib/quobyte/data-1/{{ item | basename }}"
         state: link
-        force: yes
       with_items: "{{ devices1 }}"
 
     - name: Link devices into test directories 
       ansible.builtin.file:
-        src: "/var/lib/quobyte/mnt/inspector-{{ item | basename}}" 
+        src: "{{ item }}" 
         dest: "/var/lib/quobyte/data-2/{{ item | basename }}"
         state: link
-        force: yes
       with_items: "{{ devices2 }}"
 
     - name: Place service config for first service
@@ -74,68 +72,68 @@
          - quobyte-data-1
          - quobyte-data-2
            
-#    - name: Create a xfs filesystem on {{ devices1 }}
-#      filesystem:
-#        fstype: xfs 
-#        opts: -isize=1024 
-#        dev: "{{ item }}"
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Create a xfs filesystem on {{ devices2 }}
-#      filesystem:
-#        fstype: xfs 
-#        opts: -isize=1024 -L quobyte-dev
-#        dev: "{{ item }}"
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Label device partition 1 
-#      command:
-#        cmd: xfs_admin -L data-1 {{ item }} 
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Label device partition 2 
-#      command:
-#        cmd: xfs_admin -L data-2 {{ item }} 
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Make sure device labels are up to date 
-#      command:
-#        cmd: partprobe {{ item }} 
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Make sure device labels are up to date 
-#      command:
-#        cmd: partprobe {{ item }} 
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Temp. device mount to create Quobyte devices
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: ephemeral
-#        fstype: xfs
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Temp. device mount to create Quobyte devices
-#      mount:
-#        path: "/tmp{{ item }}"
-#        src: "{{ item }}"
-#        state: ephemeral
-#        fstype: xfs
-#      with_items: "{{ devices2 }}"
-#
-#    - name: Run qmkdev to create Quobyte device 
-#      command:
-#        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
-#        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
-#      with_items: "{{ devices1 }}"
-#
-#    - name: Run qmkdev to create Quobyte device 
-#      command:
-#        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
-#        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
-#      with_items: "{{ devices2 }}"
-#
+    - name: Create a xfs filesystem on {{ devices1 }}
+      filesystem:
+        fstype: xfs 
+        opts: -isize=1024 
+        dev: "{{ item }}"
+      with_items: "{{ devices1 }}"
+
+    - name: Create a xfs filesystem on {{ devices2 }}
+      filesystem:
+        fstype: xfs 
+        opts: -isize=1024 -L quobyte-dev
+        dev: "{{ item }}"
+      with_items: "{{ devices2 }}"
+
+    - name: Label device partition 1 
+      command:
+        cmd: xfs_admin -L data-1 {{ item }} 
+      with_items: "{{ devices1 }}"
+
+    - name: Label device partition 2 
+      command:
+        cmd: xfs_admin -L data-2 {{ item }} 
+      with_items: "{{ devices2 }}"
+
+    - name: Make sure device labels are up to date 
+      command:
+        cmd: partprobe {{ item }} 
+      with_items: "{{ devices1 }}"
+
+    - name: Make sure device labels are up to date 
+      command:
+        cmd: partprobe {{ item }} 
+      with_items: "{{ devices2 }}"
+
+    - name: Temp. device mount to create Quobyte devices
+      mount:
+        path: "/tmp{{ item }}"
+        src: "{{ item }}"
+        state: ephemeral
+        fstype: xfs
+      with_items: "{{ devices1 }}"
+
+    - name: Temp. device mount to create Quobyte devices
+      mount:
+        path: "/tmp{{ item }}"
+        src: "{{ item }}"
+        state: ephemeral
+        fstype: xfs
+      with_items: "{{ devices2 }}"
+
+    - name: Run qmkdev to create Quobyte device 
+      command:
+        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
+        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
+      with_items: "{{ devices1 }}"
+
+    - name: Run qmkdev to create Quobyte device 
+      command:
+        cmd: /usr/bin/qmkdev -t DATA /tmp{{ item }}
+        creates: /tmp{{ item }}/QUOBYTE_DEV_SETUP
+      with_items: "{{ devices2 }}"
+
 #    - name: Unmount temporary device mount
 #      mount:
 #        path: "/tmp{{ item }}"
