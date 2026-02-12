@@ -68,12 +68,18 @@
 
     - name: Add systemd unit files
       template:
-        src: templates/quobyte-data-number.service
+        src: templates/quobyte-data-1.service
         dest: "/etc/systemd/system/{{ item }}.service"
       with_items: 
          - quobyte-data-1
+
+    - name: Add systemd unit files
+      template:
+        src: templates/quobyte-data-2.service
+        dest: "/etc/systemd/system/{{ item }}.service"
+      with_items: 
          - quobyte-data-2
-           
+            
     - name: Disable Quobyte default data services
       service:
         enabled: yes
