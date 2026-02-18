@@ -37,6 +37,7 @@
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.clients[1] }}"
+      when: "{{ groups.clients | length }} > 1"
 
 
 # All other nodes are used for "netbench"
