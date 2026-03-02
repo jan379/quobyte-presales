@@ -8,10 +8,10 @@ architecture-beta
     service db(database)[Database] in storage
     service disk1(disk)[Storage] in storage
     service disk2(disk)[Storage] in storage
-    service server(server)[Server] in storage
-    service server(server)[Server] in storage
-    service server(server)[Server] in storage
-    service server(server)[Server] in storage
+    service server1(server)[Server] in storage
+    service server2(server)[Server] in storage
+    service server3(server)[Server] in storage
+    service server4(server)[Server] in storage
 
     db:L -- R:server
     disk1:T -- B:server
