@@ -3,7 +3,7 @@
 ```mermaid
 block-beta
 columns 1
-  block["Distributed Application workload"]
+  block: Application["Distributed Application workload"]
   blockArrowId6<["&nbsp;&nbsp;&nbsp;"]>(down)
   block:Compute
     A["Client A"]
