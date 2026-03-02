@@ -16,7 +16,7 @@ columns 1
   "Client A" --> D
   "Client B" --> D
   "Client C" --> D
-  style B fill:#969,stroke:#333,stroke-width:4px
+  style "Client B" fill:#969,stroke:#333,stroke-width:4px
 ```
 
 
