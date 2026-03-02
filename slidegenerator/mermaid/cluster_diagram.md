@@ -3,17 +3,19 @@
 ```mermaid
 block-beta
 columns 1
-  db(("DB"))
+  db(("Distributed Application workload"))
   blockArrowId6<["&nbsp;&nbsp;&nbsp;"]>(down)
-  block:ID
-    A
-    B["A wide one in the middle"]
-    C
+  block:Compute
+    Client A
+    Client B
+    Client C
   end
   space
   D
-  ID --> D
-  C --> D
+  Compute  --> D
+  Client A --> D
+  Client B --> D
+  Client C --> D
   style B fill:#969,stroke:#333,stroke-width:4px
 ```
 
