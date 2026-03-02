@@ -14,7 +14,7 @@ architecture-beta
     service server4(server)[Server] in storage
 
     db:L -- R:server
-    disk1:T -- B:server
+    disk1:T -- B:server1
     disk2:T -- B:db
 
 ```
