@@ -2,6 +2,7 @@
   become: yes
   tasks:
     - name: Start elbencho clients
+      ignore_errors: yes
       shell:
         cmd: /usr/local/bin/elbencho --service 
 
