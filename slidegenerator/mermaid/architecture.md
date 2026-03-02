@@ -3,12 +3,12 @@
 
 ```mermaid
 architecture-beta
-    group api(cloud)[API]
+    group storage(storage)[STORAGE]
 
-    service db(database)[Database] in api
-    service disk1(disk)[Storage] in api
-    service disk2(disk)[Storage] in api
-    service server(server)[Server] in api
+    service db(database)[Database] in storage
+    service disk1(disk)[Storage] in storage
+    service disk2(disk)[Storage] in storage
+    service server(server)[Server] in storage
 
     db:L -- R:server
     disk1:T -- B:server
