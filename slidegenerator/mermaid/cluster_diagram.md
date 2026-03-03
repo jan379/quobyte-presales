@@ -4,14 +4,14 @@
 block
 columns 1
   block:Compute
-    A["Client A"]
-    B["Client B"]
-    C["Client C"]
+    C1["Client A"]
+    C2["Client B"]
+    C3["Client C"]
   end
   block:Storage
-    D["Server 1"]
-    E["Server 2"]
-    F["Server 3"]
+    S1["Server 1"]
+    S2["Server 2"]
+    S3["Server 3"]
   end
 ```
 
