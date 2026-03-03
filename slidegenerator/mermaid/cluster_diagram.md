@@ -13,7 +13,7 @@ columns 1
     C5["Client F"]
   end
   block:Storage
-    block:S1(" Lalala")
+    block:S1
     columns 1
       label1["Server 1"]:1
       disk1[("disk 01")]
@@ -24,15 +24,15 @@ columns 1
     block:S2(" ")
     columns 1
       label2["Server 2"]:1
-      disk5[("disk 5")]
-      disk6[("disk 6")]
-      disk7[("disk 7")]
-      disk8[("disk 8")]
+      disk5[("disk 05")]
+      disk6[("disk 06")]
+      disk7[("disk 07")]
+      disk8[("disk 08")]
     end
     block:S3(" ")
     columns 1
       label3["Server 3"]:1
-      disk9[("disk 9")]
+      disk9[("disk 09")]
       disk10[("disk 10")]
       disk11[("disk 11")]
       disk12[("disk 12")]
@@ -49,8 +49,13 @@ columns 1
   C3 --> disk1
   C3 --> disk6 
   C3 --> disk13
-
-classDef server fill:white,stroke:blue,stroke-width:5px,vertical-align:sup;
+  C2 --> disk2
+  C2 --> disk5
+  C2 --> disk12
+  C4 --> disk4
+  C4 --> disk12
+  C4 --> disk16
+classDef server fill:white,stroke:blue,stroke-width:4px;
 classDef client fill:#966,stroke:#333;
 classDef label fill:white,stroke:white;
 
