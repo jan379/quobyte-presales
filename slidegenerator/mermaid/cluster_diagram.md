@@ -61,7 +61,7 @@ columns 1
   C5 --> disk8
   C5 --> disk9
   C5 --> disk15
-classDef server fill:white,stroke:blue,stroke-width:4px;
+classDef server fill:white,stroke:blue,stroke-width:4px,rect:round;
 classDef client fill:#966,stroke:#333;
 classDef label fill:white,stroke:white;
 
