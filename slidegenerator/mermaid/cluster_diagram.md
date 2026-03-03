@@ -15,6 +15,7 @@ columns 1
   block:Storage
     block:S1["Server 1"]
     columns 1
+      space:1
       disk1[("disk 1")]
       disk2[("disk 1")]
       disk3[("disk 1")]
