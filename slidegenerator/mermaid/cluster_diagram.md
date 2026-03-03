@@ -20,6 +20,7 @@ columns 1
       disk2["disk 1"]
       disk3["disk 1"]
       disk4["disk 1"]
+    end
     S2["Server 2"]
     S3["Server 3"]
     S4["Server 4"]
