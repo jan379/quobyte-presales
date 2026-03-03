@@ -3,7 +3,7 @@
 ```mermaid
 block
 columns 1
-  block:Compute
+  block:Compute["Compute infrastructure"]
     C1["Client A"]
     C2["Client B"]
     C3["Client C"]
