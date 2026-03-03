@@ -13,7 +13,6 @@ columns 1
     C5["Client F"]
   end
   block:Storage
-    label("Storage Cluster"):4
     block:S1
     columns 1
       label1["Server 1"]:1
