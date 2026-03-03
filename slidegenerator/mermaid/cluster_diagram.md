@@ -2,20 +2,15 @@
 
 ```mermaid
 block-beta
-columns 1
-  block: Application["Distributed Application workload"]
-  blockArrowId6<["&nbsp;&nbsp;&nbsp;"]>(down)
+columns 3
   block:Compute
     A["Client A"]
     B["Client B"]
     C["Client C"]
-  end
-  space
-  D
-  Compute  --> D
-  A --> D
-  B --> D
-  C --> D
+  block:Storage
+    C["Server 1"]
+    D["Server 2"]
+    E["Server 3"]
   style B fill:#969,stroke:#333,stroke-width:4px
 ```
 
