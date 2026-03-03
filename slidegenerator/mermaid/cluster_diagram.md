@@ -13,7 +13,7 @@ columns 1
   end
   clientTraffic<["Client Traffic"]>(y)
   block:Storage
-    Server block:S1["Server 1"]
+    block:S1["Server 1"]
     columns 1
       disk1[("disk 1")]
       disk2[("disk 1")]
@@ -28,7 +28,7 @@ columns 1
 classDef server fill:#696,stroke:#333;
 classDef client fill:#966,stroke:#333;
 
-class Server server
+class S1 server
 
 ```
 
