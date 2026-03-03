@@ -7,7 +7,6 @@ columns 1
     A["Client A"]
     B["Client B"]
     C["Client C"]
-  end
   block:Storage
     C["Server 1"]
     D["Server 2"]
