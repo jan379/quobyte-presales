@@ -13,23 +13,25 @@ columns 1
   end
   clientTraffic<["Client Traffic"]>(y)
   block:Storage
-    block:S1["Server 1"]
+    block:S1(" ")
     columns 1
-      space:1
+      label["Server 1"]:1
       disk1[("disk 1")]
-      disk2[("disk 1")]
-      disk3[("disk 1")]
-      disk4[("disk 1")]
+      disk2[("disk 2")]
+      disk3[("disk 3")]
+      disk4[("disk 4")]
     end
     S2["Server 2"]
     S3["Server 3"]
     S4["Server 4"]
   end
 
-classDef server fill:#696,stroke:#333;padding-bottom:3em
+classDef server fill:white,stroke:blue,stroke-width:5px,vertical-align:sup;
 classDef client fill:#966,stroke:#333;
+classDef label fill:white,stroke:white;
 
 class S1 server
+class label label
 
 ```
 
