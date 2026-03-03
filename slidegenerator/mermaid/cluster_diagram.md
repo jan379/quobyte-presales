@@ -2,7 +2,7 @@
 
 ```mermaid
 block-beta
-columns 3
+columns 1
   block:Compute
     A["Client A"]
     B["Client B"]
