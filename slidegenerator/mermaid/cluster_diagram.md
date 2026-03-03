@@ -15,7 +15,7 @@ columns 1
     S1["Server 1"]
     S2["Server 2"]
     S3["Server 3"]
-    S3["Server 3"]
+    S4["Server 4"]
   end
 ```
 
