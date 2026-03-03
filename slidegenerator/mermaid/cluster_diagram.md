@@ -13,7 +13,6 @@ columns 1
     D["Server 2"]
     E["Server 3"]
   end
-  style B fill:#969,stroke:#333,stroke-width:4px
 ```
 
 
