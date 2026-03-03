@@ -12,7 +12,7 @@ columns 1
     C5["Client F"]
   end
   clientTraffic<["Client Traffic"]>(y)
-  block:Storage("")
+  block:Storage
     block:S1["Server 1"]
     columns 1
       space:1
