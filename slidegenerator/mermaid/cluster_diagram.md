@@ -26,7 +26,7 @@ columns 1
     S4["Server 4"]
   end
 
-classDef server fill:#696,stroke:#333;
+classDef server fill:#696,stroke:#333;padding-bottom:3em
 classDef client fill:#966,stroke:#333;
 
 class S1 server
