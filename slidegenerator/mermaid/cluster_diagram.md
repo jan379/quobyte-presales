@@ -3,7 +3,8 @@
 ```mermaid
 block
 columns 1
-  block:Compute["Compute infrastructure"]
+  block:Compute
+  columns 10
     C1["Client A"]
     C2["Client B"]
     C3["Client C"]
@@ -11,27 +12,50 @@ columns 1
     C5["Client E"]
     C5["Client F"]
   end
-  clientTraffic<["Client Traffic"]>(y)
   block:Storage
-    block:S1(" ")
+    block:S1(" Lalala")
     columns 1
-      label["Server 1"]:1
-      disk1[("disk 1")]
-      disk2[("disk 2")]
-      disk3[("disk 3")]
-      disk4[("disk 4")]
+      label1["Server 1"]:1
+      disk1[("disk 01")]
+      disk2[("disk 02")]
+      disk3[("disk 03")]
+      disk4[("disk 04")]
     end
-    S2["Server 2"]
-    S3["Server 3"]
-    S4["Server 4"]
+    block:S2(" ")
+    columns 1
+      label2["Server 2"]:1
+      disk5[("disk 5")]
+      disk6[("disk 6")]
+      disk7[("disk 7")]
+      disk8[("disk 8")]
+    end
+    block:S3(" ")
+    columns 1
+      label3["Server 3"]:1
+      disk9[("disk 9")]
+      disk10[("disk 10")]
+      disk11[("disk 11")]
+      disk12[("disk 12")]
+    end
+    block:S4(" ")
+    columns 1
+      label4["Server 4"]:1
+      disk13[("disk 13")]
+      disk14[("disk 14")]
+      disk15[("disk 15")]
+      disk16[("disk 16")]
+    end
   end
+  C3 --> disk1
+  C3 --> disk6 
+  C3 --> disk13
 
 classDef server fill:white,stroke:blue,stroke-width:5px,vertical-align:sup;
 classDef client fill:#966,stroke:#333;
 classDef label fill:white,stroke:white;
 
-class S1 server
-class label label
+class S1,S2,S3,S4 server
+class label1,label2,label3,label4 label
 
 ```
 
