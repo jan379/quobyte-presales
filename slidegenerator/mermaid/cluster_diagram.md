@@ -13,6 +13,7 @@ columns 1
   end
   block:Traffic
     clientTraffic<["Client Traffic"]>(y)
+  end
   block:Storage
     S1["Server 1"]
     S2["Server 2"]
