@@ -13,6 +13,7 @@ columns 1
     C5["Client F"]
   end
   block:Storage
+    label("Storage Cluster"):4
     block:S1
     columns 1
       label1["Server 1"]:1
@@ -66,7 +67,7 @@ classDef client fill:#966,stroke:#333;
 classDef label fill:white,stroke:white;
 
 class S1,S2,S3,S4 server
-class label1,label2,label3,label4 label
+class label,label1,label2,label3,label4 label
 
 ```
 
