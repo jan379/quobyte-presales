@@ -7,10 +7,14 @@ columns 1
     C1["Client A"]
     C2["Client B"]
     C3["Client C"]
+    C4["Client D"]
+    C5["Client E"]
+    C5["Client F"]
   end
   block:Storage
     S1["Server 1"]
     S2["Server 2"]
+    S3["Server 3"]
     S3["Server 3"]
   end
 ```
