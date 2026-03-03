@@ -46,15 +46,21 @@ columns 1
       disk16[("disk 16")]
     end
   end
-  C3 --> disk1
-  C3 --> disk6 
-  C3 --> disk13
+  C1 --> disk3
+  C1 --> disk7
+  C1 --> disk14
   C2 --> disk2
   C2 --> disk5
   C2 --> disk12
+  C3 --> disk1
+  C3 --> disk6 
+  C3 --> disk13
   C4 --> disk4
-  C4 --> disk12
+  C4 --> disk10
   C4 --> disk16
+  C5 --> disk8
+  C5 --> disk9
+  C5 --> disk15
 classDef server fill:white,stroke:blue,stroke-width:4px;
 classDef client fill:#966,stroke:#333;
 classDef label fill:white,stroke:white;
