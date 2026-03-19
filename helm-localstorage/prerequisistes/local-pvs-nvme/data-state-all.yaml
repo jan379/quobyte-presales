@@ -8,9 +8,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "0"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data0
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data0
   spec:
     accessModes:
     - ReadWriteOnce
@@ -25,7 +25,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -37,9 +37,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "1"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data1
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data1
   spec:
     accessModes:
     - ReadWriteOnce
@@ -54,7 +54,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -66,9 +66,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "2"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data2
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data2
   spec:
     accessModes:
     - ReadWriteOnce
@@ -83,7 +83,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -95,9 +95,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "3"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data3
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data3
   spec:
     accessModes:
     - ReadWriteOnce
@@ -112,7 +112,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -124,9 +124,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "4"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data4
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data4
   spec:
     accessModes:
     - ReadWriteOnce
@@ -141,7 +141,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -153,9 +153,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "5"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data5
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data5
   spec:
     accessModes:
     - ReadWriteOnce
@@ -170,7 +170,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
@@ -182,9 +182,9 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       index: "6"
-      node: latpoc11
+      node: gke-localstorage-cluster-default-pool-7b5b903f-02k4
       role: data
-    name: pv-latpoc11-data6
+    name: pv-gke-localstorage-cluster-default-pool-7b5b903f-02k4-data6
   spec:
     accessModes:
     - ReadWriteOnce
@@ -199,7 +199,7 @@ items:
           - key: kubernetes.io/hostname
             operator: In
             values:
-            - latpoc11
+            - gke-localstorage-cluster-default-pool-7b5b903f-02k4
     persistentVolumeReclaimPolicy: Retain
     storageClassName: quobyte-local
     volumeMode: Filesystem
