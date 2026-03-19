@@ -1,0 +1,121 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: data
+      app.kubernetes.io/name: quobyte-data
+      app.kubernetes.io/part-of: quobyte
+      index: "0"
+      node: latpoc11
+      role: data-config
+    name: pv-latpoc11-data-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    local:
+      path: /var/lib/quobyte/devices/data-config
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - latpoc11
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: data
+      app.kubernetes.io/name: quobyte-data
+      app.kubernetes.io/part-of: quobyte
+      index: "0"
+      node: latpoc12
+      role: data-config
+    name: pv-latpoc12-data-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    local:
+      path: /var/lib/quobyte/devices/data-config
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - latpoc12
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: data
+      app.kubernetes.io/name: quobyte-data
+      app.kubernetes.io/part-of: quobyte
+      index: "0"
+      node: latpoc13
+      role: data-config
+    name: pv-latpoc13-data-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    local:
+      path: /var/lib/quobyte/devices/data-config
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - latpoc13
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: data
+      app.kubernetes.io/name: quobyte-data
+      app.kubernetes.io/part-of: quobyte
+      index: "0"
+      node: latpoc14
+      role: data-config
+    name: pv-latpoc14-data-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    local:
+      path: /var/lib/quobyte/devices/data-config
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - latpoc14
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+kind: List
+metadata:
+  resourceVersion: ""
