@@ -56,8 +56,6 @@ spec:
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
         volumeMounts:
-#          - name: config
-#            mountPath: /etc/quobyte
           {{- range .Values.quobyte.metadatadisks }}
           - name: {{ .name }}
             mountPath: {{ .mountpoint }}
@@ -66,10 +64,6 @@ spec:
               - /bin/sh 
               - -xc
               - |
-                #touch /etc/quobyte/$QUOBYTE_SERVICE.cfg
-                #echo test.device_dir=/var/lib/quobyte/devices >> /etc/quobyte/metadata.cfg
-                #echo rpc.bind.address=${MY_POD_IP} >> /etc/quobyte/metadata.cfg
-                #echo hostname=${HOSTNAME} >> /etc/quobyte/metadata.cfg
                 for j in $(ls -d /var/lib/quobyte/devices/metadata*)
                 do
                   i=$(basename $j)
@@ -120,8 +114,6 @@ spec:
         - containerPort: 7862
           name: quobyte-meta
         volumeMounts:
-#          - name: config
-#            mountPath: /etc/quobyte
           {{- range .Values.quobyte.metadatadisks }}
           - name: {{ .name }}
             mountPath: {{ .mountpoint }}
@@ -141,24 +133,18 @@ spec:
                   - quobyte
               topologyKey: "kubernetes.io/hostname"
   volumeClaimTemplates:
-#  - metadata:
-#      name: config
-#    spec:
-#      accessModes: [ "ReadWriteOnce" ]
-#      resources:
-#        requests:
-#          storage: 1Gi
-#      selector:
-#        matchLabels:
-#          role: "metadata-config"
 {{- range .Values.quobyte.metadatadisks }}
   - metadata:
       name: {{ .name }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
-        #storageClassName: "faster"
-      storageClassName: "quobyte-local"
+      storageClassName: {{ $.Values.quobyte.storageclassMetadata }} 
       resources:
         requests:
           storage: {{ .size }}
+      {{- if eq $.Values.nodepoolname "quobyte-local" }}
+      selector:
+        matchLabels:
+          role: "metadata"
+      {{- end }}
 {{- end }}

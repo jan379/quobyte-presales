@@ -56,8 +56,6 @@ spec:
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
         volumeMounts:
-#          - name: config
-#            mountPath: /etc/quobyte
           {{- range .Values.quobyte.datadisks }}
           - name: {{ .name }}
             mountPath: {{ .mountpoint }}
@@ -116,8 +114,6 @@ spec:
         - containerPort: 7863
           name: quobyte-data
         volumeMounts:
-#          - name: config
-#            mountPath: /etc/quobyte
           {{- range .Values.quobyte.datadisks }}
           - name: {{ .name }}
             mountPath: {{ .mountpoint }}
@@ -137,25 +133,19 @@ spec:
                   - quobyte
               topologyKey: "kubernetes.io/hostname"
   volumeClaimTemplates:
-#  - metadata:
-#      name: config
-#    spec:
-#      accessModes: [ "ReadWriteOnce" ]
-#      resources:
-#        requests:
-#          storage: 1Gi
-#      selector:
-#        matchLabels:
-#          role: "data-config"
 {{- range .Values.quobyte.datadisks }}
   - metadata:
       name: {{ .name }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
-        #storageClassName: "faster"
-      storageClassName: "quobyte-local"
+      storageClassName: {{ $.Values.quobyte.storageclassData }} 
       resources:
         requests:
           storage: {{ .size }}
+      {{- if eq $.Values.nodepoolname "quobyte-local" }}
+      selector:
+        matchLabels:
+          role: "data"
+      {{- end }}
 {{- end }}
 

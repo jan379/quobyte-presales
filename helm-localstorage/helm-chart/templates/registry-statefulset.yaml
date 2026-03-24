@@ -9,6 +9,7 @@ spec:
       app: quobyte-reg # has to match .spec.template.metadata.labels
   serviceName: "quobyte"
   replicas: {{ .Values.quobyte.replicas }}  
+  minReadySeconds: 60
   template:
     metadata:
       labels:
@@ -53,18 +54,13 @@ spec:
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
         volumeMounts:
-#          - name: config
-#            mountPath: /etc/quobyte
           - name: registry
             mountPath: /var/lib/quobyte/devices/registry
+        # The first pod will bootstrap a cluster, any other pod will join.
         command:
               - /bin/bash
               - -xc
               - |
-                touch /etc/quobyte/$QUOBYTE_SERVICE.cfg
-                #echo test.device_dir=/var/lib/quobyte/devices >> /etc/quobyte/registry.cfg
-                #echo rpc.bind.address=${MY_POD_IP} >> /etc/quobyte/registry.cfg
-                #echo hostname=${HOSTNAME} >> /etc/quobyte/registry.cfg
                 NODENUM=$(echo "$NODENAME" | tr -dc "0-9")
                 if [ ! -e /var/lib/quobyte/devices/registry/QUOBYTE_DEV_SETUP ]; then
                   if [[ $NODENUM == 0 ]]; then
@@ -78,6 +74,10 @@ spec:
         image: {{ .Values.quobyte.image }}
         imagePullPolicy: Always
         env:
+          - name: SERVICE_UUID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
           - name: NODENAME
             valueFrom:
               fieldRef:
@@ -121,8 +121,6 @@ spec:
           - containerPort: 7871
             name: quobyte-health
         volumeMounts:
-          #          - name: config
-          # mountPath: /etc/quobyte
           - name: registry
             mountPath: /var/lib/quobyte/devices/registry
         livenessProbe:
@@ -144,24 +142,17 @@ spec:
                   - quobyte-reg
               topologyKey: "kubernetes.io/hostname"
   volumeClaimTemplates:
-#  - metadata:
-#      name: config
-#    spec:
-#      accessModes: [ "ReadWriteOnce" ]
-#      resources:
-#        requests:
-#          storage: 1Gi
-#      selector:
-#        matchLabels:
-#          role: "registry-config"
   - metadata:
       name: registry
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ $.Values.quobyte.storageclassRegistry }} 
       resources:
         requests:
           storage: 25Gi
+      {{- if eq $.Values.nodepoolname "quobyte-local" }}
       selector:
         matchLabels:
-          role: "registry-state"
+          role: "registry"
+      {{- end }}
 
