@@ -1,0 +1,33 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: registry
+      app.kubernetes.io/name: quobyte-storage
+      app.kubernetes.io/part-of: quobyte
+      node: gke-localstorage-cluster-default-pool-153540ea-9bnn
+      role: registry
+    name: pv-gke-localstorage-cluster-default-pool-153540ea-9bnn-registry-state
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 30Gi
+    local:
+      path: /var/lib/quobyte/devices/registry-state
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - gke-localstorage-cluster-default-pool-153540ea-9bnn
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+kind: List
+metadata:
+  resourceVersion: ""

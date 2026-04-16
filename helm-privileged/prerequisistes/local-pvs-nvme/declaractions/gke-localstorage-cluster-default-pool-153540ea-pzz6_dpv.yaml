@@ -1,0 +1,33 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: data
+      app.kubernetes.io/name: quobyte-storage
+      app.kubernetes.io/part-of: quobyte
+      node: gke-localstorage-cluster-default-pool-153540ea-pzz6
+      role: data
+    name: pv-gke-localstorage-cluster-default-pool-153540ea-pzz6-data1
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 300Gi
+    local:
+      path: /var/lib/quobyte/devices/data1
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - gke-localstorage-cluster-default-pool-153540ea-pzz6
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+kind: List
+metadata:
+  resourceVersion: ""

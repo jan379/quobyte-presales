@@ -1,0 +1,33 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    labels:
+      app.kubernetes.io/component: registry
+      app.kubernetes.io/name: quobyte-storage
+      app.kubernetes.io/part-of: quobyte
+      node: NODENAME
+      role: registry
+    name: pv-NODENAME-registry-state
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 30Gi
+    local:
+      path: /var/lib/quobyte/devices/registry-state
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - NODENAME
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: quobyte-local
+    volumeMode: Filesystem
+kind: List
+metadata:
+  resourceVersion: ""
