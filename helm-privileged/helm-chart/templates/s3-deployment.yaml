@@ -52,7 +52,7 @@ spec:
           - name: QUOBYTE_API_PORT
             value: "7860" 
           - name: QUOBYTE_S3_PORT
-            value: "8484" 
+            value: "80" 
           - name: QUOBYTE_S3_HOSTNAME 
             value: "{{ .Values.quobyte.s3.dnsname }}"
           - name: QUOBYTE_SERVICE
