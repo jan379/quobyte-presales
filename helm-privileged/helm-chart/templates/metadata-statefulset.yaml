@@ -19,58 +19,11 @@ spec:
       terminationGracePeriodSeconds: 10
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
-      initContainers:
-      - name: quobyte-meta-pre 
-        image: {{ .Values.quobyte.image }}
-        env:
-          - name: NODENAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: MY_POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          - name: HOST_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          - name: QUOBYTE_DATA_PORT 
-            value: "7863"
-          - name: QUOBYTE_META_PORT
-            value: "7862"
-          - name: QUOBYTE_REG_PORT 
-            value: "7861"
-          - name: QUOBYTE_API_PORT
-            value: "7860" 
-          - name: QUOBYTE_S3_PORT
-            value: "8484" 
-          - name: QUOBYTE_SERVICE
-            value: metadata
-          - name: CLOUD_INSTALL
-            value: "1" 
-          - name: CLUSTER_NS
-            value: {{ .Release.Namespace }}
-          - name: LIMIT_OPEN_FILES
-            value: "{{ .Values.quobyte.maxopenfiles }}"
-          - name: LIMIT_MAX_PROCESSES
-            value: "{{ .Values.quobyte.maxprocs }}"
-        volumeMounts:
-          {{- range .Values.quobyte.metadatadisks }}
-          - name: {{ .name }}
-            mountPath: {{ .mountpoint }}
-          {{- end }}
-        command:
-              - /bin/sh 
-              - -xc
-              - |
-                for j in $(ls -d /var/lib/quobyte/devices/metadata*)
-                do
-                  i=$(basename $j)
-                  if [ ! -e /var/lib/quobyte/devices/${i}/QUOBYTE_DEV_SETUP ];then
-                    /usr/bin/qmkdev -d -t METADATA /var/lib/quobyte/devices/${i}
-                  fi
-                done
+      tolerations:
+      - key: {{ .Values.taintKey }}
+        operator: "Exists"
+          #value: {{ .Values.taintValue }}
+        effect: "NoSchedule"
       containers:
       - name: quobyte
         image: {{ .Values.quobyte.image }}
@@ -110,17 +63,37 @@ spec:
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
+        # work around check in /opt/main 
+        volumeMounts:
+        - name: workaround
+          mountPath: /devices
+        - name: dev-disk 
+          mountPath: /dev/disk
+        - name: host-udev 
+          mountPath: /run/udev
         ports:
         - containerPort: 7862
           name: quobyte-meta
-        volumeMounts:
-          {{- range .Values.quobyte.metadatadisks }}
-          - name: {{ .name }}
-            mountPath: {{ .mountpoint }}
-          {{- end }}
+
+      volumes:
+      - hostPath:
+        # work around check in /opt/main 
+          path: /tmp
+          type: ""
+        name: workaround
+      - hostPath:
+          path: /dev/disk
+          type: ""
+        name: dev-disk
+      - hostPath:
+          path: /run/udev
+          type: ""
+        name: host-udev
+
+
       {{- if .Values.nodepoolname }}
       nodeSelector:
-           storage-node-pool: {{ .Values.nodepoolname }}
+         storage-node-pool: {{ .Values.nodepoolname }}
       {{- end }}
       affinity:
         podAntiAffinity:
@@ -132,19 +105,4 @@ spec:
                   values:
                   - quobyte
               topologyKey: "kubernetes.io/hostname"
-  volumeClaimTemplates:
-{{- range .Values.quobyte.metadatadisks }}
-  - metadata:
-      name: {{ .name }}
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ $.Values.quobyte.storageclassMetadata }} 
-      resources:
-        requests:
-          storage: {{ .size }}
-      {{- if eq $.Values.nodepoolname "quobyte-local" }}
-      selector:
-        matchLabels:
-          role: "metadata"
-      {{- end }}
-{{- end }}
+

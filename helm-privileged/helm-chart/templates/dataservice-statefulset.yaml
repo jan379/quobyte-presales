@@ -19,6 +19,11 @@ spec:
       terminationGracePeriodSeconds: 10
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+      - key: {{ .Values.taintKey }}
+        operator: "Exists"
+          #value: {{ .Values.taintValue }}
+        effect: "NoSchedule"
       containers:
       - name: quobyte-data
         image: {{ .Values.quobyte.image }}
@@ -60,7 +65,7 @@ spec:
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
-        # work around stupid check in /opt/main 
+        # work around check in /opt/main 
         volumeMounts:
         - name: workaround
           mountPath: /devices
@@ -74,7 +79,7 @@ spec:
 
       volumes:
       - hostPath:
-        # work around stupid check in /opt/main 
+        # work around check in /opt/main 
           path: /tmp
           type: ""
         name: workaround

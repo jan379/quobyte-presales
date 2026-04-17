@@ -19,6 +19,11 @@ spec:
       terminationGracePeriodSeconds: 10
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+      - key: {{ .Values.taintKey }}
+        operator: "Exists"
+          #value: {{ .Values.taintValue }}
+        effect: "NoSchedule"
       containers:
       - name: quobyte-s3
         image: {{ .Values.quobyte.image }}

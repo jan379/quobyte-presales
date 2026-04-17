@@ -12,35 +12,14 @@ quobyte:
   # the exact semantics of internal/external depend on your k8s config or provider.
   lbinternal: false 
   
-  # Configuration for the persistent disks used by the Quobyte services.
+  # Configuration for the persistent disks used by Quobyte services.
   # storageclassRegistry: "quobyte-local"
   storageclassRegistry: "standard"
-  storageclassMetadata: "premium-rwo"
-  storageclassData:     "standard-rwo"
   
   # Minimum number of replicas per Quobyte services, minimum is 3.
   # Your nodepool must have at least 3 nodes.
   replicas: 4
-  
-  # Data disks attached to each Quobyte data services, minimum is one data disk.
-  # The name MUST start with "data".
-  # The mount point MUST start with "/var/lib/quobyte/devices/data..." and the last
-  # part MUST match the disk name. E.g. if the name is "data5" the mountpoint
-  # must be "/var/lib/quobyte/devices/data5".
-  # The minimum capacity of a disk must be 100Gi.
-  datadisks:
-    - name: data1
-      mountpoint: /var/lib/quobyte/devices/data1
-      size: "300Gi"
-  
-  # Metadata disks attached to each Quobyte metadata service, minimum is one
-  # metadata disk. Similar to datadisks, names MUST start with "metadata".
-  # Minimum capacity is 100Gi.
-  metadatadisks:
-    - name: metadata0
-      mountpoint: /var/lib/quobyte/devices/metadata1
-      size: "100Gi"
-      
+     
   # Set enabled to start the Quobyte S3 service. Requires a properly
   # configured domain name.
   # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup. 
@@ -55,8 +34,8 @@ quobyte:
     dnsname: s3.example.com
   
   webconsoleport: 8080
-  image: quay.io/quobyte/quobyte-server:4 
-  #image: quay.io/quobyte/quobyte-server:5.0.pre2
+    #image: quay.io/quobyte/quobyte-server:4 
+  image: quay.io/quobyte/quobyte-server:5.0.pre3
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
@@ -65,3 +44,5 @@ quobyte:
 
 # Quobyte-independent settings:    
 hostNetwork: false
+taintKey: storage
+  #taintValue: no
