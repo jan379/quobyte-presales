@@ -46,3 +46,4 @@ quobyte:
 hostNetwork: false
 taintKey: storage
   #taintValue: no
+clusterDnsSuffix: svc.cluster.local

@@ -60,7 +60,7 @@ spec:
           - name: CLUSTER_NS
             value: {{ .Release.Namespace }}
           - name: QUOBYTE_REGISTRY
-            value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.svc.cluster.local
+            value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.{{ .Values.clusterDnsSuffix }}
           - name: LIMIT_OPEN_FILES
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
