@@ -34,13 +34,19 @@ quobyte:
     dnsname: s3.example.com
   
   webconsoleport: 8080
-    #image: quay.io/quobyte/quobyte-server:4 
+  #image: quay.io/quobyte/quobyte-server:4
   image: quay.io/quobyte/quobyte-server:5.0.pre3
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
   # Maximum number of processes, must be set to 16,000 or more.
   maxprocs: "16384"
+  # Set to true to enable RDMA capabilities for individual service types
+  enable_rdma:
+    data: false
+    metadata: false
+    registry: false
+    s3: false
 
 # Quobyte-independent settings:    
 hostNetwork: false

@@ -28,6 +28,13 @@ spec:
       - name: quobyte-s3
         image: {{ .Values.quobyte.image }}
         imagePullPolicy: Always
+        {{- if .Values.quobyte.enable_rdma.s3 }}
+        command: ["/bin/sh", "-c"]
+        args:
+            - |
+              echo "rdma.enabled=true" >> /etc/quobyte/s3.cfg
+              /opt/main.sh
+        {{- end }}
         env:
           - name: NODENAME
             valueFrom:

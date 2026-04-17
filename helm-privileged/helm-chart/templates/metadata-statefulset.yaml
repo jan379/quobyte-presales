@@ -30,6 +30,13 @@ spec:
         imagePullPolicy: Always
         securityContext:
           privileged: true
+        {{- if .Values.quobyte.enable_rdma.metadata }}
+        command: ["/bin/sh", "-c"]
+        args:
+            - |
+              echo "rdma.enabled=true" >> /etc/quobyte/metadata.cfg
+              /opt/main.sh
+        {{- end }}
         env:
           - name: NODENAME
             valueFrom:
