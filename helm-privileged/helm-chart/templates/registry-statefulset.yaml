@@ -78,6 +78,13 @@ spec:
       - name: quobyte-reg
         image: {{ .Values.quobyte.image }}
         imagePullPolicy: Always
+        {{- if .Values.quobyte.enable_rdma.registry }}
+        command: ["/bin/sh", "-c"]
+        args:
+            - |
+              echo "rdma.enabled=true" >> /etc/quobyte/registry.cfg
+              /opt/main.sh
+        {{- end }}
         env:
           - name: SERVICE_UUID
             valueFrom:

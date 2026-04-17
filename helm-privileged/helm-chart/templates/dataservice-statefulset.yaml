@@ -30,6 +30,13 @@ spec:
         imagePullPolicy: IfNotPresent 
         securityContext:
           privileged: true
+        {{- if .Values.quobyte.enable_rdma.data }}
+        command: ["/bin/sh", "-c"]
+        args:
+            - |
+              echo "rdma.enabled=true" >> /etc/quobyte/data.cfg
+              /opt/main.sh
+        {{- end }}
         env:
           - name: NODENAME
             valueFrom:
