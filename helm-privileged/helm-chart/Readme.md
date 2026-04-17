@@ -1,33 +1,16 @@
-# Quobyte Cluster Helm Chart
+# Quobyte Cluster Helm Chart, privileged mode
 
 This Helm Chart will install a Quobyte storage cluster.
+Containers will run in privileged mode, thus being able 
+to use storage devices located on the worker nodes
 
-## Preparation
+These storage devices can be used as data- and metadata 
+devices for Quobyte.
 
-You need to specify the infrastructure provider to provision 
-storage devices. A sample "values.yaml" looks like this:
+The registry state can be stored either locally (by providing pre-provisioned 
+volumes that match the pvc) or use a standard/ default storage class provided 
+by the k8s cluster.
 
-``` 
-quobyte:
-  # Name depends on the cloud environment, e.g. pd-ssd for Google Kubernetes Engine
-  # flashStorage: "gp2" # AWS general purpose SSD
-  # flashStorage: "Standard_LRS"  # Azure "Standard Locally Redundant Storage"
-  flashStorage: "pd-ssd"
-  # Storage provider depending to the cloud environment
-  # storageProvisioner: "kubernetes.io/aws-ebs"
-  # storageProvisioner: "kubernetes.io/azure-disk" 
-  storageProvisioner: "kubernetes.io/gce-pd"
-
-``` 
-
-You can inspect the values.yaml for other values to modify, but default should work.
-
-This Helm Chart can be installed as usual:
-
-``` 
-helm repo add quobyte https://quobyte.github.io/quobyte-k8s-resources/helm-charts
-helm repo update
-helm install my-storage-cluster quobyte/quobyte-cluster
-``` 
+This parameter can be adjusted by using "storageclassRegistry" parameter in values.yaml
 
 
