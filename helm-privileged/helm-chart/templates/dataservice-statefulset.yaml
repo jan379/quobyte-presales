@@ -27,7 +27,7 @@ spec:
       containers:
       - name: quobyte-data
         image: {{ .Values.quobyte.image }}
-        imagePullPolicy: IfNotPresent 
+        imagePullPolicy: Always
         securityContext:
           privileged: true
         env:
