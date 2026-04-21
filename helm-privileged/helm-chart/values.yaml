@@ -35,7 +35,7 @@ quobyte:
   
   webconsoleport: 8080
   #image: quay.io/quobyte/quobyte-server:4
-  image: quay.io/quobyte/quobyte-server:5.0.pre3
+  image: quay.io/quobyte/quobyte-server:5.0.pre
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
