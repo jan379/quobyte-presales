@@ -30,13 +30,6 @@ spec:
         imagePullPolicy: IfNotPresent 
         securityContext:
           privileged: true
-        {{- if .Values.quobyte.enable_rdma.data }}
-        command: ["/bin/sh", "-c"]
-        args:
-            - |
-              echo "rdma.enabled=true" >> /etc/quobyte/data.cfg
-              /opt/main.sh
-        {{- end }}
         env:
           - name: NODENAME
             valueFrom:
@@ -72,7 +65,19 @@ spec:
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
-        # work around check in /opt/main 
+          {{- if .Values.quobyte.enable_rdma.data }}
+          - name: QUOBYTE_ENABLE_RDMA
+            value: "{{ .Values.quobyte.enable_rdma.data }}"
+          {{- end }}
+          {{- if .Values.quobyte.memory.maxmem.data }}
+          - name: QUOBYTE_MAX_MEM_DATA
+            value: "{{ .Values.quobyte.memory.maxmem.data }}"
+          {{- end}}
+          {{- if .Values.quobyte.memory.maxbuffer.data }}
+          - name: QUOBYTE_MAX_BUFFER_DATA
+            value: "{{ .Values.quobyte.memory.maxbuffer.data }}"
+          {{- end}}
+        # work around check in /opt/main
         volumeMounts:
         - name: workaround
           mountPath: /devices

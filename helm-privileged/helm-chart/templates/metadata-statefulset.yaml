@@ -30,13 +30,6 @@ spec:
         imagePullPolicy: Always
         securityContext:
           privileged: true
-        {{- if .Values.quobyte.enable_rdma.metadata }}
-        command: ["/bin/sh", "-c"]
-        args:
-            - |
-              echo "rdma.enabled=true" >> /etc/quobyte/metadata.cfg
-              /opt/main.sh
-        {{- end }}
         env:
           - name: NODENAME
             valueFrom:
@@ -72,7 +65,19 @@ spec:
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
-        # work around check in /opt/main 
+          {{- if .Values.quobyte.enable_rdma.metadata }}
+          - name: QUOBYTE_ENABLE_RDMA
+            value: "{{ .Values.quobyte.enable_rdma.metadata }}"
+          {{- end }}
+          {{- if .Values.quobyte.memory.maxmem.metadata }}
+          - name: QUOBYTE_MAX_MEM_METADATA
+            value: "{{ .Values.quobyte.memory.maxmem.metadata }}"
+          {{- end}}
+          {{- if .Values.quobyte.memory.maxbuffer.metadata }}
+          - name: QUOBYTE_MAX_BUFFER_METADATA
+            value: "{{ .Values.quobyte.memory.maxbuffer.metadata }}"
+          {{- end}}
+        # work around check in /opt/main
         volumeMounts:
         - name: workaround
           mountPath: /devices

@@ -48,7 +48,15 @@ quobyte:
     registry: false
     s3: false
 
-# Quobyte-independent settings:    
+  memory:
+    maxmem:
+      metadata: "32G"
+      data: "10G"
+    maxbuffer:
+      data: "20G"
+      metadata: "8G"
+
+# Quobyte-independent settings:
 hostNetwork: false
 taintKey: storage
   #taintValue: no

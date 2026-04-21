@@ -78,13 +78,6 @@ spec:
       - name: quobyte-reg
         image: {{ .Values.quobyte.image }}
         imagePullPolicy: Always
-        {{- if .Values.quobyte.enable_rdma.registry }}
-        command: ["/bin/sh", "-c"]
-        args:
-            - |
-              echo "rdma.enabled=true" >> /etc/quobyte/registry.cfg
-              /opt/main.sh
-        {{- end }}
         env:
           - name: SERVICE_UUID
             valueFrom:
@@ -124,6 +117,18 @@ spec:
             value: "{{ .Values.quobyte.maxopenfiles }}"
           - name: LIMIT_MAX_PROCESSES
             value: "{{ .Values.quobyte.maxprocs }}"
+          {{- if .Values.quobyte.enable_rdma.registry }}
+          - name: QUOBYTE_ENABLE_RDMA
+            value: "{{ .Values.quobyte.enable_rdma.registry }}"
+          {{- end }}
+          {{- if .Values.quobyte.memory.maxmem.registry }}
+          - name: QUOBYTE_MAX_MEM_REGISTRY
+            value: "{{ .Values.quobyte.memory.maxmem.registry }}"
+          {{- end}}
+          {{- if .Values.quobyte.memory.maxbuffer.other }}
+          - name: QUOBYTE_MAX_BUFFER_OTHER
+            value: "{{ .Values.quobyte.memory.maxbuffer.other }}"
+          {{- end}}
         ports:
           - containerPort: 7861
             name: quobyte-reg
