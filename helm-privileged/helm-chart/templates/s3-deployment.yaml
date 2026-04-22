@@ -8,7 +8,7 @@ spec:
   selector:
     matchLabels:
       app: quobyte-s3 # has to match .spec.template.metadata.labels
-  replicas: {{ .Values.quobyte.replicas }} # by default is 4 
+  replicas: {{ .Values.quobyte.replicas.s3 }} # by default is 4
   template:
     metadata:
       labels:

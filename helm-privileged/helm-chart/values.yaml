@@ -16,9 +16,16 @@ quobyte:
   # storageclassRegistry: "quobyte-local"
   storageclassRegistry: "standard"
   
-  # Minimum number of replicas per Quobyte services, minimum is 3.
-  # Your nodepool must have at least 3 nodes.
-  replicas: 4
+  # Minimum number of replicas per Quobyte service.
+  # Registry, Metadata and Data must have a minimum of 3
+  # API, Webconsole and S3 need a minimum of 1, more recommended for fault-tolerance
+  replicas:
+    registry: 3
+    data: 4
+    metadata: 4
+    s3: 4
+    webconsole: 1
+    api: 1
      
   # Set enabled to start the Quobyte S3 service. Requires a properly
   # configured domain name.

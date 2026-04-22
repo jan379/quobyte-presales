@@ -8,7 +8,7 @@ spec:
     matchLabels:
       app: quobyte-data # has to match .spec.template.metadata.labels
   serviceName: "quobyte-data"
-  replicas: {{ .Values.quobyte.replicas }}  
+  replicas: {{ .Values.quobyte.replicas.data }}
   template:
     metadata:
       labels:
