@@ -9,6 +9,7 @@ spec:
       app: quobyte-reg # has to match .spec.template.metadata.labels
   serviceName: "quobyte"
   replicas: {{ .Values.quobyte.replicas.registry }}
+  podManagementPolicy: Parallel
   minReadySeconds: 60
   template:
     metadata:
