@@ -9,6 +9,7 @@ spec:
       app: quobyte-meta # has to match .spec.template.metadata.labels
   serviceName: "quobyte-meta"
   replicas: {{ .Values.quobyte.replicas.metadata }} # by default is 4
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
