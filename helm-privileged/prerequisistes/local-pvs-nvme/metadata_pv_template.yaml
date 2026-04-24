@@ -8,7 +8,7 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       node: NODENAME
-      role: metadata 
+      role: metadata
     name: pv-NODENAME-metadata1
   spec:
     accessModes:

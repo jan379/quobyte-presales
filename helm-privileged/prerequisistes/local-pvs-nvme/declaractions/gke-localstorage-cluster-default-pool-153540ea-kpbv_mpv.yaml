@@ -8,7 +8,7 @@ items:
       app.kubernetes.io/name: quobyte-storage
       app.kubernetes.io/part-of: quobyte
       node: gke-localstorage-cluster-default-pool-153540ea-kpbv
-      role: metadata 
+      role: metadata
     name: pv-gke-localstorage-cluster-default-pool-153540ea-kpbv-metadata1
   spec:
     accessModes:

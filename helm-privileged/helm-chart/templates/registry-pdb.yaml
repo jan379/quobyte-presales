@@ -6,5 +6,5 @@ spec:
   maxUnavailable: 49%
   selector:
     matchLabels:
-      app: quobyte-reg 
+      app: quobyte-reg
 

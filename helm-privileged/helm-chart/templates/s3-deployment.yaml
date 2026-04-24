@@ -1,18 +1,18 @@
 ---
 {{- if .Values.quobyte.s3.enabled }}
 apiVersion: apps/v1
-kind: Deployment 
+kind: Deployment
 metadata:
   name: quobyte-s3
 spec:
   selector:
     matchLabels:
-      app: quobyte-s3 # has to match .spec.template.metadata.labels
-  replicas: {{ .Values.quobyte.replicas.s3 }} # by default is 4
+      app: quobyte-s3  # has to match .spec.template.metadata.labels
+  replicas: {{ .Values.quobyte.replicas.s3 }}
   template:
     metadata:
       labels:
-        app: quobyte-s3 # has to match .spec.selector.matchLabels
+        app: quobyte-s3  # has to match .spec.selector.matchLabels
       annotations:
         timestamp: "{{ now }}"
     spec:
@@ -20,70 +20,72 @@ spec:
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
       tolerations:
-      - key: {{ .Values.taintKey }}
-        operator: "Exists"
-          #value: {{ .Values.taintValue }}
-        effect: "NoSchedule"
-      containers:
-      - name: quobyte-s3
-        image: {{ .Values.quobyte.image }}
-        imagePullPolicy: Always
-        env:
-          - name: NODENAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: MY_POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          - name: HOST_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-          - name: CLOUD_INSTALL
-            value: "1" 
-          - name: QUOBYTE_DATA_PORT 
-            value: "7863"
-          - name: QUOBYTE_META_PORT
-            value: "7862"
-          - name: QUOBYTE_REG_PORT 
-            value: "7861"
-          - name: QUOBYTE_API_PORT
-            value: "7860" 
-          - name: QUOBYTE_S3_PORT
-            value: "80" 
-          - name: QUOBYTE_S3_HOSTNAME 
-            value: "{{ .Values.quobyte.s3.dnsname }}"
-          - name: QUOBYTE_SERVICE
-            value: "s3"
-          - name: QUOBYTE_REGISTRY
-            value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.{{ .Values.clusterDnsSuffix }}
-          - name: CLUSTER_NS
-            value: {{ .Release.Namespace }}
-          - name: LIMIT_OPEN_FILES
-            value: "{{ .Values.quobyte.maxopenfiles }}"
-          - name: LIMIT_MAX_PROCESSES
-            value: "{{ .Values.quobyte.maxprocs }}"
-          {{- if .Values.quobyte.enable_rdma.s3 }}
-          - name: QUOBYTE_ENABLE_RDMA
-            value: "{{ .Values.quobyte.enable_rdma.s3 }}"
+        - key: {{ .Values.taintKey }}
+          operator: "Exists"
+          {{- if .Values.taintValue }}
+          value: {{ .Values.taintValue | quote }}
           {{- end }}
-        ports:
-        - containerPort: 8484
-          name: quobyte-s3
+          effect: "NoSchedule"
+      containers:
+        - name: quobyte-s3
+          image: {{ .Values.quobyte.image }}
+          imagePullPolicy: Always
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: CLOUD_INSTALL
+              value: "1"
+            - name: QUOBYTE_DATA_PORT
+              value: "7863"
+            - name: QUOBYTE_META_PORT
+              value: "7862"
+            - name: QUOBYTE_REG_PORT
+              value: "7861"
+            - name: QUOBYTE_API_PORT
+              value: "7860"
+            - name: QUOBYTE_S3_PORT
+              value: "80"
+            - name: QUOBYTE_S3_HOSTNAME
+              value: "{{ .Values.quobyte.s3.dnsname }}"
+            - name: QUOBYTE_SERVICE
+              value: "s3"
+            - name: QUOBYTE_REGISTRY
+              value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.{{ .Values.clusterDnsSuffix }}
+            - name: CLUSTER_NS
+              value: {{ .Release.Namespace }}
+            - name: LIMIT_OPEN_FILES
+              value: "{{ .Values.quobyte.maxopenfiles }}"
+            - name: LIMIT_MAX_PROCESSES
+              value: "{{ .Values.quobyte.maxprocs }}"
+            {{- if .Values.quobyte.enable_rdma.s3 }}
+            - name: QUOBYTE_ENABLE_RDMA
+              value: "{{ .Values.quobyte.enable_rdma.s3 }}"
+            {{- end }}
+          ports:
+            - containerPort: 8484
+              name: quobyte-s3
       {{- if .Values.nodepoolname }}
       nodeSelector:
            storage-node-pool: {{ .Values.nodepoolname }}
       {{- end }}
       affinity:
         podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
+          requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - quobyte
+                  - key: app
+                    operator: In
+                    values:
+                      - quobyte
               topologyKey: "kubernetes.io/hostname"
 {{- end }}

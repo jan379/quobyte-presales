@@ -1,3 +1,4 @@
+---
 # Name of the nodepool in which the Quobyte services will be deployed.
 # A separate nodepool can be used for performance isolation to avoid
 # other workloads from impacting your storage.
@@ -5,20 +6,23 @@
 # "kubectl label nodes <your-node-name> storage-node-pool=quobyte"
 ## nodepoolname: quobyte
 
-# Configuration for the Quobyte services, i.e. the Quobyte cluster providing storage.
+# Configuration for the Quobyte services, i.e. the Quobyte cluster providing
+# storage.
 quobyte:
   # Loadbalancer to make the Quobyte webconsole accessible.
-  # If set to true an internal IP will be used, if set to false an external IP will be used
-  # the exact semantics of internal/external depend on your k8s config or provider.
-  lbinternal: false 
-  
+  # If set to true an internal IP will be used, if set to false an external IP
+  # will be used the exact semantics of internal/external depend on your k8s
+  # config or provider.
+  lbinternal: false
+
   # Configuration for the persistent disks used by Quobyte services.
   # storageclassRegistry: "quobyte-local"
   storageclassRegistry: "standard"
-  
+
   # Minimum number of replicas per Quobyte service.
   # Registry, Metadata and Data must have a minimum of 3
-  # API, Webconsole and S3 need a minimum of 1, more recommended for fault-tolerance
+  # API, Webconsole and S3 need a minimum of 1, more recommended for
+  # fault-tolerance
   replicas:
     registry: 3
     data: 4
@@ -26,22 +30,24 @@ quobyte:
     s3: 4
     webconsole: 1
     api: 1
-     
+
   # Set enabled to start the Quobyte S3 service. Requires a properly
   # configured domain name.
-  # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup. 
-  # Generally the S3 service will be available under a specific hostname such as s3.example.com. 
-  # Buckets can be addressed as a subdomain of the host e.g., <bucket name>.s3.example.com.
+  # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup.
+  # Generally the S3 service will be available under a specific hostname such
+  # as s3.example.com. Buckets can be addressed as a subdomain of the host
+  # e.g., <bucket name>.s3.example.com.
   #
-  # HTTP requires a setup of both the S3 hostname and a wildcard hostname for subdomains in your DNS
-  # infrastructure which points to the machine or machines running the S3 Proxy. 
-  # So at a minimum, there are two CNAME records that point to a machine running the S3 proxy
+  # HTTP requires a setup of both the S3 hostname and a wildcard hostname for
+  # subdomains in your DNS infrastructure which points to the machine or
+  # machines running the S3 Proxy. So at a minimum, there are two CNAME records
+  # that point to a machine running the S3 proxy
   s3:
-    enabled: false 
+    enabled: true
     dnsname: s3.example.com
-  
+
   webconsoleport: 8080
-  #image: quay.io/quobyte/quobyte-server:4
+  # image: quay.io/quobyte/quobyte-server:4
   image: quay.io/quobyte/quobyte-server:5.0.pre
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
@@ -66,5 +72,5 @@ quobyte:
 # Quobyte-independent settings:
 hostNetwork: false
 taintKey: storage
-  #taintValue: no
+# taintValue: no
 clusterDnsSuffix: svc.cluster.local
