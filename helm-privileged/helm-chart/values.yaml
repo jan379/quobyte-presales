@@ -54,6 +54,7 @@ quobyte:
   maxopenfiles: "1048576"
   # Maximum number of processes, must be set to 16,000 or more.
   maxprocs: "16384"
+
   # Set to true to enable RDMA capabilities for individual service types
   enable_rdma:
     data: false
@@ -61,6 +62,8 @@ quobyte:
     registry: false
     s3: false
 
+  # Memory settings to pass to Java, see
+  # https://support.quobyte.com/docs/16/latest/reference_services.html#changing-the-memory-configuration
   memory:
     maxmem:
       metadata: "32G"
@@ -68,6 +71,7 @@ quobyte:
     maxbuffer:
       data: "20G"
       metadata: "8G"
+      other: "8G"
 
 # Quobyte-independent settings:
 hostNetwork: false
