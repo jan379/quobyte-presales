@@ -1,3 +1,4 @@
+---
 # Name of the nodepool in which the Quobyte services will be deployed.
 # A separate nodepool can be used for performance isolation to avoid
 # other workloads from impacting your storage.
@@ -5,20 +6,23 @@
 # "kubectl label nodes <your-node-name> storage-node-pool=quobyte"
 ## nodepoolname: quobyte
 
-# Configuration for the Quobyte services, i.e. the Quobyte cluster providing storage.
+# Configuration for the Quobyte services, i.e. the Quobyte cluster providing
+# storage.
 quobyte:
   # Loadbalancer to make the Quobyte webconsole accessible.
-  # If set to true an internal IP will be used, if set to false an external IP will be used
-  # the exact semantics of internal/external depend on your k8s config or provider.
-  lbinternal: false 
-  
+  # If set to true an internal IP will be used, if set to false an external IP
+  # will be used the exact semantics of internal/external depend on your k8s
+  # config or provider.
+  lbinternal: false
+
   # Configuration for the persistent disks used by Quobyte services.
   # storageclassRegistry: "quobyte-local"
   storageclassRegistry: "standard"
-  
+
   # Minimum number of replicas per Quobyte service.
   # Registry, Metadata and Data must have a minimum of 3
-  # API, Webconsole and S3 need a minimum of 1, more recommended for fault-tolerance
+  # API, Webconsole and S3 need a minimum of 1, more recommended for
+  # fault-tolerance
   replicas:
     registry: 3
     data: 4
@@ -26,28 +30,31 @@ quobyte:
     s3: 4
     webconsole: 1
     api: 1
-     
+
   # Set enabled to start the Quobyte S3 service. Requires a properly
   # configured domain name.
-  # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup. 
-  # Generally the S3 service will be available under a specific hostname such as s3.example.com. 
-  # Buckets can be addressed as a subdomain of the host e.g., <bucket name>.s3.example.com.
+  # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup.
+  # Generally the S3 service will be available under a specific hostname such
+  # as s3.example.com. Buckets can be addressed as a subdomain of the host
+  # e.g., <bucket name>.s3.example.com.
   #
-  # HTTP requires a setup of both the S3 hostname and a wildcard hostname for subdomains in your DNS
-  # infrastructure which points to the machine or machines running the S3 Proxy. 
-  # So at a minimum, there are two CNAME records that point to a machine running the S3 proxy
+  # HTTP requires a setup of both the S3 hostname and a wildcard hostname for
+  # subdomains in your DNS infrastructure which points to the machine or
+  # machines running the S3 Proxy. So at a minimum, there are two CNAME records
+  # that point to a machine running the S3 proxy
   s3:
-    enabled: false 
+    enabled: true
     dnsname: s3.example.com
-  
+
   webconsoleport: 8080
-  #image: quay.io/quobyte/quobyte-server:4
+  # image: quay.io/quobyte/quobyte-server:4
   image: quay.io/quobyte/quobyte-server:5.0.pre
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
   # Maximum number of processes, must be set to 16,000 or more.
   maxprocs: "16384"
+
   # Set to true to enable RDMA capabilities for individual service types
   enable_rdma:
     data: false
@@ -55,6 +62,8 @@ quobyte:
     registry: false
     s3: false
 
+  # Memory settings to pass to Java, see
+  # https://support.quobyte.com/docs/16/latest/reference_services.html#changing-the-memory-configuration
   memory:
     maxmem:
       metadata: "32G"
@@ -62,9 +71,52 @@ quobyte:
     maxbuffer:
       data: "20G"
       metadata: "8G"
+      other: "8G"
+
+  # Resources — any key or sub-key may be omitted; only present values are
+  # rendered.
+  #
+  # CPU limits are intentionally omitted by default. Kubernetes enforces them
+  # via CFS throttling, which stalls containers even when the node has spare
+  # capacity. For a storage system this causes latency spikes during bursty
+  # work. CPU requests are sufficient: they drive scheduling and set the pod's
+  # share during contention. Only add a CPU limit if hard multi-tenant
+  # isolation is required and the latency trade-off is acceptable.
+  #
+  # Memory requests should equal limits to prevent overcommitment. A lower
+  # request lets the scheduler place more pods than the node can safely
+  # support; when every pod reaches its limit the kernel OOM-killer decides
+  # what dies — storage daemons are poor candidates. Keeping memory
+  # request == limit ensures the pod has zero 'excess usage' relative to its
+  # request. This places it at the absolute bottom of the Burstable eviction
+  # rank, providing the maximum possible stability for a configuration that
+  # still allows CPU bursting.
+  resources:
+    registry:
+      cpu:
+        requests: 1
+      memory:
+        requests: "8G"
+        limit: "8G"
+    # metadata:
+    #   cpu:
+    #     requests: 2
+    #   memory:
+    #     requests: "128G"
+    #     limit: "128G"
+    # data:
+    #   cpu:
+    #     requests: 2
+    #   memory:
+    #     requests: "64G"
+    #     limit: "64G"
+    # webconsole: {}
+    # api: {}
+    s3: {}
+
 
 # Quobyte-independent settings:
 hostNetwork: false
 taintKey: storage
-  #taintValue: no
+# taintValue: no
 clusterDnsSuffix: svc.cluster.local
