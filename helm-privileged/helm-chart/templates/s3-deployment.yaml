@@ -74,6 +74,39 @@ spec:
           ports:
             - containerPort: 8484
               name: quobyte-s3
+          {{- with .Values.quobyte.resources.s3 }}
+          resources:
+            {{- $cpuReq := "" }}
+            {{- $cpuLim := "" }}
+            {{- $memReq := "" }}
+            {{- $memLim := "" }}
+            {{- if .cpu }}
+              {{- if .cpu.requests }}{{- $cpuReq = (.cpu.requests | toString) }}{{- end }}
+              {{- if .cpu.limit }}{{- $cpuLim = (.cpu.limit | toString) }}{{- end }}
+            {{- end }}
+            {{- if .memory }}
+              {{- if .memory.requests }}{{- $memReq = (.memory.requests | toString) }}{{- end }}
+              {{- if .memory.limit }}{{- $memLim = (.memory.limit | toString) }}{{- end }}
+            {{- end }}
+            {{- if or $cpuReq $memReq }}
+            requests:
+              {{- if $cpuReq }}
+              cpu: {{ $cpuReq | quote }}
+              {{- end }}
+              {{- if $memReq }}
+              memory: {{ $memReq | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if or $cpuLim $memLim }}
+            limits:
+              {{- if $cpuLim }}
+              cpu: {{ $cpuLim | quote }}
+              {{- end }}
+              {{- if $memLim }}
+              memory: {{ $memLim | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
       {{- if .Values.nodepoolname }}
       nodeSelector:
            storage-node-pool: {{ .Values.nodepoolname }}

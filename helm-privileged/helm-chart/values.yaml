@@ -73,6 +73,33 @@ quobyte:
       metadata: "8G"
       other: "8G"
 
+  # Resources — any key or sub-key may be omitted; only present values are
+  # rendered.
+  resources:
+    registry:
+      cpu:
+        requests: 1
+        limit: 4
+      memory:
+        requests: "16G"
+        limit: "32G"
+    # metadata:
+    #   cpu:
+    #     requests: 2
+    #   memory:
+    #     requests: "32G"
+    #     limit: "128G"
+    # data:
+    #   cpu:
+    #     requests: 2
+    #   memory:
+    #     requests: "10G"
+    #     limit: "64G"
+    # webconsole: {}
+    # api: {}
+    s3: {}
+
+
 # Quobyte-independent settings:
 hostNetwork: false
 taintKey: storage
