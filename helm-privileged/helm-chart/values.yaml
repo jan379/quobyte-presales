@@ -75,25 +75,40 @@ quobyte:
 
   # Resources — any key or sub-key may be omitted; only present values are
   # rendered.
+  #
+  # CPU limits are intentionally omitted by default. Kubernetes enforces them
+  # via CFS throttling, which stalls containers even when the node has spare
+  # capacity. For a storage system this causes latency spikes during bursty
+  # work. CPU requests are sufficient: they drive scheduling and set the pod's
+  # share during contention. Only add a CPU limit if hard multi-tenant
+  # isolation is required and the latency trade-off is acceptable.
+  #
+  # Memory requests should equal limits to prevent overcommitment. A lower
+  # request lets the scheduler place more pods than the node can safely
+  # support; when every pod reaches its limit the kernel OOM-killer decides
+  # what dies — storage daemons are poor candidates. Keeping memory
+  # request == limit ensures the pod has zero 'excess usage' relative to its
+  # request. This places it at the absolute bottom of the Burstable eviction
+  # rank, providing the maximum possible stability for a configuration that
+  # still allows CPU bursting.
   resources:
     registry:
       cpu:
         requests: 1
-        limit: 4
       memory:
-        requests: "16G"
-        limit: "32G"
+        requests: "8G"
+        limit: "8G"
     # metadata:
     #   cpu:
     #     requests: 2
     #   memory:
-    #     requests: "32G"
+    #     requests: "128G"
     #     limit: "128G"
     # data:
     #   cpu:
     #     requests: 2
     #   memory:
-    #     requests: "10G"
+    #     requests: "64G"
     #     limit: "64G"
     # webconsole: {}
     # api: {}
