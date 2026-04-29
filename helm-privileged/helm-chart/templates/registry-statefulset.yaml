@@ -187,13 +187,13 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - quobyte-reg
-              topologyKey: "kubernetes.io/hostname"
+            labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                    - quobyte-reg
+            topologyKey: "kubernetes.io/hostname"
   volumeClaimTemplates:
     - metadata:
         name: registry

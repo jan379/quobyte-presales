@@ -107,10 +107,10 @@ spec:
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
+            labelSelector:
               matchExpressions:
                 - key: app
                   operator: In
                   values:
                     - quobyte
-          topologyKey: "kubernetes.io/hostname"
+            topologyKey: "kubernetes.io/hostname"
