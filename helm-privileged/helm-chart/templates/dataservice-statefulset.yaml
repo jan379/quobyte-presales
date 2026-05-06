@@ -146,12 +146,12 @@ spec:
          storage-node-pool: {{ .Values.nodepoolname }}
       {{- end }}
       affinity:
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                    - quobyte
-            topologyKey: "kubernetes.io/hostname"
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - quobyte-data
+              topologyKey: "kubernetes.io/hostname"

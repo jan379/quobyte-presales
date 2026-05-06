@@ -74,6 +74,10 @@ spec:
           ports:
             - containerPort: 8484
               name: quobyte-s3
+          {{- if .Values.quobyte.enable_rdma.s3 }}
+          securityContext:
+            privileged: true
+          {{- end }}
           {{- with .Values.quobyte.resources.s3 }}
           resources:
             {{- $cpuReq := "" }}
@@ -119,6 +123,6 @@ spec:
                   - key: app
                     operator: In
                     values:
-                      - quobyte
+                      - quobyte-s3
               topologyKey: "kubernetes.io/hostname"
 {{- end }}
