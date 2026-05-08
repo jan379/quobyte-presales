@@ -81,6 +81,8 @@ spec:
         - name: quobyte-reg
           image: {{ .Values.quobyte.image }}
           imagePullPolicy: Always
+          securityContext:
+            privileged: true
           env:
             - name: SERVICE_UUID
               valueFrom:
@@ -176,10 +178,38 @@ spec:
           volumeMounts:
             - name: registry
               mountPath: /var/lib/quobyte/devices/registry
+            - name: workaround
+              mountPath: /devices
+            - name: dev-disk
+              mountPath: /dev/disk
+            - name: host-udev
+              mountPath: /run/udev
+            - name: var-lib-quobyte
+              mountPath: /var/lib/quobyte
           livenessProbe:
             httpGet:
               path: /serviceHealth
               port: quobyte-health
+      volumes:
+        - hostPath:
+            # work around check in /opt/main.sh
+            path: /tmp
+            type: ""
+          name: workaround
+        - hostPath:
+            path: /dev/disk
+            type: ""
+          name: dev-disk
+        - hostPath:
+            path: /run/udev
+            type: ""
+          name: host-udev
+        # services need a place for a common lock file per node
+        - hostPath:
+            path: /var/lib/quobyte/
+            type: ""
+          name: var-lib-quobyte
+
       {{- if .Values.nodepoolname }}
       nodeSelector:
            storage-node-pool: {{ .Values.nodepoolname }}

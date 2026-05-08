@@ -88,6 +88,8 @@ spec:
               mountPath: /dev/disk
             - name: host-udev
               mountPath: /run/udev
+            - name: var-lib-quobyte
+              mountPath: /var/lib/quobyte
           ports:
             - containerPort: 7862
               name: quobyte-meta
@@ -127,7 +129,7 @@ spec:
 
       volumes:
         - hostPath:
-            # work around check in /opt/main
+            # work around check in /opt/main.sh
             path: /tmp
             type: ""
           name: workaround
@@ -139,7 +141,11 @@ spec:
             path: /run/udev
             type: ""
           name: host-udev
-
+        # services need a place for a common lock file per node
+        - hostPath:
+            path: /var/lib/quobyte/
+            type: ""
+          name: var-lib-quobyte
 
       {{- if .Values.nodepoolname }}
       nodeSelector:
