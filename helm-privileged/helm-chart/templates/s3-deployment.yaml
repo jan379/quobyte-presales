@@ -67,6 +67,8 @@ spec:
               value: "{{ .Values.quobyte.maxopenfiles }}"
             - name: LIMIT_MAX_PROCESSES
               value: "{{ .Values.quobyte.maxprocs }}"
+            - name: LIMIT_LOCKED_MEMORY
+              value: "10000000"
             {{- if .Values.quobyte.enable_rdma.s3 }}
             - name: QUOBYTE_ENABLE_RDMA
               value: "{{ .Values.quobyte.enable_rdma.s3 }}"
