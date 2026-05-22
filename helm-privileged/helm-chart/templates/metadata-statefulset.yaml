@@ -9,7 +9,7 @@ spec:
       app: quobyte-meta  # has to match .spec.template.metadata.labels
   serviceName: "quobyte-meta"
   replicas: {{ .Values.quobyte.replicas.metadata }}
-  podManagementPolicy: Parallel
+  #podManagementPolicy: Parallel
   template:
     metadata:
       labels:
@@ -88,8 +88,6 @@ spec:
               mountPath: /dev/disk
             - name: host-udev
               mountPath: /run/udev
-            - name: var-lib-quobyte
-              mountPath: /var/lib/quobyte
           ports:
             - containerPort: 7862
               name: quobyte-meta
@@ -141,11 +139,6 @@ spec:
             path: /run/udev
             type: ""
           name: host-udev
-        # services need a place for a common lock file per node
-        - hostPath:
-            path: /var/lib/quobyte/
-            type: ""
-          name: var-lib-quobyte
 
       {{- if .Values.nodepoolname }}
       nodeSelector:

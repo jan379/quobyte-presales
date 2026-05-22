@@ -9,8 +9,8 @@ spec:
       app: quobyte-reg  # has to match .spec.template.metadata.labels
   serviceName: "quobyte"
   replicas: {{ .Values.quobyte.replicas.registry }}
-  podManagementPolicy: Parallel
-  minReadySeconds: 60
+  # start other registries with only a small delay
+  minReadySeconds: 10
   template:
     metadata:
       labels:
@@ -19,7 +19,7 @@ spec:
         timestamp: "{{ now }}"
     spec:
       subdomain: "quobyte"
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 30
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
       tolerations:
@@ -184,9 +184,10 @@ spec:
               mountPath: /dev/disk
             - name: host-udev
               mountPath: /run/udev
-            - name: var-lib-quobyte
-              mountPath: /var/lib/quobyte
           livenessProbe:
+            # Give the system enough time to start two other 
+            # registry services and become fully redundant/ healthy
+            initialDelaySeconds: 70
             httpGet:
               path: /serviceHealth
               port: quobyte-health
@@ -204,11 +205,6 @@ spec:
             path: /run/udev
             type: ""
           name: host-udev
-        # services need a place for a common lock file per node
-        - hostPath:
-            path: /var/lib/quobyte/
-            type: ""
-          name: var-lib-quobyte
 
       {{- if .Values.nodepoolname }}
       nodeSelector:
