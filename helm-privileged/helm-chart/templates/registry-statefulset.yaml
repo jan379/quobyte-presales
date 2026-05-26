@@ -10,7 +10,7 @@ spec:
   serviceName: "quobyte"
   replicas: {{ .Values.quobyte.replicas.registry }}
   # start other registries with only a small delay
-  minReadySeconds: 10
+  minReadySeconds: 5 
   template:
     metadata:
       labels:
@@ -77,6 +77,9 @@ spec:
               else
                 /usr/bin/qmkdev -d -t REGISTRY /var/lib/quobyte/devices/registry
               fi
+              # let's wait until a majority of our pods are registered to DNS
+              # so we can form a proper cluster
+              sleep 5
       containers:
         - name: quobyte-reg
           image: {{ .Values.quobyte.image }}
