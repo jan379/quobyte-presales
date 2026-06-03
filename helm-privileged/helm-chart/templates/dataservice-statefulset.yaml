@@ -8,8 +8,14 @@ spec:
     matchLabels:
       app: quobyte-data  # has to match .spec.template.metadata.labels
   serviceName: "quobyte-data"
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+    partition: 0 # Optional: default is 0, meaning all pods will be updated sequentially
   replicas: {{ .Values.quobyte.replicas.data }}
-  #podManagementPolicy: Parallel
+  # let some time pass to finish catch up tasks. 
+  minReadySeconds: 180
   template:
     metadata:
       labels:
@@ -17,7 +23,7 @@ spec:
       annotations:
         timestamp: "{{ now }}"
     spec:
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 60
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
       tolerations:

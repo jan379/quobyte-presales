@@ -9,8 +9,13 @@ spec:
       app: quobyte-reg  # has to match .spec.template.metadata.labels
   serviceName: "quobyte"
   replicas: {{ .Values.quobyte.replicas.registry }}
-  # start other registries with only a small delay
-  minReadySeconds: 5 
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+    partition: 0 # Optional: default is 0, meaning all pods will be updated sequentially
+  # start other registries with only a small delay (or a large?)
+  minReadySeconds: 60 
   template:
     metadata:
       labels:
@@ -19,7 +24,7 @@ spec:
         timestamp: "{{ now }}"
     spec:
       subdomain: "quobyte"
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 60
       hostNetwork: {{ .Values.hostNetwork }}
       dnsPolicy: ClusterFirstWithHostNet
       tolerations:
@@ -77,9 +82,6 @@ spec:
               else
                 /usr/bin/qmkdev -d -t REGISTRY /var/lib/quobyte/devices/registry
               fi
-              # let's wait until a majority of our pods are registered to DNS
-              # so we can form a proper cluster
-              sleep 5
       containers:
         - name: quobyte-reg
           image: {{ .Values.quobyte.image }}
@@ -144,7 +146,7 @@ spec:
               name: reg-ping
               protocol: UDP
             - containerPort: 7871
-              name: quobyte-health
+              name: reg-health
           {{- with .Values.quobyte.resources.registry }}
           resources:
             {{- $cpuReq := "" }}
@@ -193,7 +195,7 @@ spec:
             initialDelaySeconds: 70
             httpGet:
               path: /serviceHealth
-              port: quobyte-health
+              port: reg-health
       volumes:
         - hostPath:
             # work around check in /opt/main.sh

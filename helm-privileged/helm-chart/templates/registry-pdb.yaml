@@ -3,7 +3,7 @@ kind: PodDisruptionBudget
 metadata:
   name: quobyte-reg-pdb
 spec:
-  maxUnavailable: 49%
+  maxUnavailable: 1
   selector:
     matchLabels:
       app: quobyte-reg
