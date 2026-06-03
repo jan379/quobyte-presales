@@ -3,7 +3,7 @@ annotations:
   catalog.cattle.io/display-name: Quobyte Cluster Deployment
   catalog.cattle.io/release-name: quobyte-cluster
 apiVersion: v2
-appVersion: "4"
+appVersion: "5"
 description: Quobyte Cluster Helm Chart Deployment
 home: https://www.quobyte.com
 icon: https://quobyte.github.io/quobyte-k8s-resources/images/quobyte.png
@@ -15,4 +15,4 @@ name: quobyte-cluster
 sources:
 - https://github.com/quobyte/quobyte-k8s-resources
 type: application
-version: 0.2.5
+version: 0.3.0
