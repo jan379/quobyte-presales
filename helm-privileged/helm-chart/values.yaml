@@ -24,10 +24,10 @@ quobyte:
   # API, Webconsole and S3 need a minimum of 1, more recommended for
   # fault-tolerance
   replicas:
-    registry: 3
-    data: 4
-    metadata: 4
-    s3: 4
+    registry: 4
+    data: 5
+    metadata: 3
+    s3: 2
     webconsole: 1
     api: 1
 

@@ -14,7 +14,7 @@ spec:
     rollingUpdate:
       partition: 0 # Optional: default is 0, meaning all pods will be updated sequentially
   replicas: {{ .Values.quobyte.replicas.metadata }}
-  # let some time pass to finish catch up tasks. 
+  # let some time pass to finish catch up tasks.
   minReadySeconds: 180
   template:
     metadata:
@@ -30,7 +30,7 @@ spec:
         - key: {{ .Values.taintKey }}
           operator: "Exists"
           {{- if .Values.taintValue }}
-          value: {{ .Values.taintValue | quote }}
+          value: "{{ .Values.taintValue | quote }}"
           {{- end }}
           effect: "NoSchedule"
       containers:
@@ -40,6 +40,10 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: SERVICE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: NODENAME
               valueFrom:
                 fieldRef:
