@@ -14,3 +14,5 @@ spec:
       targetPort: 7860
   selector:
     app: quobyte-api
+  sessionAffinity: ClientIP
+  
