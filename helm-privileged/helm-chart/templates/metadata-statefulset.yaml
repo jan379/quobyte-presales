@@ -98,6 +98,9 @@ spec:
               mountPath: /dev/disk
             - name: host-udev
               mountPath: /run/udev
+            - name: var-lib-quobyte
+              mountPath: /var/lib/quobyte
+              mountPropagation: Bidirectional
           ports:
             - containerPort: 7862
               name: quobyte-meta
@@ -161,6 +164,10 @@ spec:
             path: /run/udev
             type: ""
           name: host-udev
+        - hostPath:
+            path: /var/lib/quobyte/
+            type: ""
+          name: var-lib-quobyte
 
       {{- if .Values.nodepoolname }}
       nodeSelector:

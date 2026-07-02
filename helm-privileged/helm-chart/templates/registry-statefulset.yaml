@@ -71,26 +71,30 @@ spec:
               value: "{{ .Values.quobyte.maxprocs }}"
           volumeMounts:
             - name: registry
-              mountPath: /var/lib/quobyte/devices/registry
+              #mountPath: /var/lib/quobyte/devices/registry
+              mountPath: /devices/registry
           # The first pod will bootstrap a cluster, any other pod will join.
           command:
             - /bin/bash
             - -xc
             - |
               NODENUM=$(echo "$NODENAME" | tr -dc "0-9")
-              test -e /var/lib/quobyte/devices/registry/QUOBYTE_DEV_SETUP && \
+              #test -e /var/lib/quobyte/devices/registry/QUOBYTE_DEV_SETUP && \
+              test -e /devices/registry/QUOBYTE_DEV_SETUP && \
                 exit 0
               if [[ $NODENUM == 0 ]]; then
-                /usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry
+                #/usr/bin/qbootstrap -y -d /var/lib/quobyte/devices/registry
+                /usr/bin/qbootstrap -y -d /devices/registry
               else
-                /usr/bin/qmkdev -d -t REGISTRY /var/lib/quobyte/devices/registry
+                #/usr/bin/qmkdev -d -t REGISTRY /var/lib/quobyte/devices/registry
+                /usr/bin/qmkdev -d -t REGISTRY /devices/registry
               fi
       containers:
         - name: quobyte-reg
           image: {{ .Values.quobyte.image }}
           imagePullPolicy: Always
           securityContext:
-            privileged: true
+            privileged: false 
           env:
             - name: SERVICE_UUID
               valueFrom:
@@ -185,13 +189,7 @@ spec:
           {{- end }}
           volumeMounts:
             - name: registry
-              mountPath: /var/lib/quobyte/devices/registry
-            - name: workaround
-              mountPath: /devices
-            - name: dev-disk
-              mountPath: /dev/disk
-            - name: host-udev
-              mountPath: /run/udev
+              mountPath: /devices/registry
           livenessProbe:
             # Give the system enough time to start two other 
             # registry services and become fully redundant/ healthy
@@ -199,20 +197,6 @@ spec:
             httpGet:
               path: /serviceHealth
               port: reg-health
-      volumes:
-        - hostPath:
-            # work around check in /opt/main.sh
-            path: /tmp
-            type: ""
-          name: workaround
-        - hostPath:
-            path: /dev/disk
-            type: ""
-          name: dev-disk
-        - hostPath:
-            path: /run/udev
-            type: ""
-          name: host-udev
 
       {{- if .Values.nodepoolname }}
       nodeSelector:
