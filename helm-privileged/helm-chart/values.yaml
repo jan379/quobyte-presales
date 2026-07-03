@@ -18,14 +18,14 @@ quobyte:
   # Configuration for the persistent disks used by the Quobyte registry service.
   # This can be your clusters default storage class without strong performance 
   # requirements.
-  # storageclassRegistry: "standard-rwo"	# GKE default	
+  # storageclassRegistry: "standard"		# GKE default	
   # storageclassRegistry: "managed-csi"		# AKS default
   # storageclassRegistry: "local-path"		# k3s default
   storageclassRegistry: "standard"
 
   # Minimum number of replicas per Quobyte service.
   # Registry, Metadata and Data must have a minimum of 3
-  # API, Webconsole and S3 need a minimum of 1, more recommended for
+  # API, Webconsole and S3 need a minimum of 1, more is recommended for
   # fault-tolerance
   replicas:
     registry: 4
@@ -35,17 +35,16 @@ quobyte:
     webconsole: 1
     api: 1
 
-  # Set enabled to start the Quobyte S3 service. Requires a properly
-  # configured domain name.
+  # S3 / Object storage configuration
+  # Set "enabled: true" to start the Quobyte S3 service.
   # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup.
   # Generally the S3 service will be available under a specific hostname such
   # as s3.example.com. Buckets can be addressed as a subdomain of the host
   # e.g., <bucket name>.s3.example.com.
   #
-  # HTTP requires a setup of both the S3 hostname and a wildcard hostname for
-  # subdomains in your DNS infrastructure which points to the machine or
-  # machines running the S3 Proxy. So at a minimum, there are two CNAME records
-  # that point to a machine running the S3 proxy
+  # Get the IP endpoint for your DNS records like this:
+  # ``` kubectl get svc quobyte-s3 ```
+  # once the Helm Chart is deployed.
   s3:
     enabled: true
     dnsname: s3.example.com
