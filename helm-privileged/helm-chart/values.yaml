@@ -35,7 +35,7 @@ quobyte:
     webconsole: 1
     api: 1
 
-  # S3 / Object storage configuration
+  # S3 / object storage configuration
   # Set "enabled: true" to start the Quobyte S3 service.
   # As S3 is an HTTP-based protocol, it requires a correct DNS hostname setup.
   # Generally the S3 service will be available under a specific hostname such
@@ -45,6 +45,7 @@ quobyte:
   # Get the IP endpoint for your DNS records like this:
   # ``` kubectl get svc quobyte-s3 ```
   # once the Helm Chart is deployed.
+  # The resulting IP address in the "External IP" field can be used to populate your DNS.
   s3:
     enabled: true
     dnsname: s3.example.com
@@ -60,10 +61,10 @@ quobyte:
 
   # Set to true to enable RDMA capabilities for individual service types
   enable_rdma:
-    data: false
-    metadata: false
-    registry: false
-    s3: false
+    data: true
+    metadata: true
+    registry: true
+    s3: true
 
   # Memory settings to pass to Java, see
   # https://support.quobyte.com/docs/16/latest/reference_services.html#changing-the-memory-configuration
@@ -120,6 +121,15 @@ quobyte:
 
 # Quobyte-independent settings:
 hostNetwork: false
+
+# Taint Keys can be used to dedicate tainted
+# worker nodes to only quobyte storage containers.
+# If no other workloads shall be scheduled on these nodes
+# set a taint like this:
+# "kubectl taint node <nodeName> storage=true:NoSchedule
+# The taint value can be anything, but the key must be "storage".
 taintKey: storage
-# taintValue: no
+
+# Depending on your Kubernetes cluster the DNS suffix 
+# for internal name resolution might differ.
 clusterDnsSuffix: svc.cluster.local
