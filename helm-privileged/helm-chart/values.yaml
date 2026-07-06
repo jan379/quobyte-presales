@@ -100,8 +100,8 @@ quobyte:
       cpu:
         requests: 1
       memory:
-        requests: "8G"
-        limit: "8G"
+        requests: "24G"
+        limit: "24G"
     # metadata:
     #   cpu:
     #     requests: 2
