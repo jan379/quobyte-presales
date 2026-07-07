@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elbencho
+  labels:
+    app: elbencho
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elbencho
+  template:
+    metadata:
+      labels:
+        app: elbencho
+    spec:
+      containers:
+      - name: elbencho 
+        image: breuner/elbencho 
+        # This keeps the container alive indefinitely so you can exec into it
+        command: ["/bin/sh", "-c", "tail -f /dev/null"]

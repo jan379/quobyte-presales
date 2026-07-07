@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: warp
+  labels:
+    app: warp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: warp
+  template:
+    metadata:
+      labels:
+        app: warp
+    spec:
+      containers:
+      - name: warp 
+        image: quay.io/minio/aistor/warp:v1.5.0 
+        # This keeps the container alive indefinitely so you can exec into it
+        command: ["/bin/sh", "-c", "tail -f /dev/null"]
+#        resources:
+#          limits:
+#            cpu: "200m"
+#            memory: "256Mi"
+#          requests:
+#            cpu: "50m"
+#            memory: "64Mi"

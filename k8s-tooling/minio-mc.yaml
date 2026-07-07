@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-client-tools
+  labels:
+    app: minio-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio-client
+  template:
+    metadata:
+      labels:
+        app: minio-client
+    spec:
+      containers:
+      - name: mc
+        image: minio/mc:edge
+        # This keeps the container alive indefinitely so you can exec into it
+        command: ["/bin/sh", "-c", "tail -f /dev/null"]
