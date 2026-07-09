@@ -105,6 +105,18 @@ spec:
           ports:
             - containerPort: 7863
               name: quobyte-data
+            - containerPort: 7863
+              name: data-ping
+              protocol: UDP
+            - containerPort: 7873
+              name: data-health
+          livenessProbe:
+            # Give the system enough time to start two other 
+            # registry services and become fully redundant/ healthy
+            initialDelaySeconds: 70
+            httpGet:
+              path: /serviceHealth
+              port: data-health
           {{- with .Values.quobyte.resources.data }}
           resources:
             {{- $cpuReq := "" }}

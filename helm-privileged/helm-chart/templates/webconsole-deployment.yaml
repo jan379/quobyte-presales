@@ -69,6 +69,11 @@ spec:
           ports:
             - containerPort: 8080
               name: quobyte-web
+            - containerPort: 7862
+              name: meta-ping
+              protocol: UDP
+            - containerPort: 7872
+              name: meta-health
           {{- with .Values.quobyte.resources.webconsole }}
           resources:
             {{- $cpuReq := "" }}

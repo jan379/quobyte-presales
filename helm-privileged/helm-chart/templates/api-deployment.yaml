@@ -67,6 +67,11 @@ spec:
           ports:
             - containerPort: 7860
               name: quobyteapi
+            - containerPort: 7860
+              name: api-ping
+              protocol: UDP
+            - containerPort: 7870
+              name: api-health
           {{- with .Values.quobyte.resources.api }}
           resources:
             {{- $cpuReq := "" }}

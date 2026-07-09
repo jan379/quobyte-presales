@@ -76,6 +76,11 @@ spec:
           ports:
             - containerPort: 8484
               name: quobyte-s3
+            - containerPort: 7864
+              name: s3-ping
+              protocol: UDP
+            - containerPort: 7874
+              name: s3-health
           {{- if .Values.quobyte.enable_rdma.s3 }}
           securityContext:
             privileged: true
