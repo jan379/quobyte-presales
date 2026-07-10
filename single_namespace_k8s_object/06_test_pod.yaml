@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qb-test-pod
+  labels:
+    app: qb-test-pod
+spec:
+  volumes:
+    - name: quobyte-backend
+      persistentVolumeClaim:
+        claimName: test-pvc
+        readOnly: false
+  containers:
+    - name: app
+      image: python:3.12-alpine
+      command: ["/bin/sh", "-c", "tail -f /dev/null"]
+      volumeMounts:
+        - name: quobyte-backend
+          mountPath: /mnt/quobyte-shared
