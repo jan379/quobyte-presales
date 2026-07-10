@@ -11,5 +11,8 @@ spec:
     driver: csi.quobyte.com
     # The volumeHandle refers to a tenant name and a volume name
     volumeHandle: 'My Tenant|test-volume'
+    nodePublishSecretRef:
+      name: quobyte-secret
+      namespace: jantest
   persistentVolumeReclaimPolicy: Retain
   storageClassName: quobyte-simple
