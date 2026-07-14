@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qb-bench-pod
+  labels:
+    app: qb-bench-pod
+spec:
+  volumes:
+    - name: quobyte-backend
+      persistentVolumeClaim:
+        claimName: test-pvc
+        readOnly: false
+  containers:
+    - name: app
+      image: breuner/elbencho 
+      command: ["/bin/sh", "-c", "tail -f /dev/null"]
+      volumeMounts:
+        - name: quobyte-backend
+          mountPath: /mnt/quobyte-volume
