@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3cmd
+  labels:
+    app: s3cmd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: s3cmd
+  template:
+    metadata:
+      labels:
+        app: s3cmd
+    spec:
+      containers:
+      - name: s3cmd 
+        image: d3fk/s3cmd 
+        # This keeps the container alive indefinitely so you can exec into it
+        command: ["/bin/sh", "-c", "tail -f /dev/null"]
