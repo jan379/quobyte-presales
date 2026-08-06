@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: elbencho
+  name: elbencho
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: elbencho
+  template:
+    metadata:
+      labels:
+        app: elbencho
+    spec:
+      containers:
+      - command:
+        - /bin/sh
+        - -c
+        - elbencho --service --foreground
+        image: breuner/elbencho
+        name: elbencho
+        volumeMounts:
+        - mountPath: /mnt/quobyte-volume
+          name: quobyte-backend
+      volumes:
+      - name: quobyte-backend
+        persistentVolumeClaim:
+          claimName: test-pvc
