@@ -5,7 +5,7 @@ metadata:
     app: elbencho
   name: elbencho
 spec:
-  replicas: 3
+  replicas: 5
   selector:
     matchLabels:
       app: elbencho
@@ -18,7 +18,7 @@ spec:
       - command:
         - /bin/sh
         - -c
-        - tail -f /dev/null
+        - elbencho --service --foreground
         image: breuner/elbencho
         name: elbencho
         volumeMounts:
