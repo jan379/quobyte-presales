@@ -13,8 +13,11 @@ spec:
         readOnly: false
   containers:
     - name: app
-      image: python:3.12-alpine
+      # We use the quobyte client image only to obtain the tool "qinfo" 
+      # That tool allows us to inspect files like this: "qinfo info <fileName>" 
+      # It also allows us to see how we are authenticated: "qinfo whoami"
+      image: quay.io/quobyte/quobyte-client:5 
       command: ["/bin/sh", "-c", "tail -f /dev/null"]
       volumeMounts:
         - name: quobyte-backend
-          mountPath: /mnt/quobyte-shared
+          mountPath: /mnt/quobyte-volume
