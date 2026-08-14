@@ -68,12 +68,18 @@ spec:
               value: "443"
             - name: QUOBYTE_S3_CA
               value: "{{ .Values.quobyte.s3.ca }}"
+            {{- if .Values.quobyte.s3.pkcs12 }}
             - name: QUOBYTE_S3_PKCS12
               value: "{{ .Values.quobyte.s3.pkcs12 }}"
+            {{- end }}
+            {{- if .Values.quobyte.s3.cert }}
             - name: QUOBYTE_S3_CERT
               value: "{{ .Values.quobyte.s3.cert }}"
+            {{- end }}
+            {{- if .Values.quobyte.s3.key }}
             - name: QUOBYTE_S3_KEY
               value: "{{ .Values.quobyte.s3.key }}"
+            {{- end }}
             {{- end }}
             - name: QUOBYTE_SERVICE
               value: "s3"

@@ -51,7 +51,7 @@ quobyte:
     # https://docs.quobyte.com/docs/16/latest/s3_gateway.html#hostname-setup
     # (can be configured in webconsole)
     dnsname: s3.example.com
-    enable_https: true
+    enable_https: false
     # If HTTPS is used, Quobyte will need:
     # 1) The CA certificate
     # 2) The service certificate (matching the DNS domain name in use)
@@ -62,7 +62,8 @@ quobyte:
     ca: "/etc/quobyte/certificates/ca.crt" 
     cert: "/etc/quobyte/certificates/tls.crt"
     key: "/etc/quobyte/certificates/tls.key"
-    pkcs12:  "/etc/quobyte/certificates/tls.pk12"
+    # There should be either pk12 or crt/key combination
+    #pkcs12:  "/etc/quobyte/certificates/tls.pk12"
 
   webconsoleport: 8080
   image: quay.io/quobyte/quobyte-server:5.0
