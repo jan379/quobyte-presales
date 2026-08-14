@@ -117,5 +117,5 @@ spec:
                 - key: app
                   operator: In
                   values:
-                    - quobyte
+                    - quobyte-api
             topologyKey: "kubernetes.io/hostname"

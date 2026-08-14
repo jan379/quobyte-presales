@@ -30,6 +30,12 @@ spec:
         - name: quobyte-s3
           image: {{ .Values.quobyte.image }}
           imagePullPolicy: Always
+          volumeMounts:
+          {{- if .Values.quobyte.s3.enable_https }}
+          - name: tls-certificates
+            mountPath: "/etc/quobyte/certificates"
+            readOnly: true
+          {{- end }}
           env:
             - name: NODENAME
               valueFrom:
@@ -57,6 +63,18 @@ spec:
               value: "80"
             - name: QUOBYTE_S3_HOSTNAME
               value: "{{ .Values.quobyte.s3.dnsname }}"
+            {{- if .Values.quobyte.s3.enable_https }}
+            - name: QUOBYTE_S3_SECURE_PORT 
+              value: "443"
+            - name: QUOBYTE_S3_CA
+              value: "{{ .Values.quobyte.s3.ca }}"
+            - name: QUOBYTE_S3_PKCS12
+              value: "{{ .Values.quobyte.s3.pkcs12 }}"
+            - name: QUOBYTE_S3_CERT
+              value: "{{ .Values.quobyte.s3.cert }}"
+            - name: QUOBYTE_S3_KEY
+              value: "{{ .Values.quobyte.s3.key }}"
+            {{- end }}
             - name: QUOBYTE_SERVICE
               value: "s3"
             - name: QUOBYTE_REGISTRY
@@ -74,8 +92,12 @@ spec:
               value: "{{ .Values.quobyte.enable_rdma.s3 }}"
             {{- end }}
           ports:
-            - containerPort: 8484
+            - containerPort: 80
               name: quobyte-s3
+            - containerPort: 443
+              name: quobyte-s3-tls
+            - containerPort: 8484
+              name: quobyte-s3-alt
             - containerPort: 7864
               name: s3-ping
               protocol: UDP
@@ -122,6 +144,10 @@ spec:
       nodeSelector:
            storage-node-pool: {{ .Values.nodepoolname }}
       {{- end }}
+      volumes:
+        - name: tls-certificates
+          secret:
+            secretName: s3-cert
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

@@ -48,11 +48,24 @@ quobyte:
   # The resulting IP address in the "External IP" field can be used to populate your DNS.
   s3:
     enabled: true
+    # https://docs.quobyte.com/docs/16/latest/s3_gateway.html#hostname-setup
+    # (can be configured in webconsole)
     dnsname: s3.example.com
+    enable_https: true
+    # If HTTPS is used, Quobyte will need:
+    # 1) The CA certificate
+    # 2) The service certificate (matching the DNS domain name in use)
+    # 3) The service certificate key file
+    # Key and certificate can be combined in a pkcs12 file.
+    # The configuration values are file paths to the respective files.
+    # https://docs.quobyte.com/docs/16/latest/s3_gateway.html#ssl-https-setup
+    ca: "/etc/quobyte/certificates/ca.crt" 
+    cert: "/etc/quobyte/certificates/tls.crt"
+    key: "/etc/quobyte/certificates/tls.key"
+    pkcs12:  "/etc/quobyte/certificates/tls.pk12"
 
   webconsoleport: 8080
-  # image: quay.io/quobyte/quobyte-server:4
-  image: quay.io/quobyte/quobyte-server:5.0.pre
+  image: quay.io/quobyte/quobyte-server:5.0
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
@@ -96,12 +109,12 @@ quobyte:
   # rank, providing the maximum possible stability for a configuration that
   # still allows CPU bursting.
   resources:
-    registry:
-      cpu:
-        requests: 1
-      memory:
-        requests: "24G"
-        limit: "24G"
+    # registry:
+    #  cpu:
+    #    requests: 1
+    #  memory:
+    #    requests: "24G"
+    #    limit: "24G"
     # metadata:
     #   cpu:
     #     requests: 2
@@ -114,9 +127,14 @@ quobyte:
     #   memory:
     #     requests: "64G"
     #     limit: "64G"
-    # webconsole: {}
-    # api: {}
-    s3: {}
+    # s3: 
+    #   cpu:
+    #     requests: 2
+    #   memory:
+    #     requests: "64G"
+    #     limit: "64G"
+    webconsole: {}
+    api: {}
 
 
 # Quobyte-independent settings:
