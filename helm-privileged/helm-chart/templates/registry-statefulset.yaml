@@ -126,6 +126,8 @@ spec:
               value: registry
             - name: CLOUD_INSTALL
               value: "1"
+            - name: QUOBYTE_EXTRA_SERVICE_CONFIG
+              value: "constants.deviceInspector.enabled=false"
             - name: CLUSTER_NS
               value: {{ .Release.Namespace }}
             - name: QUOBYTE_REGISTRY
