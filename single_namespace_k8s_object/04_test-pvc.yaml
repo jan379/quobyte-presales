@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: test-pvc 
   annotations: {
-    user-secret: "user-secret" 
+    user-secret: "quobyte-secret" 
   }
 spec:
   accessModes:

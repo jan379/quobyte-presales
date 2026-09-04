@@ -11,6 +11,8 @@ spec:
       persistentVolumeClaim:
         claimName: test-pvc
         readOnly: false
+  nodeSelector:
+    storage-node-pool: quobyte
   containers:
     - name: app
       # We use the quobyte client image only to obtain the tool "qinfo" 
