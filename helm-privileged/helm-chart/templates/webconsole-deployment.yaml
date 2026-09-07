@@ -59,7 +59,7 @@ spec:
             - name: CLOUD_INSTALL
               value: "1"
             - name: QUOBYTE_REGISTRY
-              value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.{{ .Values.clusterDnsSuffix }}
+              value: _quobyte._tcp.quobyte.{{ .Release.Namespace }}.{{ default "svc.cluster.local" .Values.clusterDnsSuffix }}
             - name: CLUSTER_NS
               value: {{ .Release.Namespace }}
             - name: LIMIT_OPEN_FILES

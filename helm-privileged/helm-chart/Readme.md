@@ -1,3 +1,19 @@
+
+
+# Deprecated, use https://github.com/quobyte/quobyte-k8s-resources/
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Quobyte Cluster Helm Chart, privileged mode
 
 

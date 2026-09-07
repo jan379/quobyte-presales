@@ -66,7 +66,7 @@ quobyte:
     #pkcs12:  "/etc/quobyte/certificates/tls.pk12"
 
   webconsoleport: 8080
-  image: quay.io/quobyte/quobyte-server:5.0
+  image: quay.io/quobyte/quobyte-server:5
   # Maximum number of open file descriptors per container,
   # must be set to 999,999 or more.
   maxopenfiles: "1048576"
@@ -151,4 +151,4 @@ taintKey: storage
 
 # Depending on your Kubernetes cluster the DNS suffix 
 # for internal name resolution might differ.
-clusterDnsSuffix: svc.cluster.local
+## clusterDnsSuffix: svc.cluster.local
