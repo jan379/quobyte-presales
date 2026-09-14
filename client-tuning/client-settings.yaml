@@ -9,7 +9,7 @@
   tasks:
     - name: Write /etc/quobyte/client-service.cfg
       template:
-        src: templates/client.cfg
+        src: templates/client.cfg.jinja2
         dest: "/etc/quobyte/client.cfg"
       register: host_cfg_change
 
