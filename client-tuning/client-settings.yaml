@@ -1,0 +1,20 @@
+- name: Control Client parameters 
+  hosts: clients
+  become: true
+  vars_files:
+    - vars/ansible-vars
+  vars: 
+    RDMA: false
+
+  tasks:
+    - name: Write /etc/quobyte/client-service.cfg
+      template:
+        src: templates/client.cfg
+        dest: "/etc/quobyte/client.cfg"
+      register: host_cfg_change
+
+    - name: Restart running Quobyte client to apply RDMA setting
+      ansible.builtin.systemd:
+        name: quobyte-client
+        state: restarted
+      when: host_cfg_change.changed

@@ -1,0 +1,23 @@
+registry={{ registry_frontend }}
+{% else %}
+registry={{ registry }}
+{% endif %}
+
+# enable or disable rdma
+rdma.enabled=true
+rdma.busy_poll=time
+rdma.completion_handler=sharded
+# IO_uring instead of fuse pipe
+options=io_uring
+# Use more threads. Automatically sets 
+# congestion_threshold and  effective_fuse_max_num_threads
+fuse_max_background=1024
+
+# Thread placement according to L3 Domain. 
+# Needs io_uring enabled
+rpc.l3_locality_routing=true
+threads.async_rpc_callback_l3_local=16
+rpc.l3_locality_completion_workers_per_l3_domain=4
+buffer_pool_split=2
+threads.non_blocking_spin_time_ms=0
+
