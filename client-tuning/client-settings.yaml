@@ -2,7 +2,7 @@
   hosts: clients
   become: true
   vars_files:
-    - vars/ansible-vars
+    - /home/deploy/quobyte-ansible/vars/ansible-vars
   vars: 
     RDMA: false
 
