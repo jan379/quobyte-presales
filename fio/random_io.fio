@@ -1,4 +1,6 @@
 [global]
+kb_base=1000
+iomem_align=4KiB
 ioengine=libaio
 direct=1
 ramp_time=10
@@ -11,5 +13,6 @@ rw=randread          # or randwrite
 iodepth=4            # change for more concurrency (1..32)
 numjobs=1            # change for multiple files
 directory=.          # change if necessary
-bs=4k
-size=100G
+bs=4KiB
+size=100GiB
+

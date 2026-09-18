@@ -1,0 +1,16 @@
+[global]
+kb_base=1000
+iomem_align=4KiB
+ramp_time=10
+time_based
+runtime=60
+create_serialize=0
+
+[1m_data]
+rw=read              # or write
+numjobs=10           # change number of streams
+directory=.          # change if necessary
+bs=1MiB
+size=100GiB          # adapt to your level of throughput
+group_reporting
+
