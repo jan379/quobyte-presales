@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: fio
+  name: fio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fio
+  template:
+    metadata:
+      labels:
+        app: fio
+    spec:
+      nodeSelector:
+        # run on same hw as storage nodes
+        storage-node-pool: quobyte
+      initContainers:
+      - name: fetch-repo
+        image: alpine/git
+        command:
+        - sh
+        - -c
+        - |
+          git clone --filter=blob:none --no-checkout --depth=1 https://github.com/jan379/quobyte-presales.git /tmp/repo
+          cd /tmp/repo/
+          git sparse-checkout set fio
+          git checkout master
+          cp -r fio /mnt/quobyte-volume/fio-jobfiles
+        volumeMounts:
+        - name: quobyte-backend 
+          mountPath: /mnt/quobyte-volume/
+      containers:
+      - command: ["/bin/sh", "-c", "tail -f /dev/null"]
+        #image: cloud-bulldozer/fio 
+        image:  quay.io/dan_cohen/fio 
+        name: fio
+        volumeMounts:
+        - mountPath: /mnt/quobyte-volume
+          name: quobyte-backend
+      volumes:
+      - name: quobyte-backend
+        persistentVolumeClaim:
+          claimName: test-pvc
