@@ -1,26 +1,42 @@
 - hosts: metadataservices
   become: yes
   vars:
+    # Total memory on machine
     mem_total: '{{ ansible_facts["memtotal_mb"] }}'
-    pg_memory: "{{ mem_total * 0.4 }}"
+    # We leave 40% for page cache use
+    pg_memory: "{{ mem_total * 0.2 }}"
+    # We divide memory without page cache into buffer and heap usage
     mem_avail: "{{ mem_total - pg_memory }}"
     max_buffer_metadata: "{{ mem_avail * 0.1 }}"
     max_buffer_metadata_gb: "{{ max_buffer_metadata / 1024 }}"
     max_mem_metadata: "{{ mem_avail * 0.3 }}"
     max_mem_metadata_gb: "{{ max_mem_metadata / 1024 }}"
+    # The cgroup limit should contain all sort of memory reservations
     mem_cgroup_limit: "{{ 3 * max_mem_metadata + max_buffer_metadata + pg_memory }}"
     mem_cgroup_limit_gb: "{{ mem_cgroup_limit / 1024 }}"
+
   tasks:
+    - name: Populate service facts
+      ansible.builtin.service_facts:
+    - name: Only reserve half memory if data service also runs on tis node
+      set_fact: 
+        max_mem_metadata_gb_shared: "{{ max_mem_metadata / 1024 / 2 }}"
+        max_buffer_metadata_gb_shared: "{{ max_buffer_metadata / 1024 / 2 }}"
+        mem_cgroup_limit_gb_shared: "{{ mem_cgroup_limit / 1024 / 2 }}"
+      when: "ansible_facts.services['quobyte-data.service'] is defined and ansible_facts.services['quobyte-data.service'].status == 'enabled'"
+      
     - name: Configure metadataservice memory consumption
+      vars: 
+        localvar: jan
       blockinfile:
         path: /etc/systemd/system.control/quobyte-metadata.service.d/50-MemoryMaxScale.conf
         state: present
         create: true
         block: |
           [Service]
-          MemoryMax={{ mem_cgroup_limit_gb | round(0, 'ceil') | int }}G
-          Environment=MAX_MEM_METADATA={{ max_mem_metadata_gb | round(0, 'ceil') | int }}G
-          Environment=MAX_BUFFER_METADATA={{ max_buffer_metadata_gb | round(0, 'ceil') | int }}G
+          MemoryMax={{ mem_cgroup_limit_gb_shared | default(mem_cgroup_limit_gb) | round(0, 'ceil') | int }}G
+          Environment=MAX_MEM_METADATA={{ max_mem_metadata_gb_shared | default(max_mem_metadata_gb) | round(0, 'ceil') | int }}G
+          Environment=MAX_BUFFER_METADATA={{ max_buffer_metadata_gb_shared | default(max_buffer_metadata_gb) | round(0, 'ceil') | int }}G
 
     - name: Reload systemd config
       ansible.builtin.systemd:
@@ -77,5 +93,4 @@
       service:
         state: restarted
         name: quobyte-data 
-
 
