@@ -1,0 +1,54 @@
+- hosts: metadataservices
+  become: yes
+  vars:
+    mem_avail={{ ansible_memtotal_mb }}
+    pg_memory={{ mem_avail * 0.2 }}
+    max_buffer_metadata={{ mem_avail * 0.1 }}
+    max_mem_metadata={{ mem_avail * 0.3 }}
+    mem_cgroup_limit={{ 3 * max_mem_data + max_buffer_metadata + pg_memory }}
+  tasks:
+    - name: Configure metadataservice memory consumption
+      blockinfile:
+        path: /etc/systemd/system.control/quobyte-metadata.service.d/50-MemoryMaxScale.conf
+        state: present
+        create: true
+        block: |
+          [Service]
+          MemoryMax={{ mem_cgroup_limit }}
+          Environment=MAX_MEM_METADATA={{ max_mem_metadata }}
+          Environment=MAX_BUFFER_METADATA={{ max_buffer_metadata }}
+
+    - name: Reload systemd config
+      command: systemctl daemon-reload
+    - name: Restart Quobyte metadata services 
+      service:
+        state: restarted
+        name: quobyte-metadata 
+
+- hosts: dataservices
+  become: yes
+  vars:
+    mem_avail={{ ansible_memtotal_mb }}
+    pg_memory={{ mem_avail * 0.2 }}
+    max_buffer_data={{ mem_avail * 0.1 }}
+    max_mem_data={{ mem_avail * 0.3 }}
+    mem_cgroup_limit={{ 3 * max_mem_data + max_buffer_data + pg_memory }}
+  tasks:
+    - name: Configure dataservice memory consumption
+      blockinfile:
+        path: /etc/systemd/system.control/quobyte-data.service.d/50-MemoryMaxScale.conf
+        state: present
+        create: true
+        block: |
+          [Service]
+          MemoryMax={{ mem_cgroup_limit }}
+          Environment=MAX_MEM_METADATA={{ max_mem_data }}
+          Environment=MAX_BUFFER_METADATA={{ max_buffer_data }}
+
+    - name: Reload systemd config
+      command: systemctl daemon-reload
+    - name: Restart Quobyte data services 
+      service:
+        state: restarted
+        name: quobyte-data 
+
