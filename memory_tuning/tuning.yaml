@@ -1,11 +1,15 @@
 - hosts: metadataservices
   become: yes
   vars:
-    mem_avail={{ ansible_memtotal_mb }}
-    pg_memory={{ mem_avail * 0.2 }}
-    max_buffer_metadata={{ mem_avail * 0.1 }}
-    max_mem_metadata={{ mem_avail * 0.3 }}
-    mem_cgroup_limit={{ 3 * max_mem_data + max_buffer_metadata + pg_memory }}
+    mem_total: '{{ ansible_facts["memtotal_mb"] }}'
+    pg_memory: "{{ mem_total * 0.4 }}"
+    mem_avail: "{{ mem_total - pg_memory }}"
+    max_buffer_metadata: "{{ mem_avail * 0.1 }}"
+    max_buffer_metadata_gb: "{{ max_buffer_metadata / 1024 }}"
+    max_mem_metadata: "{{ mem_avail * 0.3 }}"
+    max_mem_metadata_gb: "{{ max_mem_metadata / 1024 }}"
+    mem_cgroup_limit: "{{ 3 * max_mem_metadata + max_buffer_metadata + pg_memory }}"
+    mem_cgroup_limit_gb: "{{ mem_cgroup_limit / 1024 }}"
   tasks:
     - name: Configure metadataservice memory consumption
       blockinfile:
@@ -14,12 +18,13 @@
         create: true
         block: |
           [Service]
-          MemoryMax={{ mem_cgroup_limit }}
-          Environment=MAX_MEM_METADATA={{ max_mem_metadata }}
-          Environment=MAX_BUFFER_METADATA={{ max_buffer_metadata }}
+          MemoryMax={{ mem_cgroup_limit_gb | round(0, 'ceil') | int }}G
+          Environment=MAX_MEM_METADATA={{ max_mem_metadata_gb | round(0, 'ceil') | int }}G
+          Environment=MAX_BUFFER_METADATA={{ max_buffer_metadata_gb | round(0, 'ceil') | int }}G
 
     - name: Reload systemd config
-      command: systemctl daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: true
     - name: Restart Quobyte metadata services 
       service:
         state: restarted
@@ -28,27 +33,41 @@
 - hosts: dataservices
   become: yes
   vars:
-    mem_avail={{ ansible_memtotal_mb }}
-    pg_memory={{ mem_avail * 0.2 }}
-    max_buffer_data={{ mem_avail * 0.1 }}
-    max_mem_data={{ mem_avail * 0.3 }}
-    mem_cgroup_limit={{ 3 * max_mem_data + max_buffer_data + pg_memory }}
+    # Total memory on machine
+    mem_total: '{{ ansible_facts["memtotal_mb"] }}'
+    # We leave 40% for page cache use
+    pg_memory: "{{ mem_total * 0.4 }}"
+    # We divide memory without page cache into buffer and heap usage
+    mem_avail: "{{ mem_total - pg_memory }}"
+    max_buffer_data: "{{ mem_avail * 0.3 }}"
+    max_buffer_data_gb: "{{ max_buffer_data / 1024 }}"
+    max_mem_data: "{{ mem_avail * 0.1 }}"
+    max_mem_data_gb: "{{ max_mem_data / 1024 }}"
+    # The cgroup limit should contain all sort of memory reservations
+    mem_cgroup_limit: "{{ 3 * max_mem_data + max_buffer_data + pg_memory }}"
+    mem_cgroup_limit_gb: "{{ mem_cgroup_limit / 1024 }}"
   tasks:
+    - name: Detect which services are enabled
+      
     - name: Configure dataservice memory consumption
+      vars: 
+        localvar: jan
       blockinfile:
         path: /etc/systemd/system.control/quobyte-data.service.d/50-MemoryMaxScale.conf
         state: present
         create: true
         block: |
           [Service]
-          MemoryMax={{ mem_cgroup_limit }}
-          Environment=MAX_MEM_METADATA={{ max_mem_data }}
-          Environment=MAX_BUFFER_METADATA={{ max_buffer_data }}
+          MemoryMax={{ mem_cgroup_limit_gb | round(0, 'ceil') | int }}G
+          Environment=MAX_MEM_DATA={{ max_mem_data_gb | round(0, 'ceil') | int }}G
+          Environment=MAX_BUFFER_DATA={{ max_buffer_data_gb | round(0, 'ceil') | int }}G
 
     - name: Reload systemd config
-      command: systemctl daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: true
     - name: Restart Quobyte data services 
       service:
         state: restarted
         name: quobyte-data 
+
 
