@@ -4,8 +4,8 @@
 # Example call:
 # elbencho -c iops.elbencho /quobyte/elbencho
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/iops.txt
+hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
+resfile={{ ansible_env.HOME }}/benchmarks/results/iops.txt
 
 size=80M	# A file spanning more than one (10G) segment.
 write=1		# Files are only created if "write=1"

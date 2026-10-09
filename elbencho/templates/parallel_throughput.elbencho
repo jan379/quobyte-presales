@@ -4,8 +4,8 @@
 # Example call:
 # elbencho -c parallel_throughput.elbencho /quobyte/elbencho
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput.txt
+hostsfile={{ {{ ansible_env.HOME }} }}/benchmarks/elbencho-clients.list
+resfile={{ {{ ansible_env.HOME }} }}/benchmarks/results/elbencho-parallel_throughput.txt
 
 size=80M	# A weet spot between (no significant) metadata and a broad distribution even on small systems
 block=8M	# A convenient block size

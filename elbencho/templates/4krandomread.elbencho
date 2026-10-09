@@ -4,8 +4,8 @@
 # Example call:
 # elbencho -c iops.elbencho /quobyte/elbencho
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/4krandread.txt
+hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
+resfile={{ ansible_env.HOME }}/benchmarks/results/4krandread.txt
 
 size=80M	# A convenient file size
 write=0		# Data needs to be written before

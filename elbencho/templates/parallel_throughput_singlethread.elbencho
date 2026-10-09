@@ -4,8 +4,8 @@
 # Example call:
 # elbencho -c parallel_throughput_singlethread.elbencho /quobyte/elbencho
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/elbencho-parallel_throughput-3.24.txt
+hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
+resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-parallel_throughput-3.24.txt
 
 size=80M	# A lot of 80MB files will distribute fairly across available devices. 
 block=8M	# A convenient block size

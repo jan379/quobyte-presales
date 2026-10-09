@@ -3,10 +3,10 @@
 # Network benchmark. Needs elbencho deployed && started on all hosts that participate
 ## Clients send data
 label=arg="One client sends data to all servers (single stream write)"
-resfile=/home/deploy/benchmarks/results/elbencho-netbench.txt
+resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-netbench.txt
 netbench=1
-serversfile=/home/deploy/benchmarks/elbencho-dataserver.list
-clientsfile=/home/deploy/benchmarks/elbencho-firstclient.list
+serversfile={{ ansible_env.HOME }}/benchmarks/elbencho-dataserver.list
+clientsfile={{ ansible_env.HOME }}/benchmarks/elbencho-firstclient.list
 block=10m
 respsize=1
 threads=32

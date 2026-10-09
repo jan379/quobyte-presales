@@ -1,39 +1,48 @@
 - hosts: localhost
-  become: yes
+  become: no 
   tasks:
 
     - name: Create benchmark directory
       file:
-        path: /home/deploy/benchmarks
+        path: "{{ ansible_env.HOME }}/benchmarks"
         state: directory
-        owner: deploy
-        mode: '0755'
 
     - name: Create benchmark results directory
       file:
-        path: /home/deploy/benchmarks/results
+        path: "{{ ansible_env.HOME }}/benchmarks/results"
         state: directory
-        owner: deploy
-        mode: '0755'
+
+    - name: Create benchmark example directory
+      file:
+        path: "{{ ansible_env.HOME }}/benchmarks/example_workloads"
+        state: directory
+
+    - name: Create example workloads 
+      template:
+        src: templates/{{ item }}
+        dest: "{{ ansible_env.HOME }}/benchmarks/example_workloads/{{ item }}"
+      with_items:
+        - "parallel_throughput.elbencho"
+
 
 # Clients are used for actual storage benchmarks
     - name: Create client list
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-clients.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-clients.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.clients }}"
 
     - name: Create first client file
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-firstclient.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-firstclient.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.clients[0] }}"
 
     - name: Create second client file
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-secondclient.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-secondclient.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.clients[1] }}"
@@ -43,21 +52,21 @@
 # All other nodes are used for "netbench"
     - name: Create dataserver list
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-dataserver.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-dataserver.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.dataservices }}"
 
     - name: Create first dataservice file 
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-firstdataserver.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-firstdataserver.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.dataservices[0] }}"
 
     - name: Create second dataservice file
       lineinfile:
-        path: /home/deploy/benchmarks/elbencho-seconddataserver.list
+        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-seconddataserver.list"
         create: true
         line: "{{ item }}"
       with_items: "{{ groups.dataservices[1] }}"
