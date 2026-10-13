@@ -22,7 +22,17 @@
         dest: "{{ bench_dir }}/example_workloads/{{ item }}"
         mode: "0644"
       loop:
+        - 4krandomread-layout.elbencho
+        - 4krandomread.elbencho
+        - Readme.md
+        - iops.elbencho
+        - localdevice_throughput.elbencho
         - parallel_throughput.elbencho
+        - parallel_throughput_singlethread.elbencho
+        - singleclient_multithread_throughput.elbencho
+        - singleclient_throughput.elbencho
+        - smallfiles.elbencho
+        - zerobytefiles.elbencho
 
     # Clients are used for actual storage benchmarks
     - name: Create client list

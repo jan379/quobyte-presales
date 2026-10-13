@@ -6,7 +6,7 @@
 
 label=arg="Localhost writes a large file to local storage device"
 hosts=localhost
-resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-localdevice_throughput.txt
+resfile={{ bench_dir }}/results/elbencho-localdevice_throughput.txt
 
 size=40G	# A file spanning more than one (10G) segment, also larger than possible device buffer sizes
 write=1		# Files are only created if "write=1"

@@ -6,8 +6,8 @@
 # Example using many volumes (requires volumes with a naming schem of "r0", "r1", "rN" to exist):
 # elbencho -c zerobytefiles.elbencho /quobyte
 
-hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
-resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-zerobyte.txt
+hostsfile={{ hosts_dir }}/elbencho-clients.list
+resfile={{ bench_dir }}/results/elbencho-zerobyte.txt
 
 size=0		# Empty files to not involve data services
 write=1		# Files are only created if "write=1"

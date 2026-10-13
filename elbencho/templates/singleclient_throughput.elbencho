@@ -5,8 +5,8 @@
 # elbencho -c parallel_throughput.elbencho /quobyte/elbencho
 
 label=arg="One client writes one large file (like dd)"
-hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-firstclient.list
-resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-singleclient_throughput.txt
+hostsfile={{ hosts_dir }}/elbencho-firstclient.list
+resfile={{ bench_dir }}/results/elbencho-singleclient_throughput.txt
 
 size=80M	# A file spanning more than one (10G) segment.
 block=8M	# A convenient block size. 

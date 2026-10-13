@@ -4,8 +4,8 @@
 # Example call:
 # elbencho -c iops.elbencho /quobyte/elbencho
 
-hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
-resfile={{ ansible_env.HOME }}/benchmarks/results/iops-layout.txt
+hostsfile={{ hosts_dir }}/elbencho-clients.list
+resfile={{ bench_dir }}/results/iops-layout.txt
 
 size=80M	# A convenient file size
 write=1		# Files are only created if "write=1"
