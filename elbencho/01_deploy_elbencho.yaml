@@ -1,99 +1,83 @@
 - hosts: localhost
-  become: no 
+  become: no
+  vars:
+    bench_dir: "{{ ansible_facts['env']['HOME'] }}/benchmarks"
   tasks:
 
-    - name: Create benchmark directory
+    - name: Create benchmark directories
       file:
-        path: "{{ ansible_env.HOME }}/benchmarks"
+        path: "{{ item }}"
         state: directory
+        mode: "0755"
+      loop:
+        - "{{ bench_dir }}"
+        - "{{ bench_dir }}/results"
+        - "{{ bench_dir }}/example_workloads"
 
-    - name: Create benchmark results directory
-      file:
-        path: "{{ ansible_env.HOME }}/benchmarks/results"
-        state: directory
+    # - name: Create example workloads
+    #   template:
+    #     src: "templates/{{ item }}"
+    #     dest: "{{ bench_dir }}/example_workloads/{{ item }}"
+    #   loop:
+    #     - parallel_throughput.elbencho
 
-    - name: Create benchmark example directory
-      file:
-        path: "{{ ansible_env.HOME }}/benchmarks/example_workloads"
-        state: directory
-
-    - name: Create example workloads 
-      template:
-        src: templates/{{ item }}
-        dest: "{{ ansible_env.HOME }}/benchmarks/example_workloads/{{ item }}"
-      with_items:
-        - "parallel_throughput.elbencho"
-
-
-# Clients are used for actual storage benchmarks
+    # Clients are used for actual storage benchmarks
     - name: Create client list
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-clients.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.clients }}"
+      copy:
+        dest: "{{ bench_dir }}/elbencho-clients.list"
+        content: "{{ groups['clients'] | join('\n') }}\n"
+        mode: "0644"
 
     - name: Create first client file
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-firstclient.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.clients[0] }}"
+      copy:
+        dest: "{{ bench_dir }}/elbencho-firstclient.list"
+        content: "{{ groups['clients'][0] }}\n"
+        mode: "0644"
 
     - name: Create second client file
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-secondclient.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.clients[1] }}"
-      when: "groups.clients | length  > 1"
+      copy:
+        dest: "{{ bench_dir }}/elbencho-secondclient.list"
+        content: "{{ groups['clients'][1] }}\n"
+        mode: "0644"
+      when: groups['clients'] | length > 1
 
-
-# All other nodes are used for "netbench"
+    # All other nodes are used for "netbench"
     - name: Create dataserver list
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-dataserver.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.dataservices }}"
+      copy:
+        dest: "{{ bench_dir }}/elbencho-dataserver.list"
+        content: "{{ groups['dataservices'] | join('\n') }}\n"
+        mode: "0644"
 
-    - name: Create first dataservice file 
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-firstdataserver.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.dataservices[0] }}"
+    - name: Create first dataservice file
+      copy:
+        dest: "{{ bench_dir }}/elbencho-firstdataserver.list"
+        content: "{{ groups['dataservices'][0] }}\n"
+        mode: "0644"
 
     - name: Create second dataservice file
-      lineinfile:
-        path: "{{ ansible_env.HOME }}/benchmarks/elbencho-seconddataserver.list"
-        create: true
-        line: "{{ item }}"
-      with_items: "{{ groups.dataservices[1] }}"
+      copy:
+        dest: "{{ bench_dir }}/elbencho-seconddataserver.list"
+        content: "{{ groups['dataservices'][1] }}\n"
+        mode: "0644"
+      when: groups['dataservices'] | length > 1
 
 
-- hosts: quobyteservers,clients 
+- hosts: quobyteservers,clients
   become: yes
   tasks:
 
     - name: Set architecture specific variables
       set_fact:
-        arch: "{{ 'aarch64' if ansible_facts.architecture == 'aarch64' else 'x86_64' }}"
+        arch: "{{ 'aarch64' if ansible_facts['architecture'] == 'aarch64' else 'x86_64' }}"
 
     - name: Get elbencho binary archive
-      get_url: 
-        #url: https://github.com/breuner/elbencho/releases/download/v2.2-5/elbencho-static-x86_64.tar.gz
-        #url: https://github.com/breuner/elbencho/releases/download/v3.0-7/elbencho-static-x86_64.tar.gz 
-        ##url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-x86_64.tar.gz
-        ##url: https://github.com/breuner/elbencho/releases/download/v3.0-25/elbencho-static-{{ arch }}.tar.gz
-        # ARM:
-        url: https://github.com/breuner/elbencho/releases/download/v3.0-37/elbencho-static-{{ arch }}.tar.gz
-        force: true
+      get_url:
+        url: "https://github.com/breuner/elbencho/releases/download/v3.0-37/elbencho-static-{{ arch }}.tar.gz"
         dest: /tmp/elbencho.tar.gz
+        force: true
 
     - name: Unpack elbencho archive
       unarchive:
         src: /tmp/elbencho.tar.gz
         remote_src: yes
         dest: /usr/local/bin/
-
