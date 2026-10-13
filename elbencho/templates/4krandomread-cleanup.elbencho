@@ -7,7 +7,7 @@
 hostsfile={{ hosts_dir }}/elbencho-clients.list
 resfile={{ bench_dir }}/results/4krandread-cleanup.txt
 
-size=12G	# A convenient file size
+size=6G	# A convenient file size
 write=0		# Files are only created if "write=1"
 read=0		# Do not read
 threads=8	# Do parallel requests from each client
@@ -15,4 +15,4 @@ mkdirs=0	# Create directories if necessary
 delfiles=1	# We want to keep files for later reads
 deldirs=1	# We want to keep everything
 dirs=1		# Number of directories per worker thread
-files=1		# Number of files to create
+files=2		# Number of files to create

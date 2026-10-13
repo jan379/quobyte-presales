@@ -1,21 +1,25 @@
-# Create a bunch of small files.
-# You can benchmark metadata performance using this test.
-# You can observe differences in performance when writing into one large volume vs. spread out across many volumes.
-# Example using one volume:
-# elbencho -c zerobytefiles.elbencho /quobyte/elbencho
-# Example using many volumes (requires volumes with a naming schem of "r0", "r1", "rN" to exist):
-# elbencho -c zerobytefiles.elbencho /quobyte
+# Small file workload.
+# Creates, stats, reads and deletes many small files in parallel.
+# You can benchmark metadata performance (files/s) using this test.
+# Each file is written and read with a single I/O (block size = file size).
+# Total files per client = threads x dirs x files (here: 8 x 10 x 1000 = 80000).
+# Example call:
+# elbencho -c small_files.elbencho /quobyte/elbencho
 
 hostsfile={{ hosts_dir }}/elbencho-clients.list
-resfile={{ bench_dir }}/results/elbencho-smallfile.txt
+resfile={{ bench_dir }}/results/elbencho-small_files.txt
 
-size=256000	# A small file
-write=1		# Files are only created if "write=1"
-read=1		# Let's collect read performance
+size=4K		# Small file size. Try 64K or 1M to see where throughput takes over
+block=4K	# Same as file size: one I/O per file
+write=1		# Create the files
+stat=1		# Stat all files, measures metadata lookups
+read=1		# Read the files back
 threads=8	# Do parallel requests from each client
 mkdirs=1	# Create directories if necessary
+dirs=10		# Number of directories per worker thread
+files=1000	# Number of files per directory
 delfiles=1	# Delete files
 deldirs=1	# Delete directories
-dirs=1		# Number of directories per worker thread
-files=30000	# Number of files to create
-lat=1
+iodepth=1	# Files are tiny, so no need for async I/O
+cpu=1		# We are interested in client CPUs as upper boundary
+lat=1		# Latencies can explain a lot

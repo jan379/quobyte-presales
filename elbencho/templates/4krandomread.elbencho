@@ -2,16 +2,18 @@
 hostsfile={{ hosts_dir }}/elbencho-clients.list
 resfile={{ bench_dir }}/results/4krandread.txt
 
-size=12G	# One large file per thread 
+size=6G		# One large file per thread 
 write=0		# Data needs to be written before
 read=1		# Let's collect read performance
 rand=1		# random reads, yes
 threads=8	# Do parallel requests from each client
+iodepth=8	# >1 enables async I/O; raises queue depth per thread
+direct=1	# check I/O policies in Quobyte to see if O_DIRECT get honoured.
 mkdirs=0	# Create directories if necessary
 delfiles=0	# Delete files
 deldirs=0	# Delete directories
 dirs=1		# Number of directories per worker thread
-files=1		# Number of files to read, per thread
+files=2		# Number of files to read, per thread
 block=4k	# Smallest write unit in QB
-cpu=1
-lat=1
+cpu=1		# Print CPU stats
+lat=1		# Print latency stats

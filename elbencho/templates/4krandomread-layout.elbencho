@@ -2,13 +2,14 @@
 hostsfile={{ hosts_dir }}/elbencho-clients.list
 resfile={{ bench_dir }}/results/4krandread-layout.txt
 
-size=12G	# One large file per thread 
+size=6G		# One large file per thread 
 write=1		# Files are only created if "write=1"
 read=0		# Do not read
 threads=8	# Do parallel requests from each client
+direct=1	# check I/O policies in Quobyte to see if O_DIRECT get honoured.
 mkdirs=1	# Create directories if necessary
 delfiles=0	# We want to keep files for later reads
 deldirs=0	# We want to keep everything
 dirs=1		# Number of directories per worker thread
-files=1		# Number of files to write 
+files=2		# Number of files to write 
 block=8M	# Convenient writes to get the job done fast
