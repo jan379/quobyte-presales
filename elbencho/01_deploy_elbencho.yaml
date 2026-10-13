@@ -24,6 +24,7 @@
       loop:
         - 4krandomread-layout.elbencho
         - 4krandomread.elbencho
+        - 4krandomread-cleanup.elbencho
         - Readme.md
         - iops.elbencho
         - localdevice_throughput.elbencho
