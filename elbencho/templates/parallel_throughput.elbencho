@@ -4,10 +4,10 @@
 # Example call:
 # elbencho -c parallel_throughput.elbencho /quobyte/elbencho
 
-hostsfile={{ {{ ansible_env.HOME }} }}/benchmarks/elbencho-clients.list
-resfile={{ {{ ansible_env.HOME }} }}/benchmarks/results/elbencho-parallel_throughput.txt
+hostsfile={{ hosts_dir }}/elbencho-clients.list
+resfile={{ bench_dir }}/results/elbencho-parallel_throughput.txt
 
-size=80M	# A weet spot between (no significant) metadata and a broad distribution even on small systems
+size=80M	# A sweet spot between (no significant) metadata and a broad distribution even on small systems
 block=8M	# A convenient block size
 write=1		# Files are only created if "write=1"
 read=1		# Let's collect read performance
