@@ -2,6 +2,7 @@
   become: no
   vars:
     bench_dir: "{{ ansible_facts['env']['HOME'] }}/benchmarks"
+    hosts_dir: "{{ bench_dir }}/hosts"
   tasks:
 
     - name: Create benchmark directories
@@ -13,30 +14,32 @@
         - "{{ bench_dir }}"
         - "{{ bench_dir }}/results"
         - "{{ bench_dir }}/example_workloads"
+        - "{{ hosts_dir }}"
 
-    # - name: Create example workloads
-    #   template:
-    #     src: "templates/{{ item }}"
-    #     dest: "{{ bench_dir }}/example_workloads/{{ item }}"
-    #   loop:
-    #     - parallel_throughput.elbencho
+    - name: Create example workloads
+      template:
+        src: "{{ playbook_dir }}/templates/{{ item }}"
+        dest: "{{ bench_dir }}/example_workloads/{{ item }}"
+        mode: "0644"
+      loop:
+        - parallel_throughput.elbencho
 
     # Clients are used for actual storage benchmarks
     - name: Create client list
       copy:
-        dest: "{{ bench_dir }}/elbencho-clients.list"
+        dest: "{{ hosts_dir }}/elbencho-clients.list"
         content: "{{ groups['clients'] | join('\n') }}\n"
         mode: "0644"
 
     - name: Create first client file
       copy:
-        dest: "{{ bench_dir }}/elbencho-firstclient.list"
+        dest: "{{ hosts_dir }}/elbencho-firstclient.list"
         content: "{{ groups['clients'][0] }}\n"
         mode: "0644"
 
     - name: Create second client file
       copy:
-        dest: "{{ bench_dir }}/elbencho-secondclient.list"
+        dest: "{{ hosts_dir }}/elbencho-secondclient.list"
         content: "{{ groups['clients'][1] }}\n"
         mode: "0644"
       when: groups['clients'] | length > 1
@@ -44,19 +47,19 @@
     # All other nodes are used for "netbench"
     - name: Create dataserver list
       copy:
-        dest: "{{ bench_dir }}/elbencho-dataserver.list"
+        dest: "{{ hosts_dir }}/elbencho-dataserver.list"
         content: "{{ groups['dataservices'] | join('\n') }}\n"
         mode: "0644"
 
     - name: Create first dataservice file
       copy:
-        dest: "{{ bench_dir }}/elbencho-firstdataserver.list"
+        dest: "{{ hosts_dir }}/elbencho-firstdataserver.list"
         content: "{{ groups['dataservices'][0] }}\n"
         mode: "0644"
 
     - name: Create second dataservice file
       copy:
-        dest: "{{ bench_dir }}/elbencho-seconddataserver.list"
+        dest: "{{ hosts_dir }}/elbencho-seconddataserver.list"
         content: "{{ groups['dataservices'][1] }}\n"
         mode: "0644"
       when: groups['dataservices'] | length > 1
