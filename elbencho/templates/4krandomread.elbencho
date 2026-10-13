@@ -1,22 +1,17 @@
-# Create large files in parallel.
-# You can benchmark data performance/ throughput using this test.
-# You can observe differences for different stripe widths.
-# Example call:
-# elbencho -c iops.elbencho /quobyte/elbencho
 
 hostsfile={{ hosts_dir }}/elbencho-clients.list
 resfile={{ bench_dir }}/results/4krandread.txt
 
-size=80M	# A convenient file size
+size=12G	# One large file per thread 
 write=0		# Data needs to be written before
 read=1		# Let's collect read performance
 rand=1		# random reads, yes
 threads=8	# Do parallel requests from each client
-mkdirs=1	# Create directories if necessary
+mkdirs=0	# Create directories if necessary
 delfiles=0	# Delete files
 deldirs=0	# Delete directories
 dirs=1		# Number of directories per worker thread
-files=200	# Number of files to read
+files=1		# Number of files to read, per thread
 block=4k	# Smallest write unit in QB
 cpu=1
 lat=1

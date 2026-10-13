@@ -5,9 +5,9 @@
 # elbencho -c iops.elbencho /quobyte/elbencho
 
 hostsfile={{ hosts_dir }}/elbencho-clients.list
-resfile={{ bench_dir }}/results/iops-cleanup.txt
+resfile={{ bench_dir }}/results/4krandread-cleanup.txt
 
-size=80M	# A convenient file size
+size=12G	# A convenient file size
 write=0		# Files are only created if "write=1"
 read=0		# Do not read
 threads=8	# Do parallel requests from each client
@@ -15,7 +15,4 @@ mkdirs=0	# Create directories if necessary
 delfiles=1	# We want to keep files for later reads
 deldirs=1	# We want to keep everything
 dirs=1		# Number of directories per worker thread
-files=200	# Number of files to create
-block=8M	# Convenient writes to get the job done fast
-cpu=1
-lat=1
+files=1		# Number of files to create
