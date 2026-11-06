@@ -5,7 +5,7 @@ metadata:
     app: elbencho
   name: elbencho
 spec:
-  replicas: 5
+  replicas: 4
   selector:
     matchLabels:
       app: elbencho
@@ -14,12 +14,15 @@ spec:
       labels:
         app: elbencho
     spec:
+      nodeSelector:
+        storage-node-pool: quobyte 
       containers:
       - command:
         - /bin/sh
         - -c
         - elbencho --service --foreground
-        image: breuner/elbencho
+        #image: breuner/elbench
+        image: breuner/elbencho:v3.1-11 
         name: elbencho
         volumeMounts:
         - mountPath: /mnt/quobyte-volume

@@ -6,6 +6,8 @@ metadata:
   labels:
     app: qb-test-pod
 spec:
+  nodeSelector:
+    storage-node-pool: quobyte 
   volumes:
     - name: quobyte-backend
       persistentVolumeClaim:
