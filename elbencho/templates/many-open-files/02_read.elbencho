@@ -2,8 +2,8 @@
 # Read a bunch of existing files
 #
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/elbencho-zerobyte.txt
+hostsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
+resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-zerobyte.txt
 
 size=0		# Empty files to not involve data services
 write=0		# Files are only created if "write=1"

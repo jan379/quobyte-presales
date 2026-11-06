@@ -4,18 +4,18 @@
 # Example call:
 # elbencho -c iops.elbencho /quobyte/elbencho
 
-hostsfile=/home/deploy/benchmarks/elbencho-clients.list
-resfile=/home/deploy/benchmarks/results/iops-layout.txt
+hostsfile={{ hosts_dir }}/elbencho-clients.list
+resfile={{ bench_dir }}/results/iops.txt
 
-size=80M	# A convenient file size
+size=80M	# A file spanning more than one (10G) segment.
 write=1		# Files are only created if "write=1"
-read=0		# Do not read
+read=1		# Let's collect read performance
 threads=8	# Do parallel requests from each client
 mkdirs=1	# Create directories if necessary
-delfiles=0	# We want to keep files for later reads
-deldirs=0	# We want to keep everything
+delfiles=1	# Delete files
+deldirs=1	# Delete directories
 dirs=1		# Number of directories per worker thread
 files=200	# Number of files to create
-block=8M	# Convenient writes to get the job done fast
+block=4k	# Smallest write unit in QB
 cpu=1
 lat=1
