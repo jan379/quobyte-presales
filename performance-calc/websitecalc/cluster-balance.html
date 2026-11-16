@@ -168,11 +168,11 @@ function topo(){
   for(let i=0;i<n1;i++){const y=a.y(i);
     lines+=`<line class="flow" x1="126" y1="${y}" x2="${sw-6}" y2="${cy}" stroke="var(--wasabi)" stroke-width="${wid(S.cN)*(U1[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
     if(n1<=6)pills+=pill(126+(sw-132)*.42,y+(cy-y)*.42,lab(U1[i],S.cN),'var(--wasabi)')}
-  if(n1>6)pills+=pill(270,cy,n1+'×'+NICS[S.cN]+'G','var(--wasabi)');
+  if(n1>6)pills+=pill(270,cy,S.clients.toLocaleString('en-US')+'×'+NICS[S.cN]+'G','var(--wasabi)');
   for(let i=0;i<n2;i++){const y=b.y(i);
     lines+=`<line class="flow" x1="${sw+6}" y1="${cy}" x2="734" y2="${y}" stroke="var(--mint)" stroke-width="${wid(S.sN)*(U2[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
     if(n2<=6)pills+=pill(sw+6+(734-sw-6)*.58,cy+(y-cy)*.58,lab(U2[i],S.sN),'var(--mint)')}
-  if(n2>6)pills+=pill(630,cy,n2+'×'+NICS[S.sN]+'G','var(--mint)');
+  if(n2>6)pills+=pill(630,cy,S.nodes.toLocaleString('en-US')+'×'+NICS[S.sN]+'G','var(--mint)');
   for(let i=0;i<n1;i++){const y=a.y(i),h=a.h;
     if(U1[i]>1){boxes+=rack(20,106,y,h,U1[i],'clients','var(--cer)','var(--wasabi)');continue}
     const t=Math.min(S.thr,48),cols=8,rows=Math.ceil(t/cols),st=Math.min(8,(h-8)/rows),r=Math.max(1.5,Math.min(3,st/2-.5));
