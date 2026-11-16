@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Storage cluster balance</title>
+<style>
+:root{--bg:#fff;--surface:#f3eef8;--ink:#170030;--muted:#5a4a72;--line:#d8cde8;--accent:#0c468e;--wasabi:#32f54e;--mint:#86ffd4;--cer:#004dff;--alloy:#0c468e;--pear:#c5ff6e;--ruby:#d60066;--track:#e4dcef;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0317;--surface:#170030;--ink:#fff;--muted:#bba9d6;--line:#33195a;--accent:#32f54e;--track:#2a1448}}
+:root[data-theme="dark"]{--bg:#0b0317;--surface:#170030;--ink:#fff;--muted:#bba9d6;--line:#33195a;--accent:#32f54e;--track:#2a1448}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 18px 40px}
+h1{font-size:clamp(26px,4vw,40px);line-height:1.1;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 22px;max-width:60ch}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.panel+.panel{margin-top:18px}
+h2{font-size:16px;margin:0 0 12px;font-weight:700}
+.ctl{margin-bottom:14px}
+.ctl .row{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.ctl output{font-weight:700;color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+.seg{display:flex;gap:6px;margin-bottom:14px}
+.seg button{flex:1;padding:9px 6px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--wasabi);color:#0b0317;border-color:var(--wasabi)}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.two{display:flex;gap:10px}.two label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--cer);outline-offset:2px}
+svg{width:100%;height:auto;display:block}
+.flow{stroke-dasharray:6 8;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-14}}
+@media(prefers-reduced-motion:reduce){.flow{animation:none}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:13px;margin-top:8px}
+.score{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.score b{font-size:clamp(40px,7vw,64px);line-height:1;letter-spacing:-.03em}
+.score span{font-size:18px;font-weight:700}
+.meter{margin:16px 0 4px}
+.meter .cap{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.track{position:relative;height:16px;border-radius:8px;background:var(--track)}
+.band{position:absolute;left:42%;width:16%;top:0;bottom:0;background:var(--wasabi);opacity:.9;border-radius:4px}
+.mark{position:absolute;top:-6px;width:6px;height:28px;margin-left:-3px;border-radius:3px;background:var(--ruby);box-shadow:0 0 0 2px var(--bg);transition:left .25s}
+.meter p{margin:8px 0 0}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:13px}
+td b{display:block;font-size:17px}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;margin-top:3px}
+.c-cl{background:var(--mint);color:#0b0317}.c-net{background:var(--cer);color:#fff}.c-dr{background:var(--pear);color:#0b0317}
+.hint{color:var(--muted);font-size:13px;margin:10px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Is your cluster balanced?</h1>
+  <p class="sub">Move the sliders to see whether the drives or the network set the pace, and which part limits each workload.</p>
+  <div class="grid">
+    <div>
+      <section class="panel" aria-label="Cluster settings">
+        <h2>Cluster</h2>
+        <div class="seg" role="group" aria-label="Drive type">
+          <button type="button" data-pre="hdd" aria-pressed="true">Hard disks</button>
+          <button type="button" data-pre="nvme" aria-pressed="false">NVMe SSDs</button>
+        </div>
+        <div id="sliders"></div>
+        <div class="two">
+          <label>Erasure coding
+            <select id="ec"><option>2+2</option><option>4+2</option><option selected>5+3</option><option>8+3</option></select></label>
+          <label>Replicas
+            <select id="rf"><option>2</option><option selected>3</option><option>4</option></select></label>
+        </div>
+        <p class="hint" id="presetnote"></p>
+      </section>
+    </div>
+    <div>
+      <section class="panel" aria-label="Topology">
+        <h2>Topology</h2>
+        <svg id="topo" viewBox="0 0 900 420" role="img" aria-label="Clients connected through a switch to storage nodes"></svg>
+        <div class="legend"><span>Left: clients, one dot per thread</span><span>Right: storage nodes, one square per drive</span><span>Line thickness follows NIC speed</span><span>Above 10 nodes, nodes are grouped into racks of up to 10; beyond 120 nodes each box stands for several racks</span></div>
+      </section>
+      <section class="panel" aria-label="Balance" aria-live="polite">
+        <div class="score"><b id="score">0%</b><span id="verdict"></span></div>
+        <div class="meter">
+          <div class="cap"><span>Drives limit</span><span id="m1t">Drives against storage network</span><span>Network limits</span></div>
+          <div class="track"><div class="band"></div><div class="mark" id="m1"></div></div>
+          <p id="m1p"></p>
+        </div>
+        <div class="meter">
+          <div class="cap"><span>Clients limit</span><span>Clients against storage network</span><span>Storage network limits</span></div>
+          <div class="track"><div class="band"></div><div class="mark" id="m2"></div></div>
+          <p id="m2p"></p>
+        </div>
+      </section>
+      <section class="panel" aria-label="Throughput">
+        <h2>Throughput and what limits it</h2>
+        <div class="tw"><table id="tbl"></table></div>
+        <p class="hint">Best-case ceilings for large sequential I&#8202;/&#8202;O in a healthy cluster. Erasure coding is done by the client, replication by the storage nodes.</p>
+      </section>
+    </div>
+  </div>
+</div>
+<script>
+const NICS=[50,100,200,400,800],G=125;
+const S={clients:4,nodes:6,dev:24,thr:8,cN:2,sN:1,pre:'hdd'};
+const PRE={hdd:{dw:217,dr:219,ctrl:1,cm:13700,note:'Hard disks: 217 MB/s write, 219 MB/s read per drive, one 13.7 GB/s controller per node (conservative whole-disk averages).'},
+ nvme:{dw:5600,dr:6800,ctrl:0,cm:0,note:'NVMe SSDs: 5.6 GB/s write, 6.8 GB/s read per drive, no shared controller.'}};
+const LOG=(()=>{const a=[1];while(a[a.length-1]<10000){const l=a[a.length-1];a.push(Math.min(10000,Math.max(l+1,Math.round(l*1.12))))}return a})();
+const CTL=[['clients','Clients',1,10000,LOG],['nodes','Storage nodes',4,120],['dev','Drives per node',1,90],['thr','Threads per client',1,64],['cN','Client NIC',0,4],['sN','Storage NIC',0,4]];
+const $=id=>document.getElementById(id);
+const fmt=v=>v>=1e9?(v/1e9).toFixed(2)+' PB/s':v>=1e6?(v/1e6).toFixed(2)+' TB/s':v>=1e3?(v/1e3).toFixed(v>=1e5?0:1)+' GB/s':Math.round(v)+' MB/s';
+const nicTxt=i=>NICS[i]+' Gbit/s';
+
+$('sliders').innerHTML=CTL.map(([k,l,mn,mx,a])=>`<div class="ctl"><div class="row"><label for="s_${k}">${l}</label><output id="o_${k}"></output></div><input type="range" id="s_${k}" min="${a?0:mn}" max="${a?a.length-1:mx}" step="1" value="${a?a.indexOf(S[k]):S[k]}"></div>`).join('');
+CTL.forEach(([k,,,,a])=>$('s_'+k).addEventListener('input',e=>{S[k]=a?a[+e.target.value]:+e.target.value;render()}));
+/* Mouse wheel over a slider changes it: up = more. Wide sliders move in coarser steps, hold Alt for single steps. */
+CTL.forEach(([k,,mn,mx,a])=>$('s_'+k).addEventListener('wheel',e=>{
+  e.preventDefault();
+  const d=e.deltaY||e.deltaX;if(!d)return;
+  const st=a||e.altKey||mx-mn<=36?1:Math.max(1,Math.round((mx-mn)/30));
+  if(a){const i=Math.max(0,Math.min(a.length-1,a.indexOf(S[k])+(d<0?1:-1)));if(a[i]!==S[k]){S[k]=a[i];e.target.value=i;render()}return}
+  const v=Math.max(mn,Math.min(mx,S[k]+(d<0?st:-st)));
+  if(v!==S[k]){S[k]=v;e.target.value=v;render()}
+},{passive:false}));
+document.querySelectorAll('[data-pre]').forEach(b=>b.addEventListener('click',()=>{S.pre=b.dataset.pre;
+  document.querySelectorAll('[data-pre]').forEach(x=>x.setAttribute('aria-pressed',x===b));render()}));
+['ec','rf'].forEach(id=>$(id).addEventListener('change',render));
+
+function model(){
+  const p=PRE[S.pre],ec=$('ec').value.split('+').map(Number),rf=+$('rf').value;
+  const cNic=NICS[S.cN]*G,sNic=NICS[S.sN]*G;
+  return {p,ec,rf,cNic,sNic,cluNic:S.nodes*sNic,cliNic:S.clients*cNic,
+    devW:S.nodes*S.dev*p.dw,devR:S.nodes*S.dev*p.dr};
+}
+function ev(m,prot,op,multi){
+  const w=op==='w',nC=multi?S.clients:1;let stripes=1,cf=1,ni=0,no=1,bf=1;
+  if(prot==='ec'){const[d,c]=m.ec,f=(d+c)/d;stripes=d;if(w){cf=ni=bf=f;no=0}}
+  else if(w){const k=prot==='repl'?m.rf:1;ni=bf=k;no=k-1}
+  const dm=w?m.p.dw:m.p.dr,L={};
+  L.client_parallelism=nC*S.thr*stripes*dm;
+  L.client_network=nC*m.cNic/cf;
+  L.backend_device=S.nodes*S.dev*dm/bf;
+  if(m.p.ctrl>0)L.backend_controller=S.nodes*m.p.ctrl*m.p.cm/bf;
+  if(ni>0)L.storage_network_in=m.cluNic/ni;
+  if(no>0)L.storage_network_out=m.cluNic/no;
+  let best=null;for(const k in L)if(best===null||L[k]<L[best])best=k;
+  return {v:L[best],n:best};
+}
+const NAME={client_parallelism:['client threads','c-cl'],client_network:['client network','c-cl'],backend_device:['drives','c-dr'],backend_controller:['controller','c-dr'],storage_network_in:['storage network in','c-net'],storage_network_out:['storage network out','c-net']};
+
+function pos(r){return Math.max(0,Math.min(1,(Math.log2(r)+2)/4))*100}
+function pct(r){return Math.round(100*Math.min(r,1/r))}
+
+function topo(){
+  const H=420,W=900,sw=450,cy=H/2;
+  const units=n=>{if(n<=10)return Array(n).fill(1);const r=Math.min(12,Math.ceil(n/10));return Array.from({length:r},(_,i)=>Math.floor(n/r)+(i<n%r?1:0))};
+  const U1=units(S.clients),U2=units(S.nodes),n1=U1.length,n2=U2.length;
+  const wid=i=>[1.5,2.5,4,6,8][i];
+  let s='',lines='',pills='',boxes='';
+  const geo=n=>{const sp=(H-20)/n;return{sp,h:Math.min(64,sp-6),y:i=>10+(i+.5)*sp}};
+  const a=geo(n1),b=geo(n2);
+  const pill=(x,y,t,c)=>{const w=Math.max(48,t.length*7.5+16);return `<g><rect x="${x-w/2}" y="${y-10}" width="${w}" height="20" rx="10" fill="var(--bg)" stroke="${c}" stroke-width="1.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">${t}</text></g>`};
+  const lab=(cnt,i)=>(cnt>1?cnt+'×':'')+NICS[i]+'G';
+  const rack=(x,w,y,h,cnt,label,stroke,fill)=>{let g=`<rect x="${x}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="var(--surface)" stroke="${stroke}" stroke-width="2"/><text x="${x+10}" y="${y+4}" font-size="11" font-weight="700" fill="var(--ink)">${cnt} ${label}</text>`;for(let k=0;k<(cnt<=10?cnt:0);k++)g+=`<rect x="${x+w-38+(k%5)*7}" y="${y-8+Math.floor(k/5)*8}" width="5" height="5" rx="1" fill="${fill}"/>`;return g};
+  for(let i=0;i<n1;i++){const y=a.y(i);
+    lines+=`<line class="flow" x1="126" y1="${y}" x2="${sw-6}" y2="${cy}" stroke="var(--wasabi)" stroke-width="${wid(S.cN)*(U1[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
+    if(n1<=6)pills+=pill(126+(sw-132)*.42,y+(cy-y)*.42,lab(U1[i],S.cN),'var(--wasabi)')}
+  if(n1>6)pills+=pill(270,cy,n1+'×'+NICS[S.cN]+'G','var(--wasabi)');
+  for(let i=0;i<n2;i++){const y=b.y(i);
+    lines+=`<line class="flow" x1="${sw+6}" y1="${cy}" x2="734" y2="${y}" stroke="var(--mint)" stroke-width="${wid(S.sN)*(U2[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
+    if(n2<=6)pills+=pill(sw+6+(734-sw-6)*.58,cy+(y-cy)*.58,lab(U2[i],S.sN),'var(--mint)')}
+  if(n2>6)pills+=pill(630,cy,n2+'×'+NICS[S.sN]+'G','var(--mint)');
+  for(let i=0;i<n1;i++){const y=a.y(i),h=a.h;
+    if(U1[i]>1){boxes+=rack(20,106,y,h,U1[i],'clients','var(--cer)','var(--wasabi)');continue}
+    const t=Math.min(S.thr,48),cols=8,rows=Math.ceil(t/cols),st=Math.min(8,(h-8)/rows),r=Math.max(1.5,Math.min(3,st/2-.5));
+    boxes+=`<rect x="20" y="${y-h/2}" width="106" height="${h}" rx="8" fill="var(--surface)" stroke="var(--cer)" stroke-width="1.5"/>`;
+    for(let k=0;k<t;k++)boxes+=`<circle cx="${34+(k%cols)*11}" cy="${y-(rows-1)*st/2+Math.floor(k/cols)*st}" r="${r}" fill="var(--wasabi)"/>`}
+  for(let i=0;i<n2;i++){const y=b.y(i),h=b.h;
+    if(U2[i]>1){boxes+=rack(734,146,y,h,U2[i],'nodes','var(--alloy)','var(--mint)');continue}
+    const cols=Math.min(S.dev,S.dev>36?24:12),xs=Math.min(11,128/cols),rows=Math.ceil(S.dev/cols),st=Math.min(10,(h-8)/rows),d=Math.max(2,Math.min(7,Math.min(st,xs)-1.5));
+    boxes+=`<rect x="734" y="${y-h/2}" width="146" height="${h}" rx="8" fill="var(--surface)" stroke="var(--alloy)" stroke-width="1.5"/>`;
+    for(let k=0;k<S.dev;k++)boxes+=`<rect x="${746+(k%cols)*xs}" y="${y-(rows-1)*st/2+Math.floor(k/cols)*st-d/2}" width="${d}" height="${d}" rx="1" fill="var(--mint)"/>`}
+  s=`<rect x="${sw-6}" y="30" width="12" height="${H-60}" rx="6" fill="var(--alloy)"/><text x="${sw}" y="20" text-anchor="middle" font-size="13" fill="var(--muted)">Switch</text>`;
+  $('topo').innerHTML=lines+s+boxes+pills;
+}
+
+function render(){
+  CTL.forEach(([k,,,,a])=>{$('o_'+k).textContent=k==='cN'||k==='sN'?nicTxt(S[k]):S[k].toLocaleString('en-US');if(a)$('s_'+k).setAttribute('aria-valuetext',S[k]+' clients')});
+  $('presetnote').textContent=PRE[S.pre].note;
+  const m=model();topo();
+  const dev=(m.devW+m.devR)/2,r1=dev/m.cluNic,r2=m.cliNic/m.cluNic;
+  const sc=Math.min(pct(r1),pct(r2));
+  $('score').textContent=sc+'%';
+  $('verdict').textContent=sc>=75?'Well balanced':sc>=45?'Somewhat unbalanced':'Strongly unbalanced';
+  $('m1').style.left=pos(r1)+'%';$('m2').style.left=pos(r2)+'%';
+  $('m1p').textContent=r1<.8?`Drives deliver up to ${fmt(m.devW)} writing and ${fmt(m.devR)} reading, while the storage network could carry ${fmt(m.cluNic)}. The drives set the pace; the network has headroom.`
+    :r1>1.25?`The storage network carries ${fmt(m.cluNic)} per direction, but the drives could deliver ${fmt(m.devW)} writing and ${fmt(m.devR)} reading. The network sets the pace; faster NICs would use more of the drives.`
+    :`Drives (${fmt(m.devW)} writing, ${fmt(m.devR)} reading) and storage network (${fmt(m.cluNic)}) are close to each other.`;
+  $('m2p').textContent=r2<.8?`Together the clients can send ${fmt(m.cliNic)}, less than the ${fmt(m.cluNic)} the storage network carries. Add clients or faster client NICs.`
+    :r2>1.25?`The clients can send ${fmt(m.cliNic)}, more than the ${fmt(m.cluNic)} the storage network carries. The storage side is the narrow part.`
+    :`Clients (${fmt(m.cliNic)}) and storage network (${fmt(m.cluNic)}) are well matched.`;
+  const rows=[['ec','Erasure coding '+m.ec.join('+')],['repl','Replication ×'+m.rf],['none','No redundancy']];
+  const cols=[[0,'w','Single client, write'],[0,'r','Single client, read'],[1,'w','All clients, write'],[1,'r','All clients, read']];
+  $('tbl').innerHTML='<tr><th></th>'+cols.map(c=>`<th>${c[2]}</th>`).join('')+'</tr>'+rows.map(([p,l])=>`<tr><th>${l}</th>`+cols.map(([mu,op])=>{
+    const e=ev(m,p,op,mu),[t,cl]=NAME[e.n];return `<td><b>${fmt(e.v)}</b><span class="chip ${cl}">${t}</span></td>`}).join('')+'</tr>').join('');
+}
+render();
+</script>
+</body>
+</html>

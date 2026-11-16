@@ -2,7 +2,7 @@
 """Capacity and performance calculator for a storage cluster.
 
 Standard library only. Usage:
-    ./calc_ng.py -c myconfig.ini [-f text|json]
+    ./calc_ng.py -c myconfig.ini [-f text|json] [-s SECTION ...]
 
 Units (one convention, everywhere):
     * Throughput is MB/s (decimal megabytes per second) internally.
@@ -65,16 +65,24 @@ class Config:
 
     def __post_init__(self):
         positive = ("clients", "threads", "client_nic_gbit", "nodes", "node_nic_gbit",
-                    "devices_per_node", "controllers_per_node", "device_write_mbs",
-                    "device_read_mbs", "controller_mbs", "device_capacity_gb",
-                    "ec_data", "stripe_width", "replication_factor")
+                    "devices_per_node", "device_write_mbs", "device_read_mbs",
+                    "device_capacity_gb", "ec_data", "stripe_width", "replication_factor")
         for name in positive:
             if getattr(self, name) <= 0:
                 raise ValueError(f"{name} must be greater than 0")
+        if self.controllers_per_node < 0 or self.controller_mbs < 0:
+            raise ValueError("controller values must not be negative")
+        if self.controllers_per_node > 0 and self.controller_mbs <= 0:
+            raise ValueError("controller_mbs must be greater than 0 when controllers are used")
         if self.ec_coding < 0:
             raise ValueError("ec_coding must not be negative")
 
     # Derived values (all MB/s or GB)
+    @property
+    def has_controller(self) -> bool:
+        """False for direct-attached devices (NVMe): no shared controller limit."""
+        return self.controllers_per_node > 0
+
     @property
     def client_nic_mbs(self) -> float:
         return self.client_nic_gbit * GBIT_TO_MBS
@@ -215,15 +223,16 @@ def evaluate(cfg: Config, protection: str, op: str, multi: bool) -> tuple[float,
 
     device_mbs = cfg.device_write_mbs if write else cfg.device_read_mbs
     cluster_device = cfg.nodes * cfg.devices_per_node * device_mbs
-    cluster_controller = cfg.nodes * cfg.controllers_per_node * cfg.controller_mbs
     cluster_nic = cfg.nodes * cfg.node_nic_mbs  # per direction
 
     limits = {
         "client_parallelism": n_clients * cfg.threads * stripes * device_mbs,
         "client_network": n_clients * cfg.client_nic_mbs / client_f,
         "backend_device": cluster_device / backend_f,
-        "backend_controller": cluster_controller / backend_f,
     }
+    if cfg.has_controller:
+        cluster_controller = cfg.nodes * cfg.controllers_per_node * cfg.controller_mbs
+        limits["backend_controller"] = cluster_controller / backend_f
     if nic_in > 0:
         limits["storage_network_in"] = cluster_nic / nic_in
     if nic_out > 0:
@@ -235,6 +244,7 @@ def build_results(cfg: Config) -> dict:
     node_device_w = cfg.devices_per_node * cfg.device_write_mbs
     node_device_r = cfg.devices_per_node * cfg.device_read_mbs
     node_controller = cfg.controllers_per_node * cfg.controller_mbs
+    # None means there is no shared controller (direct-attached NVMe).
 
     results = {
         "client_count": cfg.clients,
@@ -245,11 +255,13 @@ def build_results(cfg: Config) -> dict:
         "capacity_repl": format_capacity(usable_capacity_gb(cfg, "repl")),
         "single_node_device_throughput_write": format_rate(node_device_w),
         "single_node_device_throughput_read": format_rate(node_device_r),
-        "single_node_controller_throughput": format_rate(node_controller),
+        "single_node_controller_throughput": (
+            format_rate(node_controller) if cfg.has_controller else None),
         "single_node_network_throughput": format_rate(cfg.node_nic_mbs),
         "aggregated_device_throughput_write": format_rate(cfg.nodes * node_device_w),
         "aggregated_device_throughput_read": format_rate(cfg.nodes * node_device_r),
-        "aggregated_controller_throughput": format_rate(cfg.nodes * node_controller),
+        "aggregated_controller_throughput": (
+            format_rate(cfg.nodes * node_controller) if cfg.has_controller else None),
         "aggregated_network_throughput": format_rate(cfg.nodes * cfg.node_nic_mbs),
         "aggregated_client_network_throughput": format_rate(cfg.clients * cfg.client_nic_mbs),
     }
@@ -267,83 +279,170 @@ def build_results(cfg: Config) -> dict:
 # Output
 # --------------------------------------------------------------------------
 
-def md_table(headers: list, rows: list) -> str:
+def md_table(headers: list, rows: list, align: str = "") -> str:
     """Render a Markdown table with padded columns, so it also reads well as
-    plain text. The first column is left-aligned, the others right-aligned."""
+    plain text. align has one letter per column: l (left) or r (right).
+    Default: first column left, the others right."""
+    align = align or "l" + "r" * (len(headers) - 1)
     table = [[str(c) for c in headers]] + [[str(c) for c in row] for row in rows]
     widths = [max(len(row[i]) for row in table) for i in range(len(headers))]
 
     def fmt(row):
-        cells = [row[0].ljust(widths[0])]
-        cells += [cell.rjust(w) for cell, w in zip(row[1:], widths[1:])]
+        cells = [cell.ljust(w) if a == "l" else cell.rjust(w)
+                 for cell, w, a in zip(row, widths, align)]
         return "| " + " | ".join(cells) + " |"
 
     delimiter = "|" + "|".join(
-        ["-" * (widths[0] + 2)] + ["-" * (w + 1) + ":" for w in widths[1:]]) + "|"
+        "-" * (w + 1) + ":" if a == "r" else "-" * (w + 2) for w, a in zip(widths, align)) + "|"
     return "\n".join([fmt(table[0]), delimiter] + [fmt(row) for row in table[1:]])
 
 
-def print_text(cfg: Config, r: dict) -> None:
-    """Print the results as Markdown."""
+BAR_WIDTH = 20
+
+
+def bar(fraction: float, width: int = BAR_WIDTH) -> str:
+    """Text bar for a fraction between 0 and 1."""
+    fraction = max(0.0, min(1.0, fraction))
+    filled = round(fraction * width)
+    if fraction > 0 and filled == 0:
+        filled = 1
+    return "\u2588" * filled + "\u2591" * (width - filled)
+
+
+SHOW_CHOICES = ("all", "capacity", "ec", "replication", "performance")
+
+
+def resolve_show(choices) -> tuple:
+    """Translate --show choices into (capacity, hardware, protections).
+
+    all          everything (default)
+    capacity     capacity only
+    ec           performance of erasure coding
+    replication  performance of replication
+    performance  performance of all three: EC, replication, no redundancy
+    """
+    if "all" in choices:
+        return True, True, list(PROTECTIONS)
+    selected = set()
+    if "ec" in choices:
+        selected.add("ec")
+    if "replication" in choices:
+        selected.add("repl")
+    if "performance" in choices:
+        selected.update(PROTECTIONS)
+    return "capacity" in choices, False, [p for p in PROTECTIONS if p in selected]
+
+
+def filter_results(results: dict, capacity: bool, hardware: bool, protections: list) -> dict:
+    """Keep only the JSON keys that belong to the selected sections."""
+    out = {}
+    for key, value in results.items():
+        if key.startswith("capacity_"):
+            keep = capacity
+        elif key.split("_")[0] in PROTECTIONS:
+            keep = key.split("_")[0] in protections
+        elif key in ("client_count", "client_threads"):
+            keep = bool(protections) or hardware
+        else:
+            keep = hardware
+        if keep:
+            out[key] = value
+    return out
+
+
+def print_text(cfg: Config, r: dict, capacity: bool = True, hardware: bool = True,
+               protections=PROTECTIONS) -> None:
+    """Print the selected sections of the results as Markdown."""
     def rate(key):
-        return rate_str(r[key])
+        return rate_str(r[key]) if r[key] is not None else "n/a"
 
-    print("# Cluster capacity and performance\n")
+    blocks = ["# Cluster capacity and performance"]
 
-    print("## Capacity\n")
-    print(md_table(["Type", "Capacity"], [
-        ["Raw", r["capacity_raw"]],
-        ["Erasure coding", r["capacity_ec"]],
-        ["Replication", r["capacity_repl"]],
-    ]))
+    if hardware:
+        devices = f"{cfg.devices_per_node} devices" + (
+            "" if cfg.has_controller else " (no shared controller)")
+        blocks.append("## Setup\n\n" + md_table(["Component", "Configuration"], [
+            ["Storage", f"{cfg.nodes} nodes x {devices}, {cfg.node_nic_gbit:g} Gbit/s NIC per node"],
+            ["Clients", f"{cfg.clients} clients x {cfg.threads} threads, "
+                        f"{cfg.client_nic_gbit:g} Gbit/s NIC per client"],
+            ["Protection", f"EC {cfg.ec_data}+{cfg.ec_coding}, {cfg.replication_factor}x "
+                           f"replication, stripe width {cfg.stripe_width}"],
+        ], align="ll"))
 
-    print("\n## Device performance\n")
-    print(md_table(["", "Write", "Read"], [
-        ["Single node devices", rate("single_node_device_throughput_write"),
-         rate("single_node_device_throughput_read")],
-        ["Cluster devices", rate("aggregated_device_throughput_write"),
-         rate("aggregated_device_throughput_read")],
-        ["Single node controller", rate("single_node_controller_throughput"),
-         rate("single_node_controller_throughput")],
-        ["Cluster controller", rate("aggregated_controller_throughput"),
-         rate("aggregated_controller_throughput")],
-    ]))
+    if capacity:
+        raw = cfg.raw_capacity_gb
+        rows = []
+        for label, key, gb in (("Raw", "capacity_raw", raw),
+                               ("Erasure coding", "capacity_ec", usable_capacity_gb(cfg, "ec")),
+                               ("Replication", "capacity_repl", usable_capacity_gb(cfg, "repl"))):
+            share = gb / raw
+            rows.append([label, r[key], f"{bar(share)} {share * 100:.1f}%"])
+        blocks.append("## Capacity\n\n" + md_table(
+            ["Type", "Capacity", "Share of raw"], rows, align="lrl"))
 
-    print("\n## Network performance\n")
-    print(md_table(["", "Storage nodes", "Clients"], [
-        ["Single node", rate("single_node_network_throughput"),
-         rate("single_clientnode_network_throughput")],
-        ["Cluster", rate("aggregated_network_throughput"),
-         rate("aggregated_client_network_throughput")],
-    ]))
+    if hardware:
+        blocks.append("## Device performance\n\n" + md_table(["", "Write", "Read"], [
+            ["Single node devices", rate("single_node_device_throughput_write"),
+             rate("single_node_device_throughput_read")],
+            ["Cluster devices", rate("aggregated_device_throughput_write"),
+             rate("aggregated_device_throughput_read")],
+            ["Single node controller", rate("single_node_controller_throughput"),
+             rate("single_node_controller_throughput")],
+            ["Cluster controller", rate("aggregated_controller_throughput"),
+             rate("aggregated_controller_throughput")],
+        ]))
+        blocks.append("## Network performance\n\n" + md_table(["", "Storage nodes", "Clients"], [
+            ["Single node", rate("single_node_network_throughput"),
+             rate("single_clientnode_network_throughput")],
+            ["Cluster", rate("aggregated_network_throughput"),
+             rate("aggregated_client_network_throughput")],
+        ]))
 
-    for protection in PROTECTIONS:
-        title = PROTECTION_TITLES[protection]
-        print(f"\n## {title}")
-        for mode in ("single", "multi"):
-            for op in ("write", "read"):
-                prefix = f"{protection}_{mode}_{op}"
-                print(f"\n### {mode.capitalize()} client {op}, {title}\n")
-                print(f"Bottleneck: `{r[prefix + '_bottleneck']}`\n")
-                print(f"Performance, {cfg.threads} threads per client: "
-                      f"{rate(prefix + '_throughput')}")
-    print()
+    if protections:
+        # Bars are scaled to the highest throughput among the scenarios shown.
+        values = {(p, m, o): evaluate(cfg, p, o, m == "multi")[0]
+                  for p in protections for m in ("single", "multi") for o in ("write", "read")}
+        top = max(values.values())
+        for protection in protections:
+            title = PROTECTION_TITLES[protection]
+            blocks.append(f"## {title}")
+            for mode in ("single", "multi"):
+                rows = []
+                for op in ("write", "read"):
+                    prefix = f"{protection}_{mode}_{op}"
+                    rows.append([op.capitalize(), rate(prefix + "_throughput"),
+                                 bar(values[(protection, mode, op)] / top),
+                                 f"`{r[prefix + '_bottleneck']}`"])
+                blocks.append(f"### {mode.capitalize()} client, {title}\n\n" + md_table(
+                    ["Operation", "Throughput", "Relative", "Bottleneck"], rows, align="lrll"))
+        blocks.append(f"*Throughput with {cfg.threads} threads per client. Bars show the share "
+                      "of the highest throughput shown.*")
+    print("\n\n".join(blocks) + "\n")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Calculate capacity and performance for a given hardware configuration.",
-        epilog='Example: ./calc_ng.py -c myconfig.ini')
+        epilog='Examples: ./calc_ng.py -c myconfig.ini   |   ./calc_ng.py -c myconfig.ini -s capacity   |   '
+               './calc_ng.py -c myconfig.ini -s ec replication')
     parser.add_argument("-c", "--configfile", required=True, help="path to the INI config file")
     parser.add_argument("-f", "--format", choices=("text", "json"), default="text")
+    parser.add_argument(
+        "-s", "--show", nargs="+", choices=SHOW_CHOICES, default=["all"], metavar="SECTION",
+        help="what to show, one or more of: all (default), capacity, ec (performance of "
+             "erasure coding), replication (performance of replication), performance "
+             "(performance of all three: EC, replication, no redundancy)")
     args = parser.parse_args()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")  # the bars use block characters
 
     cfg = load_config(args.configfile)
     results = build_results(cfg)
+    capacity, hardware, protections = resolve_show(args.show)
     if args.format == "json":
-        print(json.dumps(results, indent=2))
+        print(json.dumps(filter_results(results, capacity, hardware, protections), indent=2))
     else:
-        print_text(cfg, results)
+        print_text(cfg, results, capacity, hardware, protections)
 
 
 if __name__ == "__main__":
