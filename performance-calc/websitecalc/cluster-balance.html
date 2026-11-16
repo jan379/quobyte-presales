@@ -11,8 +11,9 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 :root[data-theme="dark"]{--bg:#0b0317;--surface:#170030;--ink:#fff;--muted:#bba9d6;--line:#33195a;--accent:#32f54e;--track:#2a1448}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
-.wrap{max-width:1180px;margin:0 auto;padding:22px 18px 40px}
+body{-webkit-text-size-adjust:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px max(18px,env(safe-area-inset-right)) 40px max(18px,env(safe-area-inset-left))}
 h1{font-size:clamp(26px,4vw,40px);line-height:1.1;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
 .sub{color:var(--muted);margin:0 0 22px;max-width:60ch}
 .grid{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
@@ -23,11 +24,11 @@ h2{font-size:16px;margin:0 0 12px;font-weight:700}
 .ctl{margin-bottom:14px}
 .ctl .row{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
 .ctl output{font-weight:700;color:var(--accent)}
-input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px;touch-action:pan-y}
 .seg{display:flex;gap:6px;margin-bottom:14px}
-.seg button{flex:1;padding:9px 6px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.seg button{flex:1;min-height:44px;padding:9px 6px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--wasabi);color:#0b0317;border-color:var(--wasabi)}
-select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+select{font:inherit;font-size:16px;min-height:42px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
 .two{display:flex;gap:10px}.two label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--cer);outline-offset:2px}
 svg{width:100%;height:auto;display:block}
@@ -39,7 +40,8 @@ svg{width:100%;height:auto;display:block}
 .score b{font-size:clamp(40px,7vw,64px);line-height:1;letter-spacing:-.03em}
 .score span{font-size:18px;font-weight:700}
 .meter{margin:16px 0 4px}
-.meter .cap{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.meter .mt{font-weight:600;margin-bottom:2px}
+.meter .cap{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted);margin-bottom:6px}
 .track{position:relative;height:16px;border-radius:8px;background:var(--track)}
 .band{position:absolute;left:42%;width:16%;top:0;bottom:0;background:var(--wasabi);opacity:.9;border-radius:4px}
 .mark{position:absolute;top:-6px;width:6px;height:28px;margin-left:-3px;border-radius:3px;background:var(--ruby);box-shadow:0 0 0 2px var(--bg);transition:left .25s}
@@ -52,15 +54,38 @@ td b{display:block;font-size:17px}
 .chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;margin-top:3px}
 .c-cl{background:var(--mint);color:#0b0317}.c-net{background:var(--cer);color:#fff}.c-dr{background:var(--pear);color:#0b0317}
 .hint{color:var(--muted);font-size:13px;margin:10px 0 0}
+.bar{display:none;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 14px}
+.bar i{width:12px;height:12px;border-radius:50%;flex:none}
+.bar b{font-size:20px;line-height:1}
+@media(min-width:861px){.left{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+@media(pointer:coarse){input[type=range]{height:40px}}
+@media(max-width:860px){
+.wrap{padding-top:14px}
+.grid{gap:14px}
+.right{display:contents}
+.p-topo{order:0}.left{order:1}.p-bal{order:2}.p-tbl{order:3}
+.panel+.panel{margin-top:0}
+.bar{display:flex}
+}
+@media(max-width:640px){
+.panel{padding:14px}
+table,tbody{display:block;width:100%;min-width:0}
+.hd{display:none}
+tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+th,td{border:0;padding:0}
+tr>th{grid-column:1/-1;font-size:15px;color:var(--ink)}
+td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Is your cluster balanced?</h1>
   <p class="sub">Move the sliders to see whether the drives or the network set the pace, and which part limits each workload.</p>
+  <div class="bar" aria-live="polite"><i id="bdot"></i><b id="bscore">0%</b><span id="bverdict"></span></div>
   <div class="grid">
-    <div>
-      <section class="panel" aria-label="Cluster settings">
+    <div class="left">
+      <section class="panel p-ctl" aria-label="Cluster settings">
         <h2>Cluster</h2>
         <div class="seg" role="group" aria-label="Drive type">
           <button type="button" data-pre="hdd" aria-pressed="true">Hard disks</button>
@@ -76,26 +101,26 @@ td b{display:block;font-size:17px}
         <p class="hint" id="presetnote"></p>
       </section>
     </div>
-    <div>
-      <section class="panel" aria-label="Topology">
+    <div class="right">
+      <section class="panel p-topo" aria-label="Topology">
         <h2>Topology</h2>
         <svg id="topo" viewBox="0 0 900 420" role="img" aria-label="Clients connected through a switch to storage nodes"></svg>
         <div class="legend"><span>Left: clients, one dot per thread</span><span>Right: storage nodes, one square per drive</span><span>Line thickness follows NIC speed</span><span>Above 10 nodes, nodes are grouped into racks of up to 10; beyond 120 nodes each box stands for several racks</span></div>
       </section>
-      <section class="panel" aria-label="Balance" aria-live="polite">
+      <section class="panel p-bal" aria-label="Balance">
         <div class="score"><b id="score">0%</b><span id="verdict"></span></div>
         <div class="meter">
-          <div class="cap"><span>Drives limit</span><span id="m1t">Drives against storage network</span><span>Network limits</span></div>
+          <div class="mt">Drives against storage network</div><div class="cap"><span>Drives limit</span><span>Network limits</span></div>
           <div class="track"><div class="band"></div><div class="mark" id="m1"></div></div>
           <p id="m1p"></p>
         </div>
         <div class="meter">
-          <div class="cap"><span>Clients limit</span><span>Clients against storage network</span><span>Storage network limits</span></div>
+          <div class="mt">Clients against storage network</div><div class="cap"><span>Clients limit</span><span>Storage network limits</span></div>
           <div class="track"><div class="band"></div><div class="mark" id="m2"></div></div>
           <p id="m2p"></p>
         </div>
       </section>
-      <section class="panel" aria-label="Throughput">
+      <section class="panel p-tbl" aria-label="Throughput">
         <h2>Throughput and what limits it</h2>
         <div class="tw"><table id="tbl"></table></div>
         <p class="hint">Best-case ceilings for large sequential I&#8202;/&#8202;O in a healthy cluster. Erasure coding is done by the client, replication by the storage nodes.</p>
@@ -155,36 +180,39 @@ function pos(r){return Math.max(0,Math.min(1,(Math.log2(r)+2)/4))*100}
 function pct(r){return Math.round(100*Math.min(r,1/r))}
 
 function topo(){
-  const H=420,W=900,sw=450,cy=H/2;
+  const svg=$('topo'),cp=svg.getBoundingClientRect().width>0&&svg.getBoundingClientRect().width<560;
+  topo.cp=cp;
+  const H=420,W=cp?420:900,sw=W/2,cy=H/2,m0=cp?8:20,CX=m0,CW=cp?84:106,CR=CX+CW,SWD=cp?112:146,SX=W-m0-SWD,fs=cp?14:12;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   const units=n=>{if(n<=10)return Array(n).fill(1);const r=Math.min(12,Math.ceil(n/10));return Array.from({length:r},(_,i)=>Math.floor(n/r)+(i<n%r?1:0))};
   const U1=units(S.clients),U2=units(S.nodes),n1=U1.length,n2=U2.length;
   const wid=i=>[1.5,2.5,4,6,8][i];
   let s='',lines='',pills='',boxes='';
   const geo=n=>{const sp=(H-20)/n;return{sp,h:Math.min(64,sp-6),y:i=>10+(i+.5)*sp}};
   const a=geo(n1),b=geo(n2);
-  const pill=(x,y,t,c)=>{const w=Math.max(48,t.length*7.5+16);return `<g><rect x="${x-w/2}" y="${y-10}" width="${w}" height="20" rx="10" fill="var(--bg)" stroke="${c}" stroke-width="1.5"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)">${t}</text></g>`};
+  const pill=(x,y,t,c)=>{const w=Math.max(48,t.length*fs*.62+16);return `<g><rect x="${x-w/2}" y="${y-11}" width="${w}" height="22" rx="11" fill="var(--bg)" stroke="${c}" stroke-width="1.5"/><text x="${x}" y="${y+fs*.34}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="var(--ink)">${t}</text></g>`};
   const lab=(cnt,i)=>(cnt>1?cnt+'×':'')+NICS[i]+'G';
-  const rack=(x,w,y,h,cnt,label,stroke,fill)=>{let g=`<rect x="${x}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="var(--surface)" stroke="${stroke}" stroke-width="2"/><text x="${x+10}" y="${y+4}" font-size="11" font-weight="700" fill="var(--ink)">${cnt} ${label}</text>`;for(let k=0;k<(cnt<=10?cnt:0);k++)g+=`<rect x="${x+w-38+(k%5)*7}" y="${y-8+Math.floor(k/5)*8}" width="5" height="5" rx="1" fill="${fill}"/>`;return g};
+  const rack=(x,w,y,h,cnt,label,stroke,fill)=>{let g=`<rect x="${x}" y="${y-h/2}" width="${w}" height="${h}" rx="8" fill="var(--surface)" stroke="${stroke}" stroke-width="2"/><text x="${x+10}" y="${y+4}" font-size="${cp?12:11}" font-weight="700" fill="var(--ink)">${cnt} ${label}</text>`;for(let k=0;k<(cnt<=10&&w>=100?cnt:0);k++)g+=`<rect x="${x+w-38+(k%5)*7}" y="${y-8+Math.floor(k/5)*8}" width="5" height="5" rx="1" fill="${fill}"/>`;return g};
   for(let i=0;i<n1;i++){const y=a.y(i);
-    lines+=`<line class="flow" x1="126" y1="${y}" x2="${sw-6}" y2="${cy}" stroke="var(--wasabi)" stroke-width="${wid(S.cN)*(U1[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
-    if(n1<=6)pills+=pill(126+(sw-132)*.42,y+(cy-y)*.42,lab(U1[i],S.cN),'var(--wasabi)')}
-  if(n1>6)pills+=pill(270,cy,S.clients.toLocaleString('en-US')+'×'+NICS[S.cN]+'G','var(--wasabi)');
+    lines+=`<line class="flow" x1="${CR}" y1="${y}" x2="${sw-6}" y2="${cy}" stroke="var(--wasabi)" stroke-width="${wid(S.cN)*(U1[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
+    if(n1<=6)pills+=pill(CR+(sw-6-CR)*.42,y+(cy-y)*.42,lab(U1[i],S.cN),'var(--wasabi)')}
+  if(n1>6)pills+=pill(CR+(sw-CR)*.45,cy,S.clients.toLocaleString('en-US')+'×'+NICS[S.cN]+'G','var(--wasabi)');
   for(let i=0;i<n2;i++){const y=b.y(i);
-    lines+=`<line class="flow" x1="${sw+6}" y1="${cy}" x2="734" y2="${y}" stroke="var(--mint)" stroke-width="${wid(S.sN)*(U2[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
-    if(n2<=6)pills+=pill(sw+6+(734-sw-6)*.58,cy+(y-cy)*.58,lab(U2[i],S.sN),'var(--mint)')}
-  if(n2>6)pills+=pill(630,cy,S.nodes.toLocaleString('en-US')+'×'+NICS[S.sN]+'G','var(--mint)');
+    lines+=`<line class="flow" x1="${sw+6}" y1="${cy}" x2="${SX}" y2="${y}" stroke="var(--mint)" stroke-width="${wid(S.sN)*(U2[i]>1?1.6:1)}" stroke-linecap="round" opacity=".85"/>`;
+    if(n2<=6)pills+=pill(sw+6+(SX-sw-6)*.58,cy+(y-cy)*.58,lab(U2[i],S.sN),'var(--mint)')}
+  if(n2>6)pills+=pill(sw+(SX-sw)*.65,cy,S.nodes.toLocaleString('en-US')+'×'+NICS[S.sN]+'G','var(--mint)');
   for(let i=0;i<n1;i++){const y=a.y(i),h=a.h;
-    if(U1[i]>1){boxes+=rack(20,106,y,h,U1[i],'clients','var(--cer)','var(--wasabi)');continue}
-    const t=Math.min(S.thr,48),cols=8,rows=Math.ceil(t/cols),st=Math.min(8,(h-8)/rows),r=Math.max(1.5,Math.min(3,st/2-.5));
-    boxes+=`<rect x="20" y="${y-h/2}" width="106" height="${h}" rx="8" fill="var(--surface)" stroke="var(--cer)" stroke-width="1.5"/>`;
-    for(let k=0;k<t;k++)boxes+=`<circle cx="${34+(k%cols)*11}" cy="${y-(rows-1)*st/2+Math.floor(k/cols)*st}" r="${r}" fill="var(--wasabi)"/>`}
+    if(U1[i]>1){boxes+=rack(CX,CW,y,h,U1[i],'clients','var(--cer)','var(--wasabi)');continue}
+    const t=Math.min(S.thr,48),cols=cp?6:8,rows=Math.ceil(t/cols),st=Math.min(8,(h-8)/rows),r=Math.max(1.5,Math.min(3,st/2-.5));
+    boxes+=`<rect x="${CX}" y="${y-h/2}" width="${CW}" height="${h}" rx="8" fill="var(--surface)" stroke="var(--cer)" stroke-width="1.5"/>`;
+    for(let k=0;k<t;k++)boxes+=`<circle cx="${CX+14+(k%cols)*11}" cy="${y-(rows-1)*st/2+Math.floor(k/cols)*st}" r="${r}" fill="var(--wasabi)"/>`}
   for(let i=0;i<n2;i++){const y=b.y(i),h=b.h;
-    if(U2[i]>1){boxes+=rack(734,146,y,h,U2[i],'nodes','var(--alloy)','var(--mint)');continue}
-    const cols=Math.min(S.dev,S.dev>36?24:12),xs=Math.min(11,128/cols),rows=Math.ceil(S.dev/cols),st=Math.min(10,(h-8)/rows),d=Math.max(2,Math.min(7,Math.min(st,xs)-1.5));
-    boxes+=`<rect x="734" y="${y-h/2}" width="146" height="${h}" rx="8" fill="var(--surface)" stroke="var(--alloy)" stroke-width="1.5"/>`;
-    for(let k=0;k<S.dev;k++)boxes+=`<rect x="${746+(k%cols)*xs}" y="${y-(rows-1)*st/2+Math.floor(k/cols)*st-d/2}" width="${d}" height="${d}" rx="1" fill="var(--mint)"/>`}
-  s=`<rect x="${sw-6}" y="30" width="12" height="${H-60}" rx="6" fill="var(--alloy)"/><text x="${sw}" y="20" text-anchor="middle" font-size="13" fill="var(--muted)">Switch</text>`;
-  $('topo').innerHTML=lines+s+boxes+pills;
+    if(U2[i]>1){boxes+=rack(SX,SWD,y,h,U2[i],'nodes','var(--alloy)','var(--mint)');continue}
+    const cols=Math.min(S.dev,S.dev>36?(cp?16:24):(cp?8:12)),xs=Math.min(11,(SWD-18)/cols),rows=Math.ceil(S.dev/cols),st=Math.min(10,(h-8)/rows),d=Math.max(2,Math.min(7,Math.min(st,xs)-1.5));
+    boxes+=`<rect x="${SX}" y="${y-h/2}" width="${SWD}" height="${h}" rx="8" fill="var(--surface)" stroke="var(--alloy)" stroke-width="1.5"/>`;
+    for(let k=0;k<S.dev;k++)boxes+=`<rect x="${SX+12+(k%cols)*xs}" y="${y-(rows-1)*st/2+Math.floor(k/cols)*st-d/2}" width="${d}" height="${d}" rx="1" fill="var(--mint)"/>`}
+  s=`<rect x="${sw-6}" y="30" width="12" height="${H-60}" rx="6" fill="var(--alloy)"/><text x="${sw}" y="20" text-anchor="middle" font-size="${fs+1}" fill="var(--muted)">Switch</text>`;
+  svg.innerHTML=lines+s+boxes+pills;
 }
 
 function render(){
@@ -195,6 +223,7 @@ function render(){
   const sc=Math.min(pct(r1),pct(r2));
   $('score').textContent=sc+'%';
   $('verdict').textContent=sc>=75?'Well balanced':sc>=45?'Somewhat unbalanced':'Strongly unbalanced';
+  $('bscore').textContent=sc+'%';$('bverdict').textContent=$('verdict').textContent;$('bdot').style.background=sc>=75?'var(--wasabi)':sc>=45?'var(--pear)':'var(--ruby)';
   $('m1').style.left=pos(r1)+'%';$('m2').style.left=pos(r2)+'%';
   $('m1p').textContent=r1<.8?`Drives deliver up to ${fmt(m.devW)} writing and ${fmt(m.devR)} reading, while the storage network could carry ${fmt(m.cluNic)}. The drives set the pace; the network has headroom.`
     :r1>1.25?`The storage network carries ${fmt(m.cluNic)} per direction, but the drives could deliver ${fmt(m.devW)} writing and ${fmt(m.devR)} reading. The network sets the pace; faster NICs would use more of the drives.`
@@ -204,10 +233,11 @@ function render(){
     :`Clients (${fmt(m.cliNic)}) and storage network (${fmt(m.cluNic)}) are well matched.`;
   const rows=[['ec','Erasure coding '+m.ec.join('+')],['repl','Replication ×'+m.rf],['none','No redundancy']];
   const cols=[[0,'w','Single client, write'],[0,'r','Single client, read'],[1,'w','All clients, write'],[1,'r','All clients, read']];
-  $('tbl').innerHTML='<tr><th></th>'+cols.map(c=>`<th>${c[2]}</th>`).join('')+'</tr>'+rows.map(([p,l])=>`<tr><th>${l}</th>`+cols.map(([mu,op])=>{
-    const e=ev(m,p,op,mu),[t,cl]=NAME[e.n];return `<td><b>${fmt(e.v)}</b><span class="chip ${cl}">${t}</span></td>`}).join('')+'</tr>').join('');
+  $('tbl').innerHTML='<tr class="hd"><th></th>'+cols.map(c=>`<th>${c[2]}</th>`).join('')+'</tr>'+rows.map(([p,l])=>`<tr><th>${l}</th>`+cols.map(([mu,op])=>{
+    const e=ev(m,p,op,mu),[t,cl]=NAME[e.n];return `<td data-l="${cols.find(c=>c[0]===mu&&c[1]===op)[2]}"><b>${fmt(e.v)}</b><span class="chip ${cl}">${t}</span></td>`}).join('')+'</tr>').join('');
 }
 render();
+let rz;new ResizeObserver(()=>{cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>{if(($('topo').getBoundingClientRect().width<560)!==topo.cp)render()})}).observe(document.body);
 </script>
 </body>
 </html>
