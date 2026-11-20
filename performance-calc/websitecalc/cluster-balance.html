@@ -99,8 +99,6 @@ td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
         <div class="two">
           <label>Erasure coding
             <select id="ec"><option>2+2</option><option>4+2</option><option selected>5+3</option><option>8+3</option></select></label>
-          <label>Replicas
-            <select id="rf"><option>2</option><option selected>3</option><option>4</option></select></label>
         </div>
         <p class="hint" id="presetnote"></p>
       </section>
@@ -139,11 +137,11 @@ td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
 </div>
 <script>
 const NICS=[50,100,200,400,800],G=125;
-const S={clients:4,nodes:6,dev:24,thr:8,cN:2,sN:1,pre:'hdd',cap:24000};
+const S={clients:4,nodes:6,dev:24,thr:8,cN:2,sN:1,pre:'hdd',cap:24000,sw:1};
 const PRE={hdd:{cap:24000,caps:[8000,12000,16000,20000,24000,28000],dw:217,dr:219,ctrl:1,cm:13700,note:'Hard disks: 217 MB/s write, 219 MB/s read per drive, one 13.7 GB/s controller per node (conservative whole-disk averages).'},
  nvme:{cap:7680,caps:[3840,7680,15360,30720],dw:5600,dr:6800,ctrl:0,cm:0,note:'NVMe SSDs: 5.6 GB/s write, 6.8 GB/s read per drive, no shared controller.'}};
 const LOG=(()=>{const a=[1];while(a[a.length-1]<10000){const l=a[a.length-1];a.push(Math.min(10000,Math.max(l+1,Math.round(l*1.12))))}return a})();
-const CTL=[['clients','Clients',1,10000,LOG],['nodes','Storage nodes',4,120],['dev','Drives per node',1,90],['thr','Threads per client',1,64],['cN','Client NIC',0,4],['sN','Storage NIC',0,4]];
+const CTL=[['clients','Clients',1,10000,LOG],['nodes','Storage nodes',4,120],['dev','Drives per node',1,90],['thr','Threads per client',1,64],['sw','Replication stripes',1,16],['cN','Client NIC',0,4],['sN','Storage NIC',0,4]];
 const $=id=>document.getElementById(id);
 const fmt=v=>v>=1e9?(v/1e9).toFixed(2)+' PB/s':v>=1e6?(v/1e6).toFixed(2)+' TB/s':v>=1e3?(v/1e3).toFixed(v>=1e5?0:1)+' GB/s':Math.round(v)+' MB/s';
 const nicTxt=i=>NICS[i]+' Gbit/s';
@@ -161,17 +159,17 @@ CTL.forEach(([k,,mn,mx,a])=>$('s_'+k).addEventListener('wheel',e=>{
 },{passive:false}));
 document.querySelectorAll('[data-pre]').forEach(b=>b.addEventListener('click',()=>{S.pre=b.dataset.pre;S.cap=PRE[S.pre].cap;fillCap();
   document.querySelectorAll('[data-pre]').forEach(x=>x.setAttribute('aria-pressed',x===b));render()}));
-['ec','rf'].forEach(id=>$(id).addEventListener('change',render));
+$('ec').addEventListener('change',render);
 $('cap').addEventListener('change',e=>{S.cap=+e.target.value;render()});
 
 function model(){
-  const p=PRE[S.pre],ec=$('ec').value.split('+').map(Number),rf=+$('rf').value;
+  const p=PRE[S.pre],ec=$('ec').value.split('+').map(Number),rf=3;
   const cNic=NICS[S.cN]*G,sNic=NICS[S.sN]*G;
   return {p,ec,rf,cNic,sNic,cluNic:S.nodes*sNic,cliNic:S.clients*cNic,
     devW:S.nodes*S.dev*p.dw,devR:S.nodes*S.dev*p.dr};
 }
 function ev(m,prot,op,multi){
-  const w=op==='w',nC=multi?S.clients:1;let stripes=1,cf=1,ni=0,no=1,bf=1;
+  const w=op==='w',nC=multi?S.clients:1;let stripes=S.sw,cf=1,ni=0,no=1,bf=1;
   if(prot==='ec'){const[d,c]=m.ec,f=(d+c)/d;stripes=d;if(w){cf=ni=bf=f;no=0}}
   else if(w){const k=prot==='repl'?m.rf:1;ni=bf=k;no=k-1}
   const dm=w?m.p.dw:m.p.dr,L={};
