@@ -56,6 +56,9 @@ td b{display:block;font-size:17px}
 .hint{color:var(--muted);font-size:13px;margin:10px 0 0}
 .bar{display:none;position:sticky;top:env(safe-area-inset-top,0px);z-index:5;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 14px}
 .bar i{width:12px;height:12px;border-radius:50%;flex:none}
+.cr{margin-bottom:14px}.ch{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.ch b{font-size:17px}
+.ct{height:14px;border-radius:7px;background:var(--track);overflow:hidden;margin:5px 0}.ct div{height:100%;border-radius:7px;transition:width .25s}
+.cs{color:var(--muted);font-size:13px}
 .bar b{font-size:20px;line-height:1}
 @media(min-width:861px){.left{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
 @media(pointer:coarse){input[type=range]{height:40px}}
@@ -63,7 +66,7 @@ td b{display:block;font-size:17px}
 .wrap{padding-top:14px}
 .grid{gap:14px}
 .right{display:contents}
-.p-topo{order:0}.left{order:1}.p-bal{order:2}.p-tbl{order:3}
+.p-topo{order:0}.left{order:1}.p-bal{order:2}.p-cap{order:3}.p-tbl{order:4}
 .panel+.panel{margin-top:0}
 .bar{display:flex}
 }
@@ -92,6 +95,7 @@ td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
           <button type="button" data-pre="nvme" aria-pressed="false">NVMe SSDs</button>
         </div>
         <div id="sliders"></div>
+        <div class="two" style="margin-bottom:10px"><label>Drive size<select id="cap"></select></label></div>
         <div class="two">
           <label>Erasure coding
             <select id="ec"><option>2+2</option><option>4+2</option><option selected>5+3</option><option>8+3</option></select></label>
@@ -120,6 +124,11 @@ td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
           <p id="m2p"></p>
         </div>
       </section>
+      <section class="panel p-cap" aria-label="Capacity">
+        <h2>Capacity</h2>
+        <div id="capb"></div>
+        <p class="hint">Decimal units (1 TB = 1000 GB), before file-system overhead. Speeds stay as set above, whatever the drive size.</p>
+      </section>
       <section class="panel p-tbl" aria-label="Throughput">
         <h2>Throughput and what limits it</h2>
         <div class="tw"><table id="tbl"></table></div>
@@ -130,9 +139,9 @@ td::before{content:attr(data-l);display:block;color:var(--muted);font-size:12px}
 </div>
 <script>
 const NICS=[50,100,200,400,800],G=125;
-const S={clients:4,nodes:6,dev:24,thr:8,cN:2,sN:1,pre:'hdd'};
-const PRE={hdd:{dw:217,dr:219,ctrl:1,cm:13700,note:'Hard disks: 217 MB/s write, 219 MB/s read per drive, one 13.7 GB/s controller per node (conservative whole-disk averages).'},
- nvme:{dw:5600,dr:6800,ctrl:0,cm:0,note:'NVMe SSDs: 5.6 GB/s write, 6.8 GB/s read per drive, no shared controller.'}};
+const S={clients:4,nodes:6,dev:24,thr:8,cN:2,sN:1,pre:'hdd',cap:24000};
+const PRE={hdd:{cap:24000,caps:[8000,12000,16000,20000,24000,28000],dw:217,dr:219,ctrl:1,cm:13700,note:'Hard disks: 217 MB/s write, 219 MB/s read per drive, one 13.7 GB/s controller per node (conservative whole-disk averages).'},
+ nvme:{cap:7680,caps:[3840,7680,15360,30720],dw:5600,dr:6800,ctrl:0,cm:0,note:'NVMe SSDs: 5.6 GB/s write, 6.8 GB/s read per drive, no shared controller.'}};
 const LOG=(()=>{const a=[1];while(a[a.length-1]<10000){const l=a[a.length-1];a.push(Math.min(10000,Math.max(l+1,Math.round(l*1.12))))}return a})();
 const CTL=[['clients','Clients',1,10000,LOG],['nodes','Storage nodes',4,120],['dev','Drives per node',1,90],['thr','Threads per client',1,64],['cN','Client NIC',0,4],['sN','Storage NIC',0,4]];
 const $=id=>document.getElementById(id);
@@ -150,9 +159,10 @@ CTL.forEach(([k,,mn,mx,a])=>$('s_'+k).addEventListener('wheel',e=>{
   const v=Math.max(mn,Math.min(mx,S[k]+(d<0?st:-st)));
   if(v!==S[k]){S[k]=v;e.target.value=v;render()}
 },{passive:false}));
-document.querySelectorAll('[data-pre]').forEach(b=>b.addEventListener('click',()=>{S.pre=b.dataset.pre;
+document.querySelectorAll('[data-pre]').forEach(b=>b.addEventListener('click',()=>{S.pre=b.dataset.pre;S.cap=PRE[S.pre].cap;fillCap();
   document.querySelectorAll('[data-pre]').forEach(x=>x.setAttribute('aria-pressed',x===b));render()}));
 ['ec','rf'].forEach(id=>$(id).addEventListener('change',render));
+$('cap').addEventListener('change',e=>{S.cap=+e.target.value;render()});
 
 function model(){
   const p=PRE[S.pre],ec=$('ec').value.split('+').map(Number),rf=+$('rf').value;
@@ -215,6 +225,16 @@ function topo(){
   svg.innerHTML=lines+s+boxes+pills;
 }
 
+function fillCap(){$('cap').innerHTML=PRE[S.pre].caps.map(c=>`<option value="${c}"${c===S.cap?' selected':''}>${c/1000} TB</option>`).join('')}
+function fmtCap(gb){return gb>=1e6?+(gb/1e6).toFixed(2)+' PB':gb>=1e3?+(gb/1e3).toFixed(2)+' TB':Math.round(gb)+' GB'}
+function capacity(m){
+  const drives=S.nodes*S.dev,raw=drives*S.cap,[d,c]=m.ec,ec=raw*d/(d+c),rp=raw/m.rf;
+  const pc=x=>+(x*100).toFixed(1)+'%';
+  const row=(l,v,sh,col,sub)=>`<div class="cr"><div class="ch"><span>${l}</span><b>${v}</b></div><div class="ct"><div style="width:${(sh*100).toFixed(1)}%;background:${col}"></div></div><div class="cs">${sub}</div></div>`;
+  $('capb').innerHTML=row('Raw',fmtCap(raw),1,'var(--cer)',`${drives.toLocaleString('en-US')} drives: ${S.nodes} nodes × ${S.dev} × ${fmtCap(S.cap)} (${fmtCap(S.dev*S.cap)} per node)`)
+    +row('Erasure coding '+m.ec.join('+'),fmtCap(ec),ec/raw,'var(--wasabi)',`${pc(ec/raw)} of raw, ${pc(1-ec/raw)} protection overhead`)
+    +row('Replication ×'+m.rf,fmtCap(rp),rp/raw,'var(--mint)',`${pc(rp/raw)} of raw, ${pc(1-rp/raw)} protection overhead`);
+}
 function render(){
   CTL.forEach(([k,,,,a])=>{$('o_'+k).textContent=k==='cN'||k==='sN'?nicTxt(S[k]):S[k].toLocaleString('en-US');if(a)$('s_'+k).setAttribute('aria-valuetext',S[k]+' clients')});
   $('presetnote').textContent=PRE[S.pre].note;
@@ -231,12 +251,13 @@ function render(){
   $('m2p').textContent=r2<.8?`Together the clients can send ${fmt(m.cliNic)}, less than the ${fmt(m.cluNic)} the storage network carries. Add clients or faster client NICs.`
     :r2>1.25?`The clients can send ${fmt(m.cliNic)}, more than the ${fmt(m.cluNic)} the storage network carries. The storage side is the narrow part.`
     :`Clients (${fmt(m.cliNic)}) and storage network (${fmt(m.cluNic)}) are well matched.`;
+  capacity(m);
   const rows=[['ec','Erasure coding '+m.ec.join('+')],['repl','Replication ×'+m.rf],['none','No redundancy']];
   const cols=[[0,'w','Single client, write'],[0,'r','Single client, read'],[1,'w','All clients, write'],[1,'r','All clients, read']];
   $('tbl').innerHTML='<tr class="hd"><th></th>'+cols.map(c=>`<th>${c[2]}</th>`).join('')+'</tr>'+rows.map(([p,l])=>`<tr><th>${l}</th>`+cols.map(([mu,op])=>{
     const e=ev(m,p,op,mu),[t,cl]=NAME[e.n];return `<td data-l="${cols.find(c=>c[0]===mu&&c[1]===op)[2]}"><b>${fmt(e.v)}</b><span class="chip ${cl}">${t}</span></td>`}).join('')+'</tr>').join('');
 }
-render();
+fillCap();render();
 let rz;new ResizeObserver(()=>{cancelAnimationFrame(rz);rz=requestAnimationFrame(()=>{if(($('topo').getBoundingClientRect().width<560)!==topo.cp)render()})}).observe(document.body);
 </script>
 </body>
