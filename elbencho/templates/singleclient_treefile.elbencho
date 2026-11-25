@@ -1,0 +1,24 @@
+# Create a file tree based on a scan done before.
+# Use https://github.com/breuner/elbencho/blob/master/dist/usr/bin/elbencho-scan-path
+# to scan an existing data set and then use elbencho to replay that data set 
+# without the applicatoin bottlenecks.
+# The example tree file is an unpacked Linux kernel archive
+# Example call:
+# elbencho -c singleclient_treefile.elbencho /quobyte/elbencho
+
+label=arg="Replay a file tree"
+hostsfile={{ hosts_dir }}/elbencho-firstclient.list
+resfile={{ bench_dir }}/results/elbencho-singleclient_treefile.txt
+treefile={{ bench_dir }}/example_treefile.dat
+
+block=8M	# A convenient block size. 
+write=1		# Files are only created if "write=1"
+read=1		# Let's collect read performance
+threads=1	# Do parallel requests from each client
+mkdirs=1	# Create directories if necessary
+delfiles=0	# Delete files
+deldirs=0	# Delete directories
+dirs=1		# Number of directories per worker thread
+cpu=1		# Especially for EC we are interested in CPU upper boundary
+trunc=1		# Truncate files if they are re-written. Avoids read-modify-write cycles.
+lat=1
