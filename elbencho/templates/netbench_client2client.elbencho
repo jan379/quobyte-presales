@@ -1,0 +1,15 @@
+# Let's first bench the network, then the storage
+
+# Network benchmark. Needs elbencho deployed && started on all hosts that participate
+## Clients send data
+label=arg="One client sends data to another client (frontend network throughput)"
+resfile={{ bench_dir }}/results/elbencho-netbench_c2c.txt
+netbench=1
+serversfile={{ hosts_dir }}/elbencho-firstclient.list
+clientsfile={{ hosts_dir }}/elbencho-secondclient.list
+block=10m
+respsize=1
+threads=32
+size=100g
+timelimit=60
+lat=1

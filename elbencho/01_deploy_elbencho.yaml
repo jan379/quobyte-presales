@@ -35,6 +35,8 @@
         - smallfiles.elbencho
         - zerobytefiles.elbencho
         - netbench_allclients2allservers.elbencho 
+        - netbench_client2client.elbencho
+        - netbench_server2server.elbencho
 
     # Clients are used for actual storage benchmarks
     - name: Create client list
