@@ -34,6 +34,7 @@
         - singleclient_throughput.elbencho
         - smallfiles.elbencho
         - zerobytefiles.elbencho
+        - netbench_allclients2allservers.elbencho 
 
     # Clients are used for actual storage benchmarks
     - name: Create client list

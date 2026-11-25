@@ -3,10 +3,10 @@
 # Network benchmark. Needs elbencho deployed && started on all hosts that participate
 ## Clients send data
 label=arg="All clients send data to all servers (parallel throughput)"
-resfile={{ ansible_env.HOME }}/benchmarks/results/elbencho-netbench.txt
+resfile={{ bench_dir }}/results/elbencho-netbench.txt
 netbench=1
-serversfile={{ ansible_env.HOME }}/benchmarks/elbencho-dataserver.list
-clientsfile={{ ansible_env.HOME }}/benchmarks/elbencho-clients.list
+serversfile={{ hosts_dir }}/elbencho-dataserver.list
+clientsfile={{ hosts_dir }}/elbencho-clients.list
 block=10m
 respsize=1
 threads=32
