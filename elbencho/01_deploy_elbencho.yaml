@@ -16,6 +16,12 @@
         - "{{ bench_dir }}/example_workloads"
         - "{{ hosts_dir }}"
 
+    - name: Create example directory tree file 
+      template:
+        src: "{{ playbook_dir }}/templates/example_treefile.dat"
+        dest: "{{ bench_dir }}/example_treefile.dat"
+        mode: "0644"
+
     - name: Create example workloads
       template:
         src: "{{ playbook_dir }}/templates/{{ item }}"
@@ -32,6 +38,7 @@
         - parallel_throughput_singlethread.elbencho
         - singleclient_multithread_throughput.elbencho
         - singleclient_throughput.elbencho
+        - singleclient_treefile.elbencho
         - smallfiles.elbencho
         - zerobytefiles.elbencho
         - netbench_allclients2allservers.elbencho 
